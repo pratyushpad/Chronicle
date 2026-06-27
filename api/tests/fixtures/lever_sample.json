@@ -1,0 +1,26 @@
+[
+  {
+    "id": "abc-def-123",
+    "text": "Frontend Engineer",
+    "categories": {
+      "location": "Remote",
+      "team": "Engineering",
+      "commitment": "Full-time"
+    },
+    "hostedUrl": "https://jobs.lever.co/sample/abc-def-123",
+    "description": "<p>Build great UIs.</p>",
+    "createdAt": 1705312800000
+  },
+  {
+    "id": "xyz-789",
+    "text": "Data Scientist",
+    "categories": {
+      "location": "New York, NY",
+      "team": "Data",
+      "commitment": "Full-time"
+    },
+    "hostedUrl": "https://jobs.lever.co/sample/xyz-789",
+    "description": "<p>Analyze data.</p>",
+    "createdAt": 1704708000000
+  }
+]

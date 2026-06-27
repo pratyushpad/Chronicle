@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+*.egg
+.env
+.env.local
+
+# Alembic
+api/alembic/versions/__pycache__/
+
+# Node
+node_modules/
+.next/
+out/
+.vercel/
+
+# Next.js local env (keep .env.local out of git — has secrets)
+web/.env.local
+web/.env*.local
+
+# macOS
+.DS_Store
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+
+# PDF / design files (large, not needed in deploy)
+*.pdf

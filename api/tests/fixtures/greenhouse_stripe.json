@@ -1,0 +1,22 @@
+{
+  "jobs": [
+    {
+      "id": 123456,
+      "title": "Software Engineer, Backend (Req #9999)",
+      "location": {"name": "Remote"},
+      "absolute_url": "https://boards.greenhouse.io/stripe/jobs/123456",
+      "updated_at": "2025-06-01T10:00:00Z",
+      "content": "&lt;p&gt;We are looking for a &lt;strong&gt;backend engineer&lt;/strong&gt;.&lt;/p&gt;",
+      "departments": [{"id": 1, "name": "Engineering"}]
+    },
+    {
+      "id": 789012,
+      "title": "Product Manager",
+      "location": {"name": "San Francisco, CA"},
+      "absolute_url": "https://boards.greenhouse.io/stripe/jobs/789012",
+      "updated_at": "2025-05-15T08:30:00Z",
+      "content": "&lt;p&gt;Join our product team.&lt;/p&gt;",
+      "departments": [{"id": 2, "name": "Product"}]
+    }
+  ]
+}
