@@ -35,7 +35,7 @@ export default async function Home() {
         </h1>
 
         <p className="mx-auto mt-6 max-w-xl font-body text-lg leading-[1.75] text-muted-foreground">
-          Folio pulls every open role from 201 top tech companies — Stripe, Anthropic,
+          Chronicle pulls every open role from 201 top tech companies — Stripe, Anthropic,
           OpenAI, Databricks, Spotify, and more — into one searchable feed. No signup.
           No noise. Refreshed every 48 hours.
         </p>

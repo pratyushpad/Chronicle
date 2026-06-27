@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 
-const KEY = "folio_bookmarks";
+const KEY = "chronicle_bookmarks";
 
 export function useBookmarks() {
   const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());

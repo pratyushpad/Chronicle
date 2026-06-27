@@ -11,7 +11,7 @@ export interface TrackedJob {
   notes?: string;
 }
 
-const KEY = "folio_tracker";
+const KEY = "chronicle_tracker";
 
 function load(): TrackedJob[] {
   try {

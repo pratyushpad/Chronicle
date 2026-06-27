@@ -32,9 +32,9 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
   useEffect(() => {
     if (isAuthed) return;
     try {
-      const bm = JSON.parse(localStorage.getItem("folio_bookmarks") || "[]") as number[];
+      const bm = JSON.parse(localStorage.getItem("chronicle_bookmarks") || "[]") as number[];
       setSaved(bm.includes(job.id));
-      const tr = JSON.parse(localStorage.getItem("folio_tracker") || "[]") as Array<{ job: { id: number } }>;
+      const tr = JSON.parse(localStorage.getItem("chronicle_tracker") || "[]") as Array<{ job: { id: number } }>;
       setTracked(tr.some((t) => t.job.id === job.id));
     } catch {}
   }, [job.id, isAuthed]);
@@ -44,9 +44,9 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
     if (loadingS) return;
     if (!isAuthed) {
       try {
-        const bm = JSON.parse(localStorage.getItem("folio_bookmarks") || "[]") as number[];
+        const bm = JSON.parse(localStorage.getItem("chronicle_bookmarks") || "[]") as number[];
         const next = saved ? bm.filter((id) => id !== job.id) : [...bm, job.id];
-        localStorage.setItem("folio_bookmarks", JSON.stringify(next));
+        localStorage.setItem("chronicle_bookmarks", JSON.stringify(next));
         setSaved(!saved);
       } catch {}
       return;
@@ -65,10 +65,10 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
     if (loadingT || tracked) return;
     if (!isAuthed) {
       try {
-        const tr = JSON.parse(localStorage.getItem("folio_tracker") || "[]") as Array<{ job: JobListItem; status: string; addedAt: string }>;
+        const tr = JSON.parse(localStorage.getItem("chronicle_tracker") || "[]") as Array<{ job: JobListItem; status: string; addedAt: string }>;
         if (!tr.some((t) => t.job.id === job.id)) {
           tr.unshift({ job, status: "saved", addedAt: new Date().toISOString() });
-          localStorage.setItem("folio_tracker", JSON.stringify(tr));
+          localStorage.setItem("chronicle_tracker", JSON.stringify(tr));
           setTracked(true);
         }
       } catch {}

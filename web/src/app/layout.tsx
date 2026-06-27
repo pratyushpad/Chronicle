@@ -19,9 +19,9 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Folio — Every open role. Every company.",
+  title: "Chronicle — Every open role. Every company.",
   description:
-    "Folio aggregates job listings from 50 top tech companies into one searchable feed. Refreshed every 48 hours.",
+    "Chronicle aggregates job listings from top tech companies into one searchable feed. Refreshed every 48 hours.",
 };
 
 export default function RootLayout({
