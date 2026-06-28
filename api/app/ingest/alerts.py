@@ -43,7 +43,7 @@ def _matches_query(job: Job, company_name: str, query: dict) -> bool:
 
 
 def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -> tuple[str, str]:
-    subject = f"Folio: {len(jobs)} new role{'s' if len(jobs) != 1 else ''} matching "{search.name}""
+    subject = f"Chronicle: {len(jobs)} new role{'s' if len(jobs) != 1 else ''} matching \"{search.name}\""
     rows = ""
     for job, company_name in jobs[:20]:
         salary = ""
