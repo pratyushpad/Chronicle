@@ -10,30 +10,40 @@
 
 @layer base {
   :root {
-    --background: #FAFAF8;
-    --foreground: #1A1A1A;
-    --muted: #F5F3F0;
-    --muted-foreground: #6B6B6B;
-    --accent: #B8860B;
-    --accent-secondary: #D4A84B;
-    --accent-foreground: #FFFFFF;
-    --border: #E8E4DF;
-    --input: #E8E4DF;
-    --card: #FFFFFF;
-    --card-foreground: #1A1A1A;
-    --ring: #B8860B;
-    --popover: #FFFFFF;
-    --popover-foreground: #1A1A1A;
-    --primary: #B8860B;
-    --primary-foreground: #FFFFFF;
-    --secondary: #F5F3F0;
-    --secondary-foreground: #1A1A1A;
-    --destructive: #dc2626;
-    --radius: 0.5rem;
+    /* ─── Minimalist Monochrome — pure black & white, no accent colors ─── */
+    --background: #ffffff;
+    --foreground: #000000;
+    --muted: #f5f5f5;
+    --muted-foreground: #525252;
+
+    /* Black IS the accent — inversion replaces color for emphasis */
+    --accent: #000000;
+    --accent-secondary: #000000;
+    --accent-foreground: #ffffff;
+
+    --border: #000000;
+    --border-light: #e5e5e5;
+    --input: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --ring: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --primary: #000000;
+    --primary-foreground: #ffffff;
+    --secondary: #f5f5f5;
+    --secondary-foreground: #000000;
+    --destructive: #000000;
+    --radius: 0px;
   }
 
+  /* Default `*` border is the subtle hairline; opt into black with border-foreground. */
   * {
-    @apply border-border;
+    border-color: var(--border-light);
+  }
+
+  html {
+    @apply font-body;
   }
 
   body {
@@ -41,23 +51,65 @@
     position: relative;
   }
 
-  /* Paper noise texture overlay */
+  /* Layered texture: fine horizontal lines for editorial paper rhythm. */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-    background-size: 200px 200px;
-    opacity: 0.025;
+    background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      #000 1px,
+      #000 2px
+    );
+    background-size: 100% 4px;
+    opacity: 0.015;
     pointer-events: none;
     z-index: 9999;
   }
 
-  html {
-    @apply font-body;
+  /* Layered texture: fractal noise for a tactile, printed quality. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 220px 220px;
+    opacity: 0.02;
+    pointer-events: none;
+    z-index: 9999;
   }
 
   h1, h2, h3, h4 {
     @apply font-display;
+  }
+
+  /* Sharp, deliberate focus — never a soft glow. */
+  :focus-visible {
+    outline: 3px solid var(--foreground);
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  /* Grid texture for editorial / detail sections. */
+  .texture-grid {
+    background-image:
+      linear-gradient(#00000008 1px, transparent 1px),
+      linear-gradient(90deg, #00000008 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Vertical-line texture for inverted (black) sections. */
+  .texture-lines-inverted {
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 1px,
+      #fff 1px,
+      #fff 2px
+    );
+    background-size: 4px 100%;
   }
 }

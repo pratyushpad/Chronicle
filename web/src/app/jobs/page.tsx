@@ -4,6 +4,7 @@ import { JobCard } from "@/components/JobCard";
 import { FilterBar } from "@/components/FilterBar";
 import { SectionLabel } from "@/components/SectionLabel";
 import { Pagination } from "@/components/Pagination";
+import { JobListSkeleton } from "@/components/JobCardSkeleton";
 import { formatNumber } from "@/lib/utils";
 
 interface PageProps {
@@ -20,6 +21,7 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
     location: searchParams.location,
     employment_type: searchParams.employment_type,
     experience_level: searchParams.experience_level,
+    level: searchParams.level,
     industry: searchParams.industry,
     remote: searchParams.remote === "true" ? true : undefined,
     since_last_run: searchParams.since_last_run === "true" ? true : undefined,
@@ -47,6 +49,12 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
         experienceLevels={meta.experience_levels ?? []}
         industries={meta.industries ?? []}
         companies={companies.map((c) => ({ id: c.id, name: c.name }))}
+        selectedCompanyName={
+          searchParams.company ??
+          (searchParams.company_id
+            ? companies.find((c) => c.id === parseInt(searchParams.company_id, 10))?.name
+            : undefined)
+        }
       />
 
       <div className="mt-6 flex items-center justify-between">
@@ -93,16 +101,10 @@ export default async function JobsPage({ searchParams }: PageProps) {
   const sp = await searchParams;
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
+    <main id="main" className="mx-auto max-w-6xl px-6 py-12 md:px-8 lg:px-12">
       <SectionLabel className="mb-6">Open Roles</SectionLabel>
 
-      <Suspense
-        fallback={
-          <div className="py-24 text-center font-mono text-xs uppercase tracking-[0.1em] text-muted-foreground">
-            Loading roles…
-          </div>
-        }
-      >
+      <Suspense fallback={<JobListSkeleton />}>
         <JobFeed searchParams={sp} />
       </Suspense>
     </main>

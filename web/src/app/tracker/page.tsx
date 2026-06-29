@@ -151,13 +151,13 @@ export default function TrackerPage() {
                             )}
                             {app.status !== "rejected" && (
                               <button onClick={() => updateStatus(app.id, "rejected")}
-                                className="font-mono text-[9px] uppercase tracking-[0.1em] px-2 py-1 rounded border border-border text-muted-foreground hover:text-red-500 transition-colors">
+                                className="font-mono text-[9px] uppercase tracking-[0.1em] px-2 py-1 border border-border text-muted-foreground hover:text-foreground transition-colors">
                                 Reject
                               </button>
                             )}
                             <a href={app.job.apply_url} target="_blank" rel="noopener noreferrer"
                               className="ml-auto font-mono text-[9px] text-accent hover:underline">Apply →</a>
-                            <button onClick={() => remove(app.id)} className="font-mono text-[9px] text-muted-foreground hover:text-red-400 transition-colors">✕</button>
+                            <button onClick={() => remove(app.id)} className="font-mono text-[9px] text-muted-foreground hover:text-foreground transition-colors">✕</button>
                           </div>
                         </div>
                       );

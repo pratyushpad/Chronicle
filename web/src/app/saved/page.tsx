@@ -105,7 +105,7 @@ export default function SavedPage() {
                 <span className="font-body text-sm text-foreground">{s.name}</span>
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-accent">{s.alert_frequency}</span>
-                  <button onClick={() => deleteSearch(s.id)} className="font-mono text-xs text-muted-foreground hover:text-red-400">✕</button>
+                  <button onClick={() => deleteSearch(s.id)} className="font-mono text-xs text-muted-foreground hover:text-foreground">✕</button>
                 </div>
               </div>
             ))}

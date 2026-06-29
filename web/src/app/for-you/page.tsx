@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import { JobCard } from "@/components/JobCard";
+import { JobListSkeleton } from "@/components/JobCardSkeleton";
 import { SectionLabel } from "@/components/SectionLabel";
 import type { JobListItem } from "@/lib/api";
 
@@ -46,7 +47,13 @@ export default function ForYouPage() {
   }
 
   if (loading) {
-    return <main className="mx-auto max-w-3xl px-6 py-32 text-center"><p className="font-body text-muted-foreground">Loading your matches…</p></main>;
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-16">
+        <SectionLabel>For You</SectionLabel>
+        <h1 className="font-display text-4xl text-foreground mt-4 mb-8">Your top matches</h1>
+        <JobListSkeleton count={5} />
+      </main>
+    );
   }
 
   if (hasProfile === false) {

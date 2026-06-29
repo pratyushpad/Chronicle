@@ -29,6 +29,7 @@ class JobListItem(BaseModel):
     title: str
     company_name: str
     company_id: int
+    company_domain: str | None = None
     location_normalized: str | None
     remote: bool | None
     department: str | None
@@ -77,6 +78,11 @@ class LastRunSummary(BaseModel):
     companies_failed: int
 
 
+class IndustryCount(BaseModel):
+    industry: str
+    count: int
+
+
 class MetaResponse(BaseModel):
     departments: list[str]
     locations: list[str]
@@ -86,6 +92,11 @@ class MetaResponse(BaseModel):
     last_run: LastRunSummary | None
     total_active_jobs: int
     total_companies: int
+    # Landing-page aggregates
+    fresh_since_last_run: int = 0
+    remote_count: int = 0
+    experience_counts: dict[str, int] = {}
+    top_industries: list[IndustryCount] = []
 
 
 class JobListResponse(BaseModel):

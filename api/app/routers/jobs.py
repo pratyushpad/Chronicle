@@ -3,20 +3,25 @@ from math import ceil
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.models import Company, IngestRun, Job
+from app.util import root_domain
 from app.schemas import (
     CompanyDetail,
     CompanyItem,
+    IndustryCount,
     JobDetail,
     JobListItem,
     JobListResponse,
     LastRunSummary,
     MetaResponse,
 )
+
+# Title keywords used to bucket senior-level roles when experience_level is blank.
+_SENIOR_REGEX = r"\m(senior|sr|staff|principal|lead|distinguished|architect)\M"
 
 router = APIRouter()
 
@@ -27,6 +32,22 @@ def _db():
         yield s
     finally:
         s.close()
+
+
+# Quick-filter "level" pills map experience_level OR a title keyword, because
+# experience_level is sparsely populated (most jobs leave it blank).
+# `title_regex` uses Postgres word boundaries (\m \M) so "Intern"/"Internship"
+# match but "International"/"Internal" do not.
+_LEVEL_FILTERS: dict[str, dict] = {
+    "intern": {
+        "experience_level": "Internship",
+        "title_regex": r"\mintern(ship)?s?\M",
+    },
+    "new_grad": {
+        "experience_level": "Entry Level",
+        "title_patterns": ["%new grad%", "%new graduate%", "%university grad%", "%entry level%"],
+    },
+}
 
 
 def _last_run_start(session: Session) -> datetime | None:
@@ -45,6 +66,7 @@ def list_jobs(
     remote: Optional[bool] = Query(None),
     employment_type: Optional[str] = Query(None),
     experience_level: Optional[str] = Query(None),
+    level: Optional[str] = Query(None),
     industry: Optional[str] = Query(None),
     posted_after: Optional[date] = Query(None),
     since_last_run: bool = Query(False),
@@ -53,7 +75,7 @@ def list_jobs(
     page_size: int = Query(20, ge=1, le=100),
     session: Session = Depends(_db),
 ):
-    stmt = select(Job, Company.name.label("company_name"), Company.industry.label("company_industry")).join(Company).where(Job.is_active == True)
+    stmt = select(Job, Company.name.label("company_name"), Company.industry.label("company_industry"), Company.careers_url.label("company_careers_url")).join(Company).where(Job.is_active == True)
 
     if q:
         stmt = stmt.where(Job.title.ilike(f"%{q}%"))
@@ -71,6 +93,13 @@ def list_jobs(
         stmt = stmt.where(Job.employment_type.ilike(f"%{employment_type}%"))
     if experience_level:
         stmt = stmt.where(Job.experience_level.ilike(f"%{experience_level}%"))
+    if level and level in _LEVEL_FILTERS:
+        cfg = _LEVEL_FILTERS[level]
+        conds = [Job.experience_level == cfg["experience_level"]]
+        if cfg.get("title_regex"):
+            conds.append(Job.title.op("~*")(cfg["title_regex"]))
+        conds += [Job.title.ilike(pat) for pat in cfg.get("title_patterns", [])]
+        stmt = stmt.where(or_(*conds))
     if industry:
         stmt = stmt.where(Company.industry.ilike(f"%{industry}%"))
     if posted_after:
@@ -99,11 +128,16 @@ def list_jobs(
                 title=job.title,
                 company_name=row.company_name,
                 company_id=job.company_id,
+                company_domain=root_domain(row.company_careers_url),
                 location_normalized=job.location_normalized,
                 remote=job.remote,
                 department=job.department,
                 employment_type=job.employment_type,
                 experience_level=job.experience_level,
+                tech_tags=job.tech_tags,
+                sponsorship_flag=job.sponsorship_flag,
+                salary_min=job.salary_min,
+                salary_max=job.salary_max,
                 posted_at=job.posted_at,
                 first_seen_at=job.first_seen_at,
                 apply_url=job.apply_url,
@@ -237,6 +271,42 @@ def get_meta(session: Session = Depends(_db)):
             companies_failed=last_run_row.companies_failed,
         )
 
+    # ── Landing-page aggregates ──────────────────────────────────────────────
+    def _count(*conds) -> int:
+        return session.execute(
+            select(func.count()).select_from(Job).where(Job.is_active == True, *conds)
+        ).scalar_one()
+
+    last_start = _last_run_start(session)
+    fresh_since_last_run = _count(Job.first_seen_at >= last_start) if last_start else 0
+    remote_count = _count(Job.remote == True)
+
+    def _level_count(level: str) -> int:
+        cfg = _LEVEL_FILTERS[level]
+        conds = [Job.experience_level == cfg["experience_level"]]
+        if cfg.get("title_regex"):
+            conds.append(Job.title.op("~*")(cfg["title_regex"]))
+        conds += [Job.title.ilike(pat) for pat in cfg.get("title_patterns", [])]
+        return _count(or_(*conds))
+
+    experience_counts = {
+        "intern": _level_count("intern"),
+        "new_grad": _level_count("new_grad"),
+        "senior": _count(
+            or_(Job.experience_level == "Senior", Job.title.op("~*")(_SENIOR_REGEX))
+        ),
+    }
+
+    top_industry_rows = session.execute(
+        select(Company.industry, func.count(Job.id))
+        .join(Job, (Job.company_id == Company.id) & (Job.is_active == True))
+        .where(Company.active == True, Company.industry != None)
+        .group_by(Company.industry)
+        .order_by(func.count(Job.id).desc())
+        .limit(8)
+    ).all()
+    top_industries = [IndustryCount(industry=r[0], count=r[1]) for r in top_industry_rows]
+
     return MetaResponse(
         departments=distinct_col(Job.department),
         locations=distinct_col(Job.location_normalized),
@@ -246,4 +316,8 @@ def get_meta(session: Session = Depends(_db)):
         last_run=last_run,
         total_active_jobs=total_active,
         total_companies=total_companies,
+        fresh_since_last_run=fresh_since_last_run,
+        remote_count=remote_count,
+        experience_counts=experience_counts,
+        top_industries=top_industries,
     )

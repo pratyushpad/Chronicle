@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatDate, formatLocation, formatDepartment } from "@/lib/utils";
 import type { JobListItem } from "@/lib/api";
 
 interface Props {
@@ -12,14 +12,6 @@ interface Props {
   why?: string;
 }
 
-const EXPERIENCE_COLORS: Record<string, string> = {
-  Internship: "text-blue-600 border-blue-200 bg-blue-50",
-  "Entry Level": "text-green-700 border-green-200 bg-green-50",
-  "Mid Level": "text-foreground border-border",
-  Senior: "text-accent border-amber-200 bg-amber-50",
-  Management: "text-purple-700 border-purple-200 bg-purple-50",
-};
-
 export function JobCard({ job, initialSaved = false, initialTracked = false, why }: Props) {
   const { data: session } = useSession();
   const isAuthed = !!session?.user?.email;
@@ -28,6 +20,8 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
   const [tracked, setTracked] = useState(initialTracked);
   const [loadingS, setLoadingS] = useState(false);
   const [loadingT, setLoadingT] = useState(false);
+  // Logo starts hopeful; falls back to initials on error OR a blank/placeholder favicon.
+  const [logoOk, setLogoOk] = useState(true);
 
   useEffect(() => {
     if (isAuthed) return;
@@ -87,79 +81,117 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
     }
   }, [tracked, job, isAuthed, loadingT]);
 
-  const expClass = job.experience_level
-    ? (EXPERIENCE_COLORS[job.experience_level] ?? "text-muted-foreground border-border")
-    : "";
+  const domain = job.company_domain;
+  const logoUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null;
+  const showLogo = !!logoUrl && logoOk;
+  const initials = job.company_name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+
+  const location = formatLocation(job.location_normalized);
+  const department = formatDepartment(job.department);
+  const salaryMin = (job as any).salary_min as number | undefined;
+  const salaryMax = (job as any).salary_max as number | undefined;
 
   return (
-    <article className="group relative rounded-lg border border-border border-t-2 border-t-accent bg-card shadow-sm transition-all duration-200 hover:shadow-md">
-      <Link href={`/jobs/${job.id}`} className="absolute inset-0 rounded-lg z-0" aria-label={`${job.title} at ${job.company_name}`} />
+    <article className="group relative border border-foreground border-l-4 bg-card transition-colors duration-100 hover:bg-muted">
+      <Link href={`/jobs/${job.id}`} className="absolute inset-0 z-0" aria-label={`${job.title} at ${job.company_name}`} />
       <div className="relative z-10 p-5 pointer-events-none">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-display text-lg leading-snug text-foreground line-clamp-2 group-hover:text-accent transition-colors">
-              {job.title}
-            </h3>
-            <p className="mt-1 font-body text-sm text-muted-foreground">
-              {job.company_name}
-              {job.location_normalized && <span> · {job.location_normalized}</span>}
-              {job.remote && <span> · Remote</span>}
-            </p>
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            {/* Company logo — monochrome tile, initials always render behind the favicon */}
+            <div className="relative shrink-0 h-10 w-10 border border-foreground bg-background flex items-center justify-center overflow-hidden">
+              <span className="font-mono text-[11px] font-semibold text-foreground">{initials}</span>
+              {showLogo && (
+                <img
+                  src={logoUrl!}
+                  alt={job.company_name}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-contain bg-background p-1.5"
+                  onLoad={(e) => {
+                    // Google returns a 16px globe placeholder for unknown domains — treat as blank.
+                    if ((e.target as HTMLImageElement).naturalWidth <= 16) setLogoOk(false);
+                  }}
+                  onError={() => setLogoOk(false)}
+                />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display text-lg leading-snug text-foreground line-clamp-2 underline-offset-4 group-hover:underline">
+                {job.title}
+              </h3>
+              <p className="mt-1 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                {job.company_name}
+                {location && <span> · {location}</span>}
+                {job.remote && <span> · Remote</span>}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-1 shrink-0 pointer-events-auto">
             <button onClick={addToTracker} title={tracked ? "In tracker" : "Add to tracker"} disabled={loadingT}
-              className={cn("p-1.5 rounded transition-colors", tracked ? "text-accent" : "text-muted-foreground hover:text-accent")}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill={tracked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+              className={cn(
+                "p-1.5 transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
+                tracked ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={tracked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5">
                 <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
               </svg>
             </button>
             <button onClick={toggleSave} title={saved ? "Remove bookmark" : "Bookmark"} disabled={loadingS}
-              className={cn("p-1.5 rounded transition-colors", saved ? "text-accent" : "text-muted-foreground hover:text-accent")}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+              className={cn(
+                "p-1.5 transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
+                saved ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
               </svg>
             </button>
           </div>
         </div>
 
-        {why && <p className="mt-2 font-body text-xs text-accent/80 italic">{why}</p>}
+        {why && <p className="mt-2 font-body text-sm italic text-muted-foreground">{why}</p>}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {job.is_new && (
-            <span className="font-mono text-[10px] uppercase tracking-[0.15em] border border-accent text-accent px-2 py-0.5 rounded">New</span>
+            <span className="bg-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-background">
+              New
+            </span>
           )}
           {job.experience_level && (
-            <span className={cn("font-mono text-[10px] uppercase tracking-[0.12em] border px-2 py-0.5 rounded", expClass)}>
+            <span className="border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-foreground">
               {job.experience_level}
             </span>
           )}
           {(job as any).sponsorship_flag === "likely_no" && (
-            <span className="font-mono text-[10px] uppercase tracking-[0.12em] border border-orange-200 text-orange-600 bg-orange-50 px-2 py-0.5 rounded">
+            <span className="border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-foreground">
               No Sponsorship
             </span>
           )}
-          {(job as any).salary_min && (
-            <span className="font-mono text-[10px] text-muted-foreground">
-              ${Math.round((job as any).salary_min / 1000)}k{(job as any).salary_max ? `–$${Math.round((job as any).salary_max / 1000)}k` : "+"}
+          {(job as any).sponsorship_flag === "likely_yes" && (
+            <span className="bg-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-background">
+              Sponsors Visa
+            </span>
+          )}
+          {salaryMin && (
+            <span className="font-mono text-[10px] tracking-[0.05em] text-muted-foreground">
+              ${Math.round(salaryMin / 1000)}k{salaryMax ? `–$${Math.round(salaryMax / 1000)}k` : "+"}
             </span>
           )}
           {job.employment_type && (
-            <span className="font-mono text-[10px] uppercase tracking-[0.12em] border border-border text-muted-foreground px-2 py-0.5 rounded">
+            <span className="border border-border-light px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
               {job.employment_type}
             </span>
           )}
-          {job.department && (
-            <span className="font-mono text-[10px] text-muted-foreground truncate max-w-[160px]">{job.department}</span>
+          {department && (
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground truncate max-w-[180px]">{department}</span>
           )}
         </div>
 
-        <div className="mt-3 flex items-center justify-between">
-          <span className="font-mono text-[10px] text-muted-foreground">
+        <div className="mt-3 flex items-center justify-between border-t border-border-light pt-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
             {formatDate(job.posted_at ?? job.first_seen_at)}
           </span>
           <a href={job.apply_url} target="_blank" rel="noopener noreferrer"
-            className="pointer-events-auto font-body text-xs text-accent hover:underline">
+            className="pointer-events-auto font-mono text-[10px] uppercase tracking-[0.15em] text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2">
             Apply →
           </a>
         </div>

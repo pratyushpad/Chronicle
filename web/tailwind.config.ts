@@ -21,6 +21,7 @@ const config: Config = {
           foreground: "var(--accent-foreground)",
         },
         border: "var(--border)",
+        "border-light": "var(--border-light)",
         input: "var(--input)",
         card: {
           DEFAULT: "var(--card)",
@@ -42,18 +43,31 @@ const config: Config = {
       },
       fontFamily: {
         display: ["var(--font-display)", "Georgia", "serif"],
-        body: ["var(--font-body)", "system-ui", "sans-serif"],
+        body: ["var(--font-body)", "Georgia", "serif"],
         mono: ["var(--font-mono)", "monospace"],
       },
+      fontSize: {
+        // Dramatic editorial scale — words become graphic elements
+        "7xl": ["6rem", { lineHeight: "1" }],
+        "8xl": ["8rem", { lineHeight: "1" }],
+        "9xl": ["10rem", { lineHeight: "1" }],
+      },
+      // Minimalist Monochrome: no depth from shadows, no rounded corners.
       boxShadow: {
-        sm: "0 1px 2px rgba(26,26,26,.04)",
-        md: "0 4px 12px rgba(26,26,26,.06)",
-        lg: "0 8px 24px rgba(26,26,26,.08)",
+        sm: "none",
+        md: "none",
+        lg: "none",
       },
       borderRadius: {
-        lg: "8px",
-        md: "6px",
-        sm: "4px",
+        none: "0px",
+        sm: "0px",
+        md: "0px",
+        lg: "0px",
+        xl: "0px",
+        "2xl": "0px",
+        "3xl": "0px",
+        full: "0px",
+        DEFAULT: "0px",
       },
     },
   },

@@ -5,11 +5,16 @@ export interface JobListItem {
   title: string;
   company_name: string;
   company_id: number;
+  company_domain?: string | null;
   location_normalized: string | null;
   remote: boolean | null;
   department: string | null;
   employment_type: string | null;
   experience_level: string | null;
+  tech_tags?: string[] | null;
+  sponsorship_flag?: string | null;
+  salary_min?: number | null;
+  salary_max?: number | null;
   posted_at: string | null;
   first_seen_at: string;
   apply_url: string;
@@ -44,6 +49,11 @@ export interface LastRunSummary {
   companies_failed: number;
 }
 
+export interface IndustryCount {
+  industry: string;
+  count: number;
+}
+
 export interface Meta {
   departments: string[];
   locations: string[];
@@ -53,6 +63,10 @@ export interface Meta {
   last_run: LastRunSummary | null;
   total_active_jobs: number;
   total_companies: number;
+  fresh_since_last_run: number;
+  remote_count: number;
+  experience_counts: Record<string, number>;
+  top_industries: IndustryCount[];
 }
 
 export interface JobListResponse {
@@ -72,6 +86,7 @@ export interface JobParams {
   remote?: boolean;
   employment_type?: string;
   experience_level?: string;
+  level?: string;
   industry?: string;
   since_last_run?: boolean;
   page?: number;

@@ -3,24 +3,6 @@ import { getCompanies, getMeta } from "@/lib/api";
 import { SectionLabel } from "@/components/SectionLabel";
 import { formatNumber } from "@/lib/utils";
 
-const INDUSTRY_COLORS: Record<string, string> = {
-  "AI/ML": "bg-purple-50 text-purple-700 border-purple-200",
-  "FinTech": "bg-green-50 text-green-700 border-green-200",
-  "Developer Tools": "bg-blue-50 text-blue-700 border-blue-200",
-  "Security": "bg-red-50 text-red-700 border-red-200",
-  "Data": "bg-amber-50 text-amber-700 border-amber-200",
-  "Analytics": "bg-orange-50 text-orange-700 border-orange-200",
-  "Database": "bg-indigo-50 text-indigo-700 border-indigo-200",
-  "Marketing": "bg-pink-50 text-pink-700 border-pink-200",
-  "HR Tech": "bg-teal-50 text-teal-700 border-teal-200",
-  "Sales Tech": "bg-cyan-50 text-cyan-700 border-cyan-200",
-};
-
-function industryClass(industry: string | null) {
-  if (!industry) return "bg-muted text-muted-foreground border-border";
-  return INDUSTRY_COLORS[industry] ?? "bg-muted text-muted-foreground border-border";
-}
-
 export default async function CompaniesPage() {
   const [companies, meta] = await Promise.all([
     getCompanies().catch(() => []),
@@ -30,33 +12,33 @@ export default async function CompaniesPage() {
   const industries = Array.from(new Set(companies.map((c) => c.industry).filter(Boolean))).sort() as string[];
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
+    <main id="main" className="mx-auto max-w-6xl px-6 py-12 md:px-8 lg:px-12">
       <SectionLabel className="mb-8">Companies</SectionLabel>
 
-      <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-4xl text-foreground">
+          <h1 className="font-display text-5xl font-medium tracking-tight text-foreground md:text-7xl">
             {companies.length} companies
           </h1>
           {meta && (
-            <p className="mt-1 font-body text-muted-foreground">
-              {formatNumber(meta.total_active_jobs)} open roles across {industries.length} industries
+            <p className="mt-2 font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">
+              {formatNumber(meta.total_active_jobs)} open roles · {industries.length} industries
             </p>
           )}
         </div>
         <Link
           href="/jobs"
-          className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-accent px-6 font-body text-sm font-medium text-white shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+          className="inline-flex h-12 items-center justify-center gap-3 border-2 border-foreground bg-foreground px-6 font-mono text-xs font-medium uppercase tracking-[0.15em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]"
         >
-          Browse All Roles
+          Browse All Roles <span aria-hidden>→</span>
         </Link>
       </div>
 
       {/* Industry filter pills */}
-      <div className="mb-8 flex flex-wrap gap-2">
+      <div className="mb-10 flex flex-wrap gap-2">
         <Link
           href="/companies"
-          className="font-mono text-xs border border-accent text-accent px-3 py-1.5 rounded-full transition-colors hover:bg-accent hover:text-white"
+          className="border border-foreground bg-foreground px-3 py-1.5 font-mono text-xs uppercase tracking-[0.08em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground"
         >
           All
         </Link>
@@ -64,7 +46,7 @@ export default async function CompaniesPage() {
           <Link
             key={ind}
             href={`/jobs?industry=${encodeURIComponent(ind)}`}
-            className={`font-mono text-xs border px-3 py-1.5 rounded-full transition-colors hover:opacity-80 ${industryClass(ind)}`}
+            className="border border-foreground px-3 py-1.5 font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background"
           >
             {ind}
           </Link>
@@ -80,27 +62,27 @@ export default async function CompaniesPage() {
             <Link
               key={company.id}
               href={`/companies/${company.id}`}
-              className="group rounded-lg border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-accent/30"
+              className="group border border-foreground border-l-4 bg-card p-5 transition-colors duration-100 hover:bg-muted focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:-outline-offset-[3px]"
             >
               <div className="flex items-start justify-between gap-2">
-                <h2 className="font-body text-base font-semibold text-foreground group-hover:text-accent transition-colors">
+                <h2 className="font-display text-lg font-medium text-foreground underline-offset-4 group-hover:underline">
                   {company.name}
                 </h2>
-                <span className="font-display text-xl text-accent shrink-0">
+                <span className="shrink-0 font-display text-2xl font-medium text-foreground">
                   {formatNumber(company.active_job_count)}
                 </span>
               </div>
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-3 flex items-center gap-2">
                 {company.industry && (
-                  <span className={`font-mono text-[10px] uppercase tracking-[0.1em] border px-2 py-0.5 rounded ${industryClass(company.industry)}`}>
+                  <span className="border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-foreground">
                     {company.industry}
                   </span>
                 )}
-                <span className="font-mono text-[10px] text-muted-foreground uppercase">
+                <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
                   {company.ats}
                 </span>
               </div>
-              <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+              <p className="mt-3 border-t border-border-light pt-3 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
                 {formatNumber(company.active_job_count)} open role{company.active_job_count !== 1 ? "s" : ""} →
               </p>
             </Link>

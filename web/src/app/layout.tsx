@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Source_Sans_3, IBM_Plex_Mono } from "next/font/google";
+import { Playfair_Display, Source_Serif_4, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { SessionWrapper } from "@/components/SessionWrapper";
@@ -8,11 +8,11 @@ const display = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-display",
 });
-const body = Source_Sans_3({
+const body = Source_Serif_4({
   subsets: ["latin"],
   variable: "--font-body",
 });
-const mono = IBM_Plex_Mono({
+const mono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["500"],
   variable: "--font-mono",
@@ -33,6 +33,12 @@ export default function RootLayout({
       className={`${display.variable} ${body.variable} ${mono.variable}`}
     >
       <body className="min-h-screen antialiased">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[10000] focus:bg-foreground focus:px-4 focus:py-2 focus:font-mono focus:text-xs focus:uppercase focus:tracking-[0.15em] focus:text-background"
+        >
+          Skip to content
+        </a>
         <SessionWrapper>
           <Nav />
           {children}
