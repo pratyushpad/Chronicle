@@ -13,6 +13,7 @@ from .adapters.greenhouse import GreenhouseAdapter
 from .adapters.lever import LeverAdapter
 from .dedupe import make_dedup_key
 from .normalize import (
+    dedup_title,
     extract_salary,
     extract_tech_tags,
     infer_experience_level,
@@ -68,7 +69,7 @@ async def _ingest_company(
         result["jobs_seen"] += 1
         t_norm = normalize_title(raw.title)
         l_norm = normalize_location(raw.location)
-        dedup = make_dedup_key(company.id, t_norm, l_norm)
+        dedup = make_dedup_key(company.id, dedup_title(t_norm, l_norm))
         desc_text = strip_html(raw.description_html)
         sal_min, sal_max = extract_salary(desc_text)
         tags = extract_tech_tags(desc_text)

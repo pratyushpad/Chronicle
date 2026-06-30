@@ -31,6 +31,8 @@ class JobListItem(BaseModel):
     company_id: int
     company_domain: str | None = None
     location_normalized: str | None
+    locations: list[str] | None = None
+    location_count: int | None = None
     remote: bool | None
     department: str | None
     employment_type: str | None

@@ -240,8 +240,21 @@ def get_recommendations(
         scored.append((total, why, job, company_name, row.company_careers_url))
 
     scored.sort(key=lambda x: x[0], reverse=True)
+
+    # Collapse cross-posted duplicates: keep the highest-scored posting per role
+    # so the same job across N countries doesn't flood the feed.
+    seen_keys: set[str] = set()
+    deduped: list[tuple] = []
+    for entry in scored:
+        key = entry[2].dedup_key
+        if key and key in seen_keys:
+            continue
+        if key:
+            seen_keys.add(key)
+        deduped.append(entry)
+
     results = []
-    for score, why, job, company_name, company_careers_url in scored[:limit]:
+    for score, why, job, company_name, company_careers_url in deduped[:limit]:
         job_item = JobListItem(
             id=job.id,
             title=job.title,

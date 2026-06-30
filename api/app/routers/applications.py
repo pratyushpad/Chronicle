@@ -10,6 +10,7 @@ from app.schemas import (
     ApplicationCreateIn, ApplicationOut, ApplicationUpdateIn,
     FunnelStats, JobListItem,
 )
+from app.util import root_domain
 
 router = APIRouter(prefix="/users/me/applications", tags=["applications"])
 
@@ -53,7 +54,7 @@ def _build_app_out(app: Application, job_item: JobListItem) -> ApplicationOut:
 @router.get("", response_model=list[ApplicationOut])
 def list_applications(user: User = Depends(get_current_user), session: Session = Depends(_db)):
     rows = session.execute(
-        select(Application, Job, Company.name.label("company_name"))
+        select(Application, Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
         .join(Job, Application.job_id == Job.id)
         .join(Company, Job.company_id == Company.id)
         .where(Application.user_id == user.id)
@@ -182,6 +183,7 @@ def _row_to_job_item(row) -> JobListItem:
         title=row.Job.title,
         company_name=row.company_name,
         company_id=row.Job.company_id,
+        company_domain=root_domain(row.company_careers_url),
         location_normalized=row.Job.location_normalized,
         remote=row.Job.remote,
         department=row.Job.department,
@@ -200,7 +202,7 @@ def _row_to_job_item(row) -> JobListItem:
 
 def _get_app_with_job(app: Application, session: Session) -> ApplicationOut:
     row = session.execute(
-        select(Application, Job, Company.name.label("company_name"))
+        select(Application, Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
         .join(Job, Application.job_id == Job.id)
         .join(Company, Job.company_id == Company.id)
         .where(Application.id == app.id)

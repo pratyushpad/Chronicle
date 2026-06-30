@@ -87,6 +87,7 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
   const initials = job.company_name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
   const location = formatLocation(job.location_normalized);
+  const extraLocations = (job.location_count ?? 0) > 1 ? (job.location_count as number) - 1 : 0;
   const department = formatDepartment(job.department);
   const salaryMin = (job as any).salary_min as number | undefined;
   const salaryMax = (job as any).salary_max as number | undefined;
@@ -121,6 +122,7 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
               <p className="mt-1 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
                 {job.company_name}
                 {location && <span> · {location}</span>}
+                {extraLocations > 0 && <span> +{extraLocations} more</span>}
                 {job.remote && <span> · Remote</span>}
               </p>
             </div>
@@ -132,8 +134,8 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
                 "p-1.5 transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
                 tracked ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill={tracked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5">
-                <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                {tracked ? <path d="M20 6L9 17l-5-5" /> : <><path d="M12 5v14" /><path d="M5 12h14" /></>}
               </svg>
             </button>
             <button onClick={toggleSave} title={saved ? "Remove bookmark" : "Bookmark"} disabled={loadingS}
@@ -141,7 +143,7 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
                 "p-1.5 transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
                 saved ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
               </svg>
             </button>

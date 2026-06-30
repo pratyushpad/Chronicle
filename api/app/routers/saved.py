@@ -7,6 +7,7 @@ from app.db import get_session
 from app.models import Company, Job, SavedJob, User
 from app.routers.users import get_current_user
 from app.schemas import JobListItem, SavedJobOut
+from app.util import root_domain
 
 router = APIRouter(prefix="/users/me/saved", tags=["saved"])
 
@@ -22,7 +23,7 @@ def _db():
 @router.get("", response_model=list[SavedJobOut])
 def list_saved(user: User = Depends(get_current_user), session: Session = Depends(_db)):
     rows = session.execute(
-        select(SavedJob, Job, Company.name.label("company_name"), Company.industry.label("company_industry"))
+        select(SavedJob, Job, Company.name.label("company_name"), Company.industry.label("company_industry"), Company.careers_url.label("company_careers_url"))
         .join(Job, SavedJob.job_id == Job.id)
         .join(Company, Job.company_id == Company.id)
         .where(SavedJob.user_id == user.id)
@@ -36,6 +37,7 @@ def list_saved(user: User = Depends(get_current_user), session: Session = Depend
             title=row.Job.title,
             company_name=row.company_name,
             company_id=row.Job.company_id,
+            company_domain=root_domain(row.company_careers_url),
             location_normalized=row.Job.location_normalized,
             remote=row.Job.remote,
             department=row.Job.department,

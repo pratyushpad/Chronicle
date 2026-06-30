@@ -33,6 +33,32 @@ def normalize_location(location: str | None) -> str | None:
     return _WHITESPACE_RE.sub(" ", loc).strip().lower() or None
 
 
+def dedup_title(title_normalized: str, location_normalized: str | None) -> str:
+    """Title used for cross-location dedup keying.
+
+    Some ATS boards bake the city into the posting title, so the same role posted
+    to N cities reads as N distinct titles (e.g.
+    'manual qa engineer, simba team - skopje' vs '... - zagreb'). Strip a trailing
+    location suffix that matches the row's normalized location (the full string and
+    its first city segment) so cross-posts share one key. Falls back to the full
+    normalized title if stripping would empty it — avoids over-stripping genuine
+    title tails like 'engineer, backend'."""
+    t = title_normalized
+    if location_normalized:
+        candidates = [location_normalized]
+        city = location_normalized.split(",")[0].strip()
+        if city and city != location_normalized:
+            candidates.append(city)
+        for loc in candidates:
+            t = re.sub(
+                r"\s*[-–—,(]\s*" + re.escape(loc) + r"\s*\)?\s*$",
+                "",
+                t,
+                flags=re.IGNORECASE,
+            )
+    return t.strip(" -–—,") or title_normalized
+
+
 def infer_remote(raw_job: RawJob) -> bool | None:
     if raw_job.remote is not None:
         return raw_job.remote

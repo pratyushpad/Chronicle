@@ -7,6 +7,8 @@ export interface JobListItem {
   company_id: number;
   company_domain?: string | null;
   location_normalized: string | null;
+  locations?: string[] | null;
+  location_count?: number | null;
   remote: boolean | null;
   department: string | null;
   employment_type: string | null;

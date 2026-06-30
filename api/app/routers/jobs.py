@@ -75,53 +75,83 @@ def list_jobs(
     page_size: int = Query(20, ge=1, le=100),
     session: Session = Depends(_db),
 ):
-    stmt = select(Job, Company.name.label("company_name"), Company.industry.label("company_industry"), Company.careers_url.label("company_careers_url")).join(Company).where(Job.is_active == True)
-
-    if q:
-        stmt = stmt.where(Job.title.ilike(f"%{q}%"))
-    if company:
-        stmt = stmt.where(Company.name.ilike(f"%{company}%"))
-    if company_id:
-        stmt = stmt.where(Job.company_id == company_id)
-    if department:
-        stmt = stmt.where(Job.department.ilike(f"%{department}%"))
-    if location:
-        stmt = stmt.where(Job.location_normalized.ilike(f"%{location}%"))
-    if remote is not None:
-        stmt = stmt.where(Job.remote == remote)
-    if employment_type:
-        stmt = stmt.where(Job.employment_type.ilike(f"%{employment_type}%"))
-    if experience_level:
-        stmt = stmt.where(Job.experience_level.ilike(f"%{experience_level}%"))
-    if level and level in _LEVEL_FILTERS:
-        cfg = _LEVEL_FILTERS[level]
-        conds = [Job.experience_level == cfg["experience_level"]]
-        if cfg.get("title_regex"):
-            conds.append(Job.title.op("~*")(cfg["title_regex"]))
-        conds += [Job.title.ilike(pat) for pat in cfg.get("title_patterns", [])]
-        stmt = stmt.where(or_(*conds))
-    if industry:
-        stmt = stmt.where(Company.industry.ilike(f"%{industry}%"))
-    if posted_after:
-        stmt = stmt.where(Job.posted_at >= datetime(posted_after.year, posted_after.month, posted_after.day, tzinfo=timezone.utc))
-    if since_last_run:
-        last_start = _last_run_start(session)
-        if last_start:
-            stmt = stmt.where(Job.first_seen_at >= last_start)
-
-    total_stmt = select(func.count()).select_from(stmt.subquery())
-    total = session.execute(total_stmt).scalar_one()
-
-    order_col = Job.posted_at if sort == "posted_at" else Job.first_seen_at
-    stmt = stmt.order_by(order_col.desc().nullslast()).offset((page - 1) * page_size).limit(page_size)
-
-    rows = session.execute(stmt).all()
     last_start = _last_run_start(session)
+    order_col = Job.posted_at if sort == "posted_at" else Job.first_seen_at
+
+    # All filter statements join Company because several filters reference it.
+    def _apply_filters(s):
+        if q:
+            s = s.where(Job.title.ilike(f"%{q}%"))
+        if company:
+            s = s.where(Company.name.ilike(f"%{company}%"))
+        if company_id:
+            s = s.where(Job.company_id == company_id)
+        if department:
+            s = s.where(Job.department.ilike(f"%{department}%"))
+        if location:
+            s = s.where(Job.location_normalized.ilike(f"%{location}%"))
+        if remote is not None:
+            s = s.where(Job.remote == remote)
+        if employment_type:
+            s = s.where(Job.employment_type.ilike(f"%{employment_type}%"))
+        if experience_level:
+            s = s.where(Job.experience_level.ilike(f"%{experience_level}%"))
+        if level and level in _LEVEL_FILTERS:
+            cfg = _LEVEL_FILTERS[level]
+            conds = [Job.experience_level == cfg["experience_level"]]
+            if cfg.get("title_regex"):
+                conds.append(Job.title.op("~*")(cfg["title_regex"]))
+            conds += [Job.title.ilike(pat) for pat in cfg.get("title_patterns", [])]
+            s = s.where(or_(*conds))
+        if industry:
+            s = s.where(Company.industry.ilike(f"%{industry}%"))
+        if posted_after:
+            s = s.where(Job.posted_at >= datetime(posted_after.year, posted_after.month, posted_after.day, tzinfo=timezone.utc))
+        if since_last_run and last_start:
+            s = s.where(Job.first_seen_at >= last_start)
+        return s
+
+    base = lambda *cols: _apply_filters(select(*cols).join(Company).where(Job.is_active == True))
+
+    # Total = distinct roles, collapsing cross-posted city duplicates.
+    keys_sub = base(Job.dedup_key).subquery()
+    total = session.execute(
+        select(func.count(func.distinct(keys_sub.c.dedup_key)))
+    ).scalar_one()
+
+    # One representative row per dedup_key (the most recent posting), then page
+    # those representatives ordered by recency.
+    rep_ids = (
+        base(Job.id, Job.dedup_key)
+        .distinct(Job.dedup_key)
+        .order_by(Job.dedup_key, order_col.desc().nullslast())
+    ).subquery()
+    page_stmt = (
+        select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
+        .join(Company)
+        .where(Job.id.in_(select(rep_ids.c.id)))
+        .order_by(order_col.desc().nullslast(), Job.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    rows = session.execute(page_stmt).all()
+
+    # Aggregate the sibling locations for each role on this page.
+    keys = [row.Job.dedup_key for row in rows]
+    loc_map: dict[str, list[str]] = {}
+    if keys:
+        for k, locs in session.execute(
+            select(Job.dedup_key, func.array_agg(func.distinct(Job.location_normalized)))
+            .where(Job.dedup_key.in_(keys), Job.is_active == True, Job.location_normalized != None)
+            .group_by(Job.dedup_key)
+        ).all():
+            loc_map[k] = sorted(l for l in (locs or []) if l)
 
     items = []
     for row in rows:
         job = row.Job
         is_new = bool(last_start and job.first_seen_at >= last_start)
+        locs = loc_map.get(job.dedup_key, [])
         items.append(
             JobListItem(
                 id=job.id,
@@ -130,6 +160,8 @@ def list_jobs(
                 company_id=job.company_id,
                 company_domain=root_domain(row.company_careers_url),
                 location_normalized=job.location_normalized,
+                locations=locs or None,
+                location_count=len(locs) or None,
                 remote=job.remote,
                 department=job.department,
                 employment_type=job.employment_type,
@@ -190,7 +222,7 @@ def list_companies(
     session: Session = Depends(_db),
 ):
     stmt = (
-        select(Company, func.count(Job.id).label("active_job_count"))
+        select(Company, func.count(func.distinct(Job.dedup_key)).label("active_job_count"))
         .outerjoin(Job, (Job.company_id == Company.id) & (Job.is_active == True))
         .where(Company.active == True)
         .group_by(Company.id)
@@ -215,7 +247,7 @@ def list_companies(
 @router.get("/companies/{company_id}", response_model=CompanyDetail)
 def get_company(company_id: int, session: Session = Depends(_db)):
     row = session.execute(
-        select(Company, func.count(Job.id).label("active_job_count"))
+        select(Company, func.count(func.distinct(Job.dedup_key)).label("active_job_count"))
         .outerjoin(Job, (Job.company_id == Company.id) & (Job.is_active == True))
         .where(Company.id == company_id, Company.active == True)
         .group_by(Company.id)
@@ -251,7 +283,7 @@ def get_meta(session: Session = Depends(_db)):
     ]
 
     total_active = session.execute(
-        select(func.count()).select_from(Job).where(Job.is_active == True)
+        select(func.count(func.distinct(Job.dedup_key))).select_from(Job).where(Job.is_active == True)
     ).scalar_one()
     total_companies = session.execute(
         select(func.count()).select_from(Company).where(Company.active == True)
@@ -274,7 +306,7 @@ def get_meta(session: Session = Depends(_db)):
     # ── Landing-page aggregates ──────────────────────────────────────────────
     def _count(*conds) -> int:
         return session.execute(
-            select(func.count()).select_from(Job).where(Job.is_active == True, *conds)
+            select(func.count(func.distinct(Job.dedup_key))).select_from(Job).where(Job.is_active == True, *conds)
         ).scalar_one()
 
     last_start = _last_run_start(session)
@@ -298,11 +330,11 @@ def get_meta(session: Session = Depends(_db)):
     }
 
     top_industry_rows = session.execute(
-        select(Company.industry, func.count(Job.id))
+        select(Company.industry, func.count(func.distinct(Job.dedup_key)))
         .join(Job, (Job.company_id == Company.id) & (Job.is_active == True))
         .where(Company.active == True, Company.industry != None)
         .group_by(Company.industry)
-        .order_by(func.count(Job.id).desc())
+        .order_by(func.count(func.distinct(Job.dedup_key)).desc())
         .limit(8)
     ).all()
     top_industries = [IndustryCount(industry=r[0], count=r[1]) for r in top_industry_rows]
