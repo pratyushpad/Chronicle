@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_session
-from app.models import Application, Company, Job, SavedJob, User
+from app.models import Application, Company, Job, User
 from app.routers.users import get_current_user
 from app.schemas import JobListItem, RecommendedJob
 from app.util import root_domain
@@ -170,19 +170,19 @@ def get_recommendations(
     salary_floor = profile.salary_floor
 
     # Behavioral signal: companies/departments the user has saved or applied to.
+    # Saved + tracked now live in one store (applications, status='saved' = bookmark).
     affinity_companies: dict[int, str] = {}
     affinity_departments: set[str] = set()
-    for tbl in (SavedJob, Application):
-        for company_id, dept, name in session.execute(
-            select(Job.company_id, Job.department, Company.name)
-            .join(tbl, tbl.job_id == Job.id)
-            .join(Company, Job.company_id == Company.id)
-            .where(tbl.user_id == user.id)
-        ).all():
-            if company_id is not None:
-                affinity_companies[company_id] = name
-            if dept:
-                affinity_departments.add(dept.lower())
+    for company_id, dept, name in session.execute(
+        select(Job.company_id, Job.department, Company.name)
+        .join(Application, Application.job_id == Job.id)
+        .join(Company, Job.company_id == Company.id)
+        .where(Application.user_id == user.id)
+    ).all():
+        if company_id is not None:
+            affinity_companies[company_id] = name
+        if dept:
+            affinity_departments.add(dept.lower())
 
     rows = session.execute(
         select(Job, Company.name.label("company_name"), Company.industry.label("company_industry"), Company.careers_url.label("company_careers_url"))

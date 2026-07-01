@@ -116,9 +116,22 @@ export async function getJobs(params: JobParams = {}): Promise<JobListResponse> 
 }
 
 export async function getJob(id: number): Promise<JobDetail> {
-  const res = await fetch(`${API}/jobs/${id}`, { next: { revalidate: 300 } });
-  if (!res.ok) throw new Error("Job not found");
-  return res.json();
+  // Retry-with-backoff to absorb Render cold-starts / transient 503s under prefetch fan-out.
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(`${API}/jobs/${id}`, { next: { revalidate: 300 } });
+      if (res.ok) return res.json();
+      if (res.status === 404) throw new Error("Job not found");
+      if (res.status < 500) throw new Error(`Job fetch failed (${res.status})`);
+      lastErr = new Error(`Job fetch failed (${res.status})`);
+    } catch (e) {
+      lastErr = e;
+      if (e instanceof Error && e.message === "Job not found") throw e;
+    }
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("Job not found");
 }
 
 export async function getCompanies(params: { industry?: string } = {}): Promise<CompanyItem[]> {

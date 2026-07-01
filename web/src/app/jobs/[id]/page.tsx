@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getJob, getJobs, JobListItem } from "@/lib/api";
 import { SectionLabel } from "@/components/SectionLabel";
 import { JobCard } from "@/components/JobCard";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDepartment, formatLocation } from "@/lib/utils";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -36,11 +36,11 @@ export default async function JobDetailPage({ params }: PageProps) {
 
   const metaTags = [
     job.company_name,
-    job.location_normalized ?? null,
+    formatLocation(job.location_normalized) || null,
     job.remote === true ? "Remote" : null,
     job.experience_level ?? null,
     job.employment_type ?? null,
-    job.department ?? null,
+    formatDepartment(job.department) || null,
     job.company_industry ?? null,
   ].filter(Boolean) as string[];
 
@@ -57,7 +57,7 @@ export default async function JobDetailPage({ params }: PageProps) {
       </div>
 
       <div className="mt-8">
-        <SectionLabel className="mb-6">{job.department ?? job.company_name}</SectionLabel>
+        <SectionLabel className="mb-6">{formatDepartment(job.department) || job.company_name}</SectionLabel>
 
         {/* Title */}
         <h1 className="font-display text-4xl leading-[1.2] text-foreground">

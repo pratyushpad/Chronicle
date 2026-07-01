@@ -12,6 +12,7 @@ export default function SavedPage() {
   const [alertSearch, setAlertSearch] = useState("");
   const [alertFreq, setAlertFreq] = useState<"daily" | "weekly">("daily");
   const [alertCreated, setAlertCreated] = useState(false);
+  const [alertHint, setAlertHint] = useState(false);
   const [searches, setSearches] = useState<any[]>([]);
 
   useEffect(() => {
@@ -27,7 +28,8 @@ export default function SavedPage() {
   }, [status]);
 
   const createAlert = async () => {
-    if (!alertSearch.trim()) return;
+    if (!alertSearch.trim()) { setAlertHint(true); return; }
+    setAlertHint(false);
     const res = await fetch("/api/searches", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -79,7 +81,7 @@ export default function SavedPage() {
         <div className="flex gap-3 flex-wrap">
           <input
             value={alertSearch}
-            onChange={(e) => setAlertSearch(e.target.value)}
+            onChange={(e) => { setAlertSearch(e.target.value); if (alertHint) setAlertHint(false); }}
             onKeyDown={(e) => e.key === "Enter" && createAlert()}
             placeholder="e.g. Machine Learning Engineer"
             className="flex-1 min-w-[200px] rounded-md border border-border bg-background px-3 py-2 font-body text-sm focus:outline-none focus:ring-2 focus:ring-accent"
@@ -92,11 +94,14 @@ export default function SavedPage() {
             <option value="daily">Daily digest</option>
             <option value="weekly">Weekly digest</option>
           </select>
-          <button onClick={createAlert}
-            className="inline-flex min-h-[44px] items-center rounded-md bg-accent px-5 font-body text-sm font-medium text-white hover:bg-accent-secondary transition-all">
+          <button onClick={createAlert} disabled={!alertSearch.trim()}
+            className="inline-flex min-h-[44px] items-center rounded-md bg-accent px-5 font-body text-sm font-medium text-white hover:bg-accent-secondary transition-all disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-accent">
             {alertCreated ? "✓ Alert set" : "Set alert"}
           </button>
         </div>
+        {alertHint && (
+          <p className="mt-2 font-body text-xs text-red-600">Enter a keyword to set an alert.</p>
+        )}
 
         {searches.length > 0 && (
           <div className="mt-4 space-y-2">

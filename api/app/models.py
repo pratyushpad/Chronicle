@@ -129,7 +129,6 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     profile = relationship("Profile", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    saved_jobs = relationship("SavedJob", back_populates="user", cascade="all, delete-orphan")
     applications = relationship("Application", back_populates="user", cascade="all, delete-orphan")
     saved_searches = relationship("SavedSearch", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
@@ -152,19 +151,6 @@ class Profile(Base):
     updated_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     user = relationship("User", back_populates="profile")
-
-
-class SavedJob(Base):
-    __tablename__ = "saved_jobs"
-    __table_args__ = (UniqueConstraint("user_id", "job_id"),)
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    job_id = Column(Integer, ForeignKey("jobs.id"), nullable=False)
-    saved_at = Column(DateTime(timezone=True), nullable=False, default=_now)
-
-    user = relationship("User", back_populates="saved_jobs")
-    job = relationship("Job")
 
 
 class Application(Base):

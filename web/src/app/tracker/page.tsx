@@ -110,7 +110,7 @@ export default function TrackerPage() {
         ) : apps.length === 0 ? (
           <div className="text-center py-24">
             <p className="font-display text-2xl text-foreground mb-2">No applications yet</p>
-            <p className="font-body text-muted-foreground mb-6">Click the checkmark on any job card to start tracking.</p>
+            <p className="font-body text-muted-foreground mb-6">Bookmark any role to start tracking — it lands in your Saved column.</p>
             <Link href="/jobs" className="inline-flex min-h-[44px] items-center rounded-md bg-accent px-8 font-body text-sm font-medium text-white hover:bg-accent-secondary transition-all">
               Browse Open Roles
             </Link>

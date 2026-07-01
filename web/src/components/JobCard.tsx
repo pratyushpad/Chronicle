@@ -8,18 +8,15 @@ import type { JobListItem } from "@/lib/api";
 interface Props {
   job: JobListItem;
   initialSaved?: boolean;
-  initialTracked?: boolean;
   why?: string;
 }
 
-export function JobCard({ job, initialSaved = false, initialTracked = false, why }: Props) {
+export function JobCard({ job, initialSaved = false, why }: Props) {
   const { data: session } = useSession();
   const isAuthed = !!session?.user?.email;
 
   const [saved, setSaved] = useState(initialSaved);
-  const [tracked, setTracked] = useState(initialTracked);
   const [loadingS, setLoadingS] = useState(false);
-  const [loadingT, setLoadingT] = useState(false);
   // Logo starts hopeful; falls back to initials on error OR a blank/placeholder favicon.
   const [logoOk, setLogoOk] = useState(true);
 
@@ -28,8 +25,6 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
     try {
       const bm = JSON.parse(localStorage.getItem("chronicle_bookmarks") || "[]") as number[];
       setSaved(bm.includes(job.id));
-      const tr = JSON.parse(localStorage.getItem("chronicle_tracker") || "[]") as Array<{ job: { id: number } }>;
-      setTracked(tr.some((t) => t.job.id === job.id));
     } catch {}
   }, [job.id, isAuthed]);
 
@@ -53,33 +48,6 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
       setLoadingS(false);
     }
   }, [saved, job.id, isAuthed, loadingS]);
-
-  const addToTracker = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (loadingT || tracked) return;
-    if (!isAuthed) {
-      try {
-        const tr = JSON.parse(localStorage.getItem("chronicle_tracker") || "[]") as Array<{ job: JobListItem; status: string; addedAt: string }>;
-        if (!tr.some((t) => t.job.id === job.id)) {
-          tr.unshift({ job, status: "saved", addedAt: new Date().toISOString() });
-          localStorage.setItem("chronicle_tracker", JSON.stringify(tr));
-          setTracked(true);
-        }
-      } catch {}
-      return;
-    }
-    setLoadingT(true);
-    try {
-      await fetch("/api/applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job_id: job.id, status: "saved" }),
-      });
-      setTracked(true);
-    } finally {
-      setLoadingT(false);
-    }
-  }, [tracked, job, isAuthed, loadingT]);
 
   const domain = job.company_domain;
   const logoUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null;
@@ -129,16 +97,8 @@ export function JobCard({ job, initialSaved = false, initialTracked = false, why
           </div>
 
           <div className="flex items-center gap-1 shrink-0 pointer-events-auto">
-            <button onClick={addToTracker} title={tracked ? "In tracker" : "Add to tracker"} disabled={loadingT}
-              className={cn(
-                "p-1.5 transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
-                tracked ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                {tracked ? <path d="M20 6L9 17l-5-5" /> : <><path d="M12 5v14" /><path d="M5 12h14" /></>}
-              </svg>
-            </button>
-            <button onClick={toggleSave} title={saved ? "Remove bookmark" : "Bookmark"} disabled={loadingS}
+            {/* Single save control: a bookmark IS the tracker's "Saved" stage. */}
+            <button onClick={toggleSave} title={saved ? "Saved — click to remove" : "Save to tracker"} disabled={loadingS}
               className={cn(
                 "p-1.5 transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
                 saved ? "text-foreground" : "text-muted-foreground hover:text-foreground"
