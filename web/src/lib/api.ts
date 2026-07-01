@@ -43,6 +43,21 @@ export interface CompanyDetail extends CompanyItem {
   last_ingested_at: string | null;
 }
 
+export interface VelocityPoint {
+  week: string; // ISO date (Monday)
+  opened: number;
+  closed: number;
+}
+
+export interface CompanyVelocity {
+  company_id: number;
+  weeks: VelocityPoint[];
+  new_this_week: number;
+  active_now: number;
+  opened_last_30d: number;
+  closed_last_30d: number;
+}
+
 export interface LastRunSummary {
   started_at: string | null;
   jobs_seen: number;
@@ -143,6 +158,14 @@ export async function getCompanies(params: { industry?: string } = {}): Promise<
 export async function getCompany(id: number): Promise<CompanyDetail> {
   const res = await fetch(`${API}/companies/${id}`, { next: { revalidate: 3600 } });
   if (!res.ok) throw new Error("Company not found");
+  return res.json();
+}
+
+export async function getCompanyVelocity(id: number, weeks = 8): Promise<CompanyVelocity> {
+  const res = await fetch(`${API}/companies/${id}/velocity?weeks=${weeks}`, {
+    next: { revalidate: 3600 },
+  });
+  if (!res.ok) throw new Error("Failed to fetch company velocity");
   return res.json();
 }
 

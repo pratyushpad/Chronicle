@@ -74,29 +74,13 @@ export function formatLocation(raw: string | null | undefined): string {
   return parts.join(", ");
 }
 
-// Umbrella finance/org buckets that prefix a real department ("S&M - Sales").
-const DEPT_GROUP_PREFIXES = new Set(["s&m", "g&a", "r&d", "ga", "sm", "cogs"]);
-
 /**
- * Cleans raw ATS department strings — CONSERVATIVELY, to avoid mangling
- * companies whose departments aren't Block-shaped.
- * - strips a leading numeric/req code block ("20213 ", "REQ-123 ")
- * - drops only a LEADING umbrella-group prefix ("S&M - Sales" → "Sales")
- * - KEEPS the parent→child chain otherwise ("Sales - EMEA" stays "Sales - EMEA",
- *   "Engineering - Infra" stays intact) — never reduces to the last segment.
- * The DB value is untouched; this is display-only.
+ * Passthrough for the department label. Normalization now happens server-side at
+ * ingest (see api/app/ingest/normalize.py `normalize_department`) — the API returns a
+ * clean controlled-vocab category ("Sales", "Engineering", "G&A", "IT", "Other") or
+ * null. We only trim; deliberately no re-casing (would break "G&A"/"IT") and no
+ * segment peeling (the old client-side cleanup leaked internal org names).
  */
 export function formatDepartment(raw: string | null | undefined): string {
-  if (!raw) return "";
-  let s = raw.trim();
-  if (!s) return "";
-
-  // Drop a leading numeric/req code block ("20213 ", "REQ-123 ").
-  s = s.replace(/^[\s#]*[A-Za-z]*-?\d[\w-]*\s+/, "");
-
-  // Peel off leading umbrella-group prefixes only; keep the rest of the chain.
-  const segs = s.split(/\s*[-/|·]\s*/).map((seg) => seg.trim()).filter(Boolean);
-  while (segs.length > 1 && DEPT_GROUP_PREFIXES.has(segs[0].toLowerCase())) segs.shift();
-
-  return segs.join(" - ").replace(/\s+/g, " ").trim() || s;
+  return raw?.trim() ?? "";
 }

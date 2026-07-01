@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from math import ceil
 from typing import Optional
 
@@ -12,12 +12,14 @@ from app.util import root_domain
 from app.schemas import (
     CompanyDetail,
     CompanyItem,
+    CompanyVelocity,
     IndustryCount,
     JobDetail,
     JobListItem,
     JobListResponse,
     LastRunSummary,
     MetaResponse,
+    VelocityPoint,
 )
 
 # Title keywords used to bucket senior-level roles when experience_level is blank.
@@ -262,6 +264,59 @@ def get_company(company_id: int, session: Session = Depends(_db)):
         industry=row.Company.industry,
         active_job_count=row.active_job_count,
         last_ingested_at=row.Company.last_ingested_at,
+    )
+
+
+@router.get("/companies/{company_id}/velocity", response_model=CompanyVelocity)
+def company_velocity(company_id: int, weeks: int = 8, session: Session = Depends(_db)):
+    """Hiring velocity from the first_seen_at/last_seen_at the ingester already stores:
+    roles opened (first seen) and closed (marked inactive) per recent week. No new data."""
+    weeks = max(1, min(weeks, 26))
+    company = session.get(Company, company_id)
+    if not company or not company.active:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    now = datetime.now(timezone.utc)
+    # Monday 00:00 UTC of the current ISO week, then walk back `weeks-1` weeks.
+    this_monday = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    window = [(this_monday - timedelta(weeks=i)).date() for i in range(weeks - 1, -1, -1)]
+    since = this_monday - timedelta(weeks=weeks - 1)
+
+    def _bucket(when_col, count_col, *conds) -> dict[date, int]:
+        wk = func.date_trunc("week", when_col)
+        rows = session.execute(
+            select(wk.label("wk"), count_col)
+            .where(Job.company_id == company_id, when_col >= since, *conds)
+            .group_by("wk")
+        ).all()
+        return {r[0].date(): r[1] for r in rows}
+
+    opened = _bucket(Job.first_seen_at, func.count(func.distinct(Job.dedup_key)))
+    closed = _bucket(Job.last_seen_at, func.count(Job.id), Job.is_active == False)
+
+    points = [VelocityPoint(week=w, opened=opened.get(w, 0), closed=closed.get(w, 0)) for w in window]
+
+    active_now = session.execute(
+        select(func.count(func.distinct(Job.dedup_key)))
+        .where(Job.company_id == company_id, Job.is_active == True)
+    ).scalar_one()
+    d30 = now - timedelta(days=30)
+    opened_30 = session.execute(
+        select(func.count(func.distinct(Job.dedup_key)))
+        .where(Job.company_id == company_id, Job.first_seen_at >= d30)
+    ).scalar_one()
+    closed_30 = session.execute(
+        select(func.count(Job.id))
+        .where(Job.company_id == company_id, Job.is_active == False, Job.last_seen_at >= d30)
+    ).scalar_one()
+
+    return CompanyVelocity(
+        company_id=company_id,
+        weeks=points,
+        new_this_week=points[-1].opened if points else 0,
+        active_now=active_now,
+        opened_last_30d=opened_30,
+        closed_last_30d=closed_30,
     )
 
 

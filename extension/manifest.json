@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Chronicle Autofill",
+  "version": "0.1.0",
+  "description": "Fill Greenhouse/Lever/Ashby applications from your Chronicle profile. Fill-only — never submits.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Chronicle Autofill"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "http://localhost/*",
+    "https://*.onrender.com/*",
+    "https://job-boards.greenhouse.io/*",
+    "https://boards.greenhouse.io/*",
+    "https://jobs.lever.co/*",
+    "https://jobs.ashbyhq.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://job-boards.greenhouse.io/*",
+        "https://boards.greenhouse.io/*",
+        "https://jobs.lever.co/*",
+        "https://jobs.ashbyhq.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

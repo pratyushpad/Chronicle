@@ -24,6 +24,21 @@ class CompanyDetail(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class VelocityPoint(BaseModel):
+    week: date          # Monday of the ISO week (UTC)
+    opened: int         # distinct roles first seen that week
+    closed: int         # roles marked inactive that week
+
+
+class CompanyVelocity(BaseModel):
+    company_id: int
+    weeks: list[VelocityPoint]
+    new_this_week: int
+    active_now: int
+    opened_last_30d: int
+    closed_last_30d: int
+
+
 class JobListItem(BaseModel):
     id: int
     title: str
@@ -132,6 +147,8 @@ class ProfileIn(BaseModel):
     full_name: str | None = None
     headline: str | None = None
     location: str | None = None
+    phone: str | None = None
+    work_authorization: str | None = None
     remote_pref: str | None = None
     seniority_pref: list[str] | None = None
     tracks: list[str] | None = None
@@ -145,6 +162,40 @@ class ProfileOut(ProfileIn):
     user_id: int
     updated_at: datetime
     model_config = {"from_attributes": True}
+
+
+# ── Browser extension ─────────────────────────────────────────────────────────
+
+class ExtensionTokenStatusOut(BaseModel):
+    connected: bool
+
+
+class ExtensionTokenOut(BaseModel):
+    token: str  # plaintext — returned ONCE at issue time, never again
+
+
+class ExtensionMeOut(BaseModel):
+    email: str
+    name: str | None
+
+
+class ExtensionProfileOut(BaseModel):
+    full_name: str | None = None
+    email: str
+    phone: str | None = None
+    location: str | None = None
+    work_authorization: str | None = None
+    links: dict[str, str] | None = None
+
+
+class ExtensionSaveIn(BaseModel):
+    ats: str
+    company_slug: str
+    company_name: str
+    source_job_id: str
+    title: str
+    apply_url: str
+    location: str | None = None
 
 
 # ── Saved jobs ────────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
-const PROTECTED = ["/tracker", "/saved", "/for-you", "/onboarding"];
+const PROTECTED = ["/tracker", "/saved", "/for-you", "/onboarding", "/settings"];
 
 export default auth((req) => {
   const isProtected = PROTECTED.some((p) => req.nextUrl.pathname.startsWith(p));

@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from app.ingest.normalize import (
     infer_remote,
+    normalize_department,
     normalize_location,
     normalize_title,
     parse_posted_at,
@@ -85,3 +86,42 @@ def test_strip_html():
 
 def test_strip_html_none():
     assert strip_html(None) is None
+
+
+# ── Department normalization (controlled vocabulary) ──────────────────────────
+
+def test_department_strips_code_and_org_to_category():
+    # The internal org tail ("Square Outside") must NOT leak — resolves to "Sales".
+    assert normalize_department("20213 S&M - Sales - Square Outside") == "Sales"
+
+
+def test_department_engineering_subteam():
+    assert normalize_department("Engineering - Infrastructure") == "Engineering"
+
+
+def test_department_region_is_not_the_department():
+    assert normalize_department("Sales - EMEA") == "Sales"
+
+
+def test_department_plain_category():
+    assert normalize_department("Marketing") == "Marketing"
+
+
+def test_department_unknown_collapses_to_other_not_org_name():
+    result = normalize_department("Skunkworks - Zephyr Internal Team")
+    assert result == "Other"
+    assert "Zephyr" not in result and "Skunkworks" not in result
+
+
+def test_department_security_beats_engineering():
+    assert normalize_department("Security Engineering") == "Security"
+
+
+def test_department_product_marketing_is_marketing():
+    assert normalize_department("Product Marketing") == "Marketing"
+
+
+def test_department_empty_is_none():
+    assert normalize_department(None) is None
+    assert normalize_department("") is None
+    assert normalize_department("   ") is None

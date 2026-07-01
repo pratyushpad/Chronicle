@@ -1,0 +1,134 @@
+[
+  {
+    "name": "Zscaler",
+    "ats": "greenhouse",
+    "slug": "zscaler",
+    "industry": "Security"
+  },
+  {
+    "name": "Palantir",
+    "ats": "lever",
+    "slug": "palantir",
+    "industry": "Software"
+  },
+  {
+    "name": "Affirm",
+    "ats": "greenhouse",
+    "slug": "affirm",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Sierra",
+    "ats": "ashby",
+    "slug": "sierra",
+    "industry": "AI"
+  },
+  {
+    "name": "Decagon",
+    "ats": "ashby",
+    "slug": "decagon",
+    "industry": "AI"
+  },
+  {
+    "name": "SoFi",
+    "ats": "greenhouse",
+    "slug": "sofi",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Nuro",
+    "ats": "greenhouse",
+    "slug": "nuro",
+    "industry": "Robotics"
+  },
+  {
+    "name": "Included Health",
+    "ats": "lever",
+    "slug": "includedhealth",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Neuralink",
+    "ats": "greenhouse",
+    "slug": "neuralink",
+    "industry": "Neurotech"
+  },
+  {
+    "name": "Peloton",
+    "ats": "greenhouse",
+    "slug": "peloton",
+    "industry": "Fitness"
+  },
+  {
+    "name": "Ro",
+    "ats": "lever",
+    "slug": "ro",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Betterment",
+    "ats": "greenhouse",
+    "slug": "betterment",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Sumo Logic",
+    "ats": "greenhouse",
+    "slug": "sumologic",
+    "industry": "Observability"
+  },
+  {
+    "name": "Warp",
+    "ats": "ashby",
+    "slug": "warp",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Instabase",
+    "ats": "greenhouse",
+    "slug": "instabase",
+    "industry": "AI"
+  },
+  {
+    "name": "Udemy",
+    "ats": "greenhouse",
+    "slug": "udemy",
+    "industry": "EdTech"
+  },
+  {
+    "name": "Coursera",
+    "ats": "greenhouse",
+    "slug": "coursera",
+    "industry": "EdTech"
+  },
+  {
+    "name": "Gemini",
+    "ats": "greenhouse",
+    "slug": "gemini",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Harvey",
+    "ats": "ashby",
+    "slug": "harvey",
+    "industry": "AI"
+  },
+  {
+    "name": "Abridge",
+    "ats": "ashby",
+    "slug": "abridge",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Cognition",
+    "ats": "ashby",
+    "slug": "cognition",
+    "industry": "AI"
+  },
+  {
+    "name": "Mercor",
+    "ats": "ashby",
+    "slug": "mercor",
+    "industry": "AI"
+  }
+]

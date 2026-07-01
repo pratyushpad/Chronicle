@@ -1,203 +1,1585 @@
 [
-  {"name": "Stripe",          "ats": "greenhouse", "slug": "stripe",            "careers_url": "https://stripe.com/jobs",                     "industry": "FinTech"},
-  {"name": "Figma",           "ats": "greenhouse", "slug": "figma",             "careers_url": "https://www.figma.com/careers",               "industry": "Design Tools"},
-  {"name": "Brex",            "ats": "greenhouse", "slug": "brex",              "careers_url": "https://www.brex.com/careers",                "industry": "FinTech"},
-  {"name": "Anthropic",       "ats": "greenhouse", "slug": "anthropic",         "careers_url": "https://www.anthropic.com/careers",           "industry": "AI/ML"},
-  {"name": "Robinhood",       "ats": "greenhouse", "slug": "robinhood",         "careers_url": "https://careers.robinhood.com",               "industry": "FinTech"},
-  {"name": "Coinbase",        "ats": "greenhouse", "slug": "coinbase",          "careers_url": "https://www.coinbase.com/careers",            "industry": "Crypto"},
-  {"name": "Airbnb",          "ats": "greenhouse", "slug": "airbnb",            "careers_url": "https://careers.airbnb.com",                  "industry": "Travel"},
-  {"name": "Reddit",          "ats": "greenhouse", "slug": "reddit",            "careers_url": "https://www.redditinc.com/careers",           "industry": "Social"},
-  {"name": "Pinterest",       "ats": "greenhouse", "slug": "pinterest",         "careers_url": "https://www.pinterestcareers.com",            "industry": "Social"},
-  {"name": "Dropbox",         "ats": "greenhouse", "slug": "dropbox",           "careers_url": "https://www.dropbox.com/jobs",                "industry": "Cloud Storage"},
-  {"name": "Twilio",          "ats": "greenhouse", "slug": "twilio",            "careers_url": "https://www.twilio.com/en-us/company/jobs",   "industry": "Developer Tools"},
-  {"name": "Gusto",           "ats": "greenhouse", "slug": "gusto",             "careers_url": "https://gusto.com/about/careers",             "industry": "HR Tech"},
-  {"name": "Lattice",         "ats": "greenhouse", "slug": "lattice",           "careers_url": "https://lattice.com/careers",                 "industry": "HR Tech"},
-  {"name": "Scale AI",        "ats": "greenhouse", "slug": "scaleai",           "careers_url": "https://scale.com/careers",                   "industry": "AI/ML"},
-  {"name": "Anduril",         "ats": "greenhouse", "slug": "andurilindustries", "careers_url": "https://www.anduril.com/careers",             "industry": "Defense Tech"},
-  {"name": "HubSpot",         "ats": "greenhouse", "slug": "hubspot",           "careers_url": "https://www.hubspot.com/careers",             "industry": "Marketing"},
-  {"name": "Carta",           "ats": "greenhouse", "slug": "carta",             "careers_url": "https://carta.com/about/careers",             "industry": "FinTech"},
-  {"name": "Vercel",          "ats": "greenhouse", "slug": "vercel",            "careers_url": "https://vercel.com/careers",                  "industry": "Developer Tools"},
-  {"name": "Airtable",        "ats": "greenhouse", "slug": "airtable",          "careers_url": "https://airtable.com/careers",                "industry": "Productivity"},
-  {"name": "Contentful",      "ats": "greenhouse", "slug": "contentful",        "careers_url": "https://www.contentful.com/careers",          "industry": "CMS"},
-  {"name": "Squarespace",     "ats": "greenhouse", "slug": "squarespace",       "careers_url": "https://www.squarespace.com/about/careers",   "industry": "Commerce"},
-  {"name": "Asana",           "ats": "greenhouse", "slug": "asana",             "careers_url": "https://asana.com/jobs",                      "industry": "Productivity"},
-  {"name": "Cloudflare",      "ats": "greenhouse", "slug": "cloudflare",        "careers_url": "https://www.cloudflare.com/careers",          "industry": "Security"},
-  {"name": "PagerDuty",       "ats": "greenhouse", "slug": "pagerduty",         "careers_url": "https://www.pagerduty.com/careers",           "industry": "DevOps"},
-  {"name": "MongoDB",         "ats": "greenhouse", "slug": "mongodb",           "careers_url": "https://www.mongodb.com/careers",             "industry": "Database"},
-  {"name": "Datadog",         "ats": "greenhouse", "slug": "datadog",           "careers_url": "https://www.datadoghq.com/careers",           "industry": "Observability"},
-  {"name": "Okta",            "ats": "greenhouse", "slug": "okta",              "careers_url": "https://www.okta.com/company/careers",        "industry": "Security"},
-  {"name": "Mixpanel",        "ats": "greenhouse", "slug": "mixpanel",          "careers_url": "https://mixpanel.com/jobs",                   "industry": "Analytics"},
-  {"name": "Lyft",            "ats": "greenhouse", "slug": "lyft",              "careers_url": "https://www.lyft.com/careers",                "industry": "Transportation"},
-  {"name": "Instacart",       "ats": "greenhouse", "slug": "instacart",         "careers_url": "https://instacart.careers",                   "industry": "Commerce"},
-  {"name": "Duolingo",        "ats": "greenhouse", "slug": "duolingo",          "careers_url": "https://careers.duolingo.com",                "industry": "EdTech"},
-  {"name": "Block",           "ats": "greenhouse", "slug": "block",             "careers_url": "https://block.xyz/careers",                   "industry": "FinTech"},
-  {"name": "Twitch",          "ats": "greenhouse", "slug": "twitch",            "careers_url": "https://www.twitch.tv/jobs",                  "industry": "Entertainment"},
-  {"name": "Chime",           "ats": "greenhouse", "slug": "chime",             "careers_url": "https://www.chime.com/careers",               "industry": "FinTech"},
-  {"name": "Faire",           "ats": "greenhouse", "slug": "faire",             "careers_url": "https://www.faire.com/careers",               "industry": "Commerce"},
-  {"name": "Samsara",         "ats": "greenhouse", "slug": "samsara",           "careers_url": "https://www.samsara.com/company/careers",     "industry": "IoT"},
-  {"name": "Verkada",         "ats": "greenhouse", "slug": "verkada",           "careers_url": "https://www.verkada.com/careers",             "industry": "Security"},
-  {"name": "Rubrik",          "ats": "greenhouse", "slug": "rubrik",            "careers_url": "https://www.rubrik.com/company/careers",      "industry": "Security"},
-  {"name": "Roblox",          "ats": "greenhouse", "slug": "roblox",            "careers_url": "https://www.roblox.com/careers",              "industry": "Gaming"},
-  {"name": "Flexport",        "ats": "greenhouse", "slug": "flexport",          "careers_url": "https://www.flexport.com/careers",            "industry": "Logistics"},
-  {"name": "Amplitude",       "ats": "greenhouse", "slug": "amplitude",         "careers_url": "https://amplitude.com/careers",               "industry": "Analytics"},
-  {"name": "Discord",         "ats": "greenhouse", "slug": "discord",           "careers_url": "https://discord.com/careers",                 "industry": "Social"},
-  {"name": "Checkr",          "ats": "greenhouse", "slug": "checkr",            "careers_url": "https://checkr.com/company/careers",          "industry": "HR Tech"},
-  {"name": "GoFundMe",        "ats": "greenhouse", "slug": "gofundme",          "careers_url": "https://www.gofundme.com/c/go/careers",       "industry": "FinTech"},
-  {"name": "Toast",           "ats": "greenhouse", "slug": "toast",             "careers_url": "https://careers.toasttab.com",                "industry": "Restaurant Tech"},
-  {"name": "Waymo",           "ats": "greenhouse", "slug": "waymo",             "careers_url": "https://waymo.com/careers",                   "industry": "Autonomous Vehicles"},
-  {"name": "Attentive",       "ats": "greenhouse", "slug": "attentive",         "careers_url": "https://www.attentivemobile.com/careers",     "industry": "Marketing"},
-  {"name": "Klaviyo",         "ats": "greenhouse", "slug": "klaviyo",           "careers_url": "https://www.klaviyo.com/careers",             "industry": "Marketing"},
-  {"name": "Speechify",       "ats": "greenhouse", "slug": "speechify",         "careers_url": "https://speechify.com/careers",               "industry": "EdTech"},
-  {"name": "Databricks",      "ats": "greenhouse", "slug": "databricks",        "careers_url": "https://www.databricks.com/careers",          "industry": "Data"},
-  {"name": "Relativity",      "ats": "greenhouse", "slug": "relativity",        "careers_url": "https://www.relativity.com/careers",          "industry": "Legal Tech"},
-  {"name": "Braze",           "ats": "greenhouse", "slug": "braze",             "careers_url": "https://www.braze.com/company/careers",       "industry": "Marketing"},
-  {"name": "Elastic",         "ats": "greenhouse", "slug": "elastic",           "careers_url": "https://www.elastic.co/about/careers",        "industry": "Search"},
-  {"name": "TripActions",     "ats": "greenhouse", "slug": "tripactions",       "careers_url": "https://tripactions.com/jobs",                "industry": "Travel"},
-  {"name": "GitLab",          "ats": "greenhouse", "slug": "gitlab",            "careers_url": "https://about.gitlab.com/jobs",               "industry": "Developer Tools"},
-  {"name": "Intercom",        "ats": "greenhouse", "slug": "intercom",          "careers_url": "https://www.intercom.com/careers",            "industry": "Customer Success"},
-  {"name": "Fivetran",        "ats": "greenhouse", "slug": "fivetran",          "careers_url": "https://www.fivetran.com/careers",            "industry": "Data"},
-  {"name": "Nubank",          "ats": "greenhouse", "slug": "nubank",            "careers_url": "https://nubank.com.br/en/careers",            "industry": "FinTech"},
-  {"name": "Justworks",       "ats": "greenhouse", "slug": "justworks",         "careers_url": "https://justworks.com/careers",               "industry": "HR Tech"},
-  {"name": "Chainguard",      "ats": "greenhouse", "slug": "chainguard",        "careers_url": "https://www.chainguard.dev/careers",          "industry": "Security"},
-  {"name": "LinkedIn",        "ats": "greenhouse", "slug": "linkedin",          "careers_url": "https://careers.linkedin.com",                "industry": "Social"},
-  {"name": "Algolia",         "ats": "greenhouse", "slug": "algolia",           "careers_url": "https://www.algolia.com/careers",             "industry": "Search"},
-  {"name": "Pendo",           "ats": "greenhouse", "slug": "pendo",             "careers_url": "https://www.pendo.io/company/careers",        "industry": "Analytics"},
-  {"name": "LaunchDarkly",    "ats": "greenhouse", "slug": "launchdarkly",      "careers_url": "https://launchdarkly.com/careers",            "industry": "Developer Tools"},
-  {"name": "Marqeta",         "ats": "greenhouse", "slug": "marqeta",           "careers_url": "https://www.marqeta.com/company/careers",     "industry": "FinTech"},
-  {"name": "ZipRecruiter",    "ats": "greenhouse", "slug": "ziprecruiter",      "careers_url": "https://www.ziprecruiter.com/careers",        "industry": "HR Tech"},
-  {"name": "Zuora",           "ats": "greenhouse", "slug": "zuora",             "careers_url": "https://www.zuora.com/about/careers",         "industry": "FinTech"},
-  {"name": "CockroachLabs",   "ats": "greenhouse", "slug": "cockroachlabs",     "careers_url": "https://www.cockroachlabs.com/careers",       "industry": "Database"},
-  {"name": "Salesloft",       "ats": "greenhouse", "slug": "salesloft",         "careers_url": "https://salesloft.com/careers",               "industry": "Sales Tech"},
-  {"name": "Iterable",        "ats": "greenhouse", "slug": "iterable",          "careers_url": "https://iterable.com/careers",                "industry": "Marketing"},
-  {"name": "Axiom",           "ats": "greenhouse", "slug": "axiom",             "careers_url": "https://axiom.co/careers",                    "industry": "Data"},
-  {"name": "Turing",          "ats": "greenhouse", "slug": "turing",            "careers_url": "https://www.turing.com/careers",              "industry": "HR Tech"},
-  {"name": "Yext",            "ats": "greenhouse", "slug": "yext",              "careers_url": "https://www.yext.com/careers",                "industry": "Marketing"},
-  {"name": "Yotpo",           "ats": "greenhouse", "slug": "yotpo",             "careers_url": "https://www.yotpo.com/careers",               "industry": "Commerce"},
-  {"name": "Nextdoor",        "ats": "greenhouse", "slug": "nextdoor",          "careers_url": "https://about.nextdoor.com/careers",          "industry": "Social"},
-  {"name": "Webflow",         "ats": "greenhouse", "slug": "webflow",           "careers_url": "https://webflow.com/careers",                 "industry": "Developer Tools"},
-  {"name": "Customer.io",     "ats": "greenhouse", "slug": "customerio",        "careers_url": "https://customer.io/jobs",                    "industry": "Marketing"},
-  {"name": "Starburst",       "ats": "greenhouse", "slug": "starburst",         "careers_url": "https://www.starburst.io/careers",            "industry": "Data"},
-  {"name": "Sendbird",        "ats": "greenhouse", "slug": "sendbird",          "careers_url": "https://sendbird.com/careers",                "industry": "Developer Tools"},
-  {"name": "Honeycomb",       "ats": "greenhouse", "slug": "honeycomb",         "careers_url": "https://www.honeycomb.io/careers",            "industry": "Observability"},
-  {"name": "Upwork",          "ats": "greenhouse", "slug": "upwork",            "careers_url": "https://www.upwork.com/careers",              "industry": "Marketplace"},
-  {"name": "PlanetScale",     "ats": "greenhouse", "slug": "planetscale",       "careers_url": "https://planetscale.com/careers",             "industry": "Database"},
-  {"name": "Lob",             "ats": "greenhouse", "slug": "lob",               "careers_url": "https://www.lob.com/careers",                 "industry": "Developer Tools"},
-  {"name": "Descript",        "ats": "greenhouse", "slug": "descript",          "careers_url": "https://www.descript.com/jobs",               "industry": "AI/ML"},
-  {"name": "Karat",           "ats": "greenhouse", "slug": "karat",             "careers_url": "https://karat.com/careers",                   "industry": "HR Tech"},
-  {"name": "Dremio",          "ats": "greenhouse", "slug": "dremio",            "careers_url": "https://www.dremio.com/careers",              "industry": "Data"},
-  {"name": "Laika",           "ats": "greenhouse", "slug": "laika",             "careers_url": "https://heylaika.com/careers",                "industry": "Security"},
-  {"name": "Blend",           "ats": "greenhouse", "slug": "blend",             "careers_url": "https://blend.com/careers",                   "industry": "FinTech"},
-  {"name": "Netlify",         "ats": "greenhouse", "slug": "netlify",           "careers_url": "https://www.netlify.com/careers",             "industry": "Developer Tools"},
-  {"name": "AssemblyAI",      "ats": "greenhouse", "slug": "assemblyai",        "careers_url": "https://www.assemblyai.com/careers",          "industry": "AI/ML"},
-  {"name": "Calm",            "ats": "greenhouse", "slug": "calm",              "careers_url": "https://www.calm.com/careers",                "industry": "Health"},
-  {"name": "Remote",          "ats": "greenhouse", "slug": "remote",            "careers_url": "https://remote.com/careers",                  "industry": "HR Tech"},
-  {"name": "ClickHouse",      "ats": "greenhouse", "slug": "clickhouse",        "careers_url": "https://clickhouse.com/careers",              "industry": "Database"},
-  {"name": "Postman",         "ats": "greenhouse", "slug": "postman",           "careers_url": "https://www.postman.com/jobs",                "industry": "Developer Tools"},
-  {"name": "Hightouch",       "ats": "greenhouse", "slug": "hightouch",         "careers_url": "https://hightouch.com/careers",               "industry": "Data"},
-  {"name": "New Relic",       "ats": "greenhouse", "slug": "newrelic",          "careers_url": "https://newrelic.com/careers",                "industry": "Observability"},
-  {"name": "LogicMonitor",    "ats": "greenhouse", "slug": "logicmonitor",      "careers_url": "https://www.logicmonitor.com/careers",        "industry": "Observability"},
-  {"name": "Fastly",          "ats": "greenhouse", "slug": "fastly",            "careers_url": "https://www.fastly.com/about/careers",        "industry": "CDN"},
-  {"name": "fal",             "ats": "greenhouse", "slug": "fal",               "careers_url": "https://fal.ai/careers",                      "industry": "AI/ML"},
-  {"name": "Mattermost",      "ats": "greenhouse", "slug": "mattermost",        "careers_url": "https://mattermost.com/careers",              "industry": "Developer Tools"},
-  {"name": "Hootsuite",       "ats": "greenhouse", "slug": "hootsuite",         "careers_url": "https://hootsuite.com/about/careers",         "industry": "Marketing"},
-  {"name": "Brandwatch",      "ats": "greenhouse", "slug": "brandwatch",        "careers_url": "https://www.brandwatch.com/careers",          "industry": "Marketing"},
-  {"name": "Celonis",         "ats": "greenhouse", "slug": "celonis",           "careers_url": "https://www.celonis.com/careers",             "industry": "Enterprise SaaS"},
-  {"name": "Cortex",          "ats": "greenhouse", "slug": "cortex",            "careers_url": "https://www.cortex.io/careers",               "industry": "Developer Tools"},
-  {"name": "Linear",          "ats": "ashby",      "slug": "linear",            "careers_url": "https://linear.app/careers",                  "industry": "Developer Tools"},
-  {"name": "Perplexity",      "ats": "ashby",      "slug": "perplexity",        "careers_url": "https://www.perplexity.ai/about#jobs",        "industry": "AI/ML"},
-  {"name": "Neon",            "ats": "ashby",      "slug": "neon",              "careers_url": "https://neon.tech/careers",                   "industry": "Database"},
-  {"name": "Resend",          "ats": "ashby",      "slug": "resend",            "careers_url": "https://resend.com/careers",                  "industry": "Developer Tools"},
-  {"name": "OpenAI",          "ats": "ashby",      "slug": "openai",            "careers_url": "https://openai.com/careers",                  "industry": "AI/ML"},
-  {"name": "Notion",          "ats": "ashby",      "slug": "notion",            "careers_url": "https://www.notion.so/careers",               "industry": "Productivity"},
-  {"name": "Cohere",          "ats": "ashby",      "slug": "cohere",            "careers_url": "https://cohere.com/careers",                  "industry": "AI/ML"},
-  {"name": "Ramp",            "ats": "ashby",      "slug": "ramp",              "careers_url": "https://ramp.com/careers",                    "industry": "FinTech"},
-  {"name": "Cursor",          "ats": "ashby",      "slug": "cursor",            "careers_url": "https://www.cursor.com/careers",              "industry": "AI/ML"},
-  {"name": "Vanta",           "ats": "ashby",      "slug": "vanta",             "careers_url": "https://www.vanta.com/company/careers",       "industry": "Security"},
-  {"name": "Plaid",           "ats": "ashby",      "slug": "plaid",             "careers_url": "https://plaid.com/careers",                   "industry": "FinTech"},
-  {"name": "Replit",          "ats": "ashby",      "slug": "replit",            "careers_url": "https://replit.com/careers",                  "industry": "Developer Tools"},
-  {"name": "Cerebras",        "ats": "ashby",      "slug": "cerebras",          "careers_url": "https://www.cerebras.net/careers",            "industry": "AI/ML"},
-  {"name": "ClickUp",         "ats": "ashby",      "slug": "clickup",           "careers_url": "https://clickup.com/careers",                 "industry": "Productivity"},
-  {"name": "Baseten",         "ats": "ashby",      "slug": "baseten",           "careers_url": "https://www.baseten.co/about/careers",        "industry": "AI/ML"},
-  {"name": "Drata",           "ats": "ashby",      "slug": "drata",             "careers_url": "https://drata.com/company/careers",           "industry": "Security"},
-  {"name": "Temporal",        "ats": "ashby",      "slug": "temporal",          "careers_url": "https://temporal.io/careers",                 "industry": "Developer Tools"},
-  {"name": "Watershed",       "ats": "ashby",      "slug": "watershed",         "careers_url": "https://watershed.com/careers",               "industry": "Climate Tech"},
-  {"name": "Benchling",       "ats": "ashby",      "slug": "benchling",         "careers_url": "https://www.benchling.com/careers",           "industry": "Life Sciences"},
-  {"name": "Attio",           "ats": "ashby",      "slug": "attio",             "careers_url": "https://attio.com/careers",                   "industry": "CRM"},
-  {"name": "Relay",           "ats": "ashby",      "slug": "relay",             "careers_url": "https://relay.app/careers",                   "industry": "Automation"},
-  {"name": "Modal",           "ats": "ashby",      "slug": "modal",             "careers_url": "https://modal.com/careers",                   "industry": "AI/ML"},
-  {"name": "Braintrust",      "ats": "ashby",      "slug": "braintrust",        "careers_url": "https://www.braintrust.dev/careers",          "industry": "AI/ML"},
-  {"name": "Ditto",           "ats": "ashby",      "slug": "ditto",             "careers_url": "https://www.dittowords.com/careers",          "industry": "Design Tools"},
-  {"name": "Incident.io",     "ats": "ashby",      "slug": "incident",          "careers_url": "https://incident.io/careers",                 "industry": "DevOps"},
-  {"name": "Brightwheel",     "ats": "ashby",      "slug": "brightwheel",       "careers_url": "https://mybrightwheel.com/careers",           "industry": "EdTech"},
-  {"name": "PostHog",         "ats": "ashby",      "slug": "posthog",           "careers_url": "https://posthog.com/careers",                 "industry": "Analytics"},
-  {"name": "Persona",         "ats": "ashby",      "slug": "persona",           "careers_url": "https://withpersona.com/careers",             "industry": "Security"},
-  {"name": "Zapier",          "ats": "ashby",      "slug": "zapier",            "careers_url": "https://zapier.com/jobs",                     "industry": "Automation"},
-  {"name": "Oneleet",         "ats": "ashby",      "slug": "oneleet",           "careers_url": "https://oneleet.com/careers",                 "industry": "Security"},
-  {"name": "Jellyfish",       "ats": "ashby",      "slug": "jellyfish",         "careers_url": "https://jellyfish.co/company/careers",        "industry": "Analytics"},
-  {"name": "Substack",        "ats": "ashby",      "slug": "substack",          "careers_url": "https://substack.com/jobs",                   "industry": "Media"},
-  {"name": "Demandbase",      "ats": "ashby",      "slug": "demandbase",        "careers_url": "https://www.demandbase.com/careers",          "industry": "Marketing"},
-  {"name": "Oso",             "ats": "ashby",      "slug": "oso",               "careers_url": "https://www.osohq.com/careers",               "industry": "Security"},
-  {"name": "Levels.fyi",      "ats": "ashby",      "slug": "levels",            "careers_url": "https://www.levels.fyi/careers",              "industry": "HR Tech"},
-  {"name": "Hedra",           "ats": "ashby",      "slug": "hedra",             "careers_url": "https://www.hedra.com/careers",               "industry": "AI/ML"},
-  {"name": "Prefect",         "ats": "ashby",      "slug": "prefect",           "careers_url": "https://www.prefect.io/careers",              "industry": "Data"},
-  {"name": "Stytch",          "ats": "ashby",      "slug": "stytch",            "careers_url": "https://stytch.com/careers",                  "industry": "Security"},
-  {"name": "FullStory",       "ats": "ashby",      "slug": "fullstory",         "careers_url": "https://www.fullstory.com/careers",           "industry": "Analytics"},
-  {"name": "OpenSea",         "ats": "ashby",      "slug": "opensea",           "careers_url": "https://opensea.io/careers",                  "industry": "Crypto"},
-  {"name": "Pika",            "ats": "ashby",      "slug": "pika",              "careers_url": "https://pika.art/careers",                    "industry": "AI/ML"},
-  {"name": "Runway",          "ats": "ashby",      "slug": "runway",            "careers_url": "https://runwayml.com/careers",                "industry": "AI/ML"},
-  {"name": "Datafold",        "ats": "ashby",      "slug": "datafold",          "careers_url": "https://www.datafold.com/careers",            "industry": "Data"},
-  {"name": "GitBook",         "ats": "ashby",      "slug": "gitbook",           "careers_url": "https://www.gitbook.com/careers",             "industry": "Developer Tools"},
-  {"name": "Continue",        "ats": "ashby",      "slug": "continue",          "careers_url": "https://continue.dev/careers",                "industry": "AI/ML"},
-  {"name": "ReadMe",          "ats": "ashby",      "slug": "readme",            "careers_url": "https://readme.com/careers",                  "industry": "Developer Tools"},
-  {"name": "ElevenLabs",      "ats": "ashby",      "slug": "elevenlabs",        "careers_url": "https://elevenlabs.io/careers",               "industry": "AI/ML"},
-  {"name": "Headway",         "ats": "ashby",      "slug": "headway",           "careers_url": "https://headway.co/careers",                  "industry": "Health"},
-  {"name": "Polymarket",      "ats": "ashby",      "slug": "polymarket",        "careers_url": "https://polymarket.com/careers",              "industry": "FinTech"},
-  {"name": "Deepgram",        "ats": "ashby",      "slug": "deepgram",          "careers_url": "https://deepgram.com/careers",                "industry": "AI/ML"},
-  {"name": "Suno",            "ats": "ashby",      "slug": "suno",              "careers_url": "https://suno.com/careers",                    "industry": "AI/ML"},
-  {"name": "Supabase",        "ats": "ashby",      "slug": "supabase",          "careers_url": "https://supabase.com/careers",                "industry": "Developer Tools"},
-  {"name": "Miro",            "ats": "ashby",      "slug": "miro",              "careers_url": "https://miro.com/careers",                    "industry": "Collaboration"},
-  {"name": "Cartesia",        "ats": "ashby",      "slug": "cartesia",          "careers_url": "https://cartesia.ai/careers",                 "industry": "AI/ML"},
-  {"name": "Teleport",        "ats": "ashby",      "slug": "goteleport",        "careers_url": "https://goteleport.com/careers",              "industry": "Security"},
-  {"name": "DeepL",           "ats": "ashby",      "slug": "deepl",             "careers_url": "https://www.deepl.com/careers",               "industry": "AI/ML"},
-  {"name": "Render",          "ats": "ashby",      "slug": "render",            "careers_url": "https://render.com/careers",                  "industry": "Developer Tools"},
-  {"name": "Gorgias",         "ats": "ashby",      "slug": "gorgias",           "careers_url": "https://www.gorgias.com/careers",             "industry": "Customer Success"},
-  {"name": "Anyscale",        "ats": "ashby",      "slug": "anyscale",          "careers_url": "https://www.anyscale.com/careers",            "industry": "AI/ML"},
-  {"name": "Railway",         "ats": "ashby",      "slug": "railway",           "careers_url": "https://railway.app/careers",                 "industry": "Developer Tools"},
-  {"name": "Airbyte",         "ats": "ashby",      "slug": "airbyte",           "careers_url": "https://airbyte.com/careers",                 "industry": "Data"},
-  {"name": "Statsig",         "ats": "ashby",      "slug": "statsig",           "careers_url": "https://www.statsig.com/careers",             "industry": "Analytics"},
-  {"name": "Plane",           "ats": "ashby",      "slug": "plane",             "careers_url": "https://plane.so/careers",                    "industry": "Productivity"},
-  {"name": "Electric",        "ats": "ashby",      "slug": "electric",          "careers_url": "https://www.electric.ai/careers",             "industry": "IT Management"},
-  {"name": "Fathom",          "ats": "ashby",      "slug": "fathom",            "careers_url": "https://fathom.video/careers",                "industry": "AI/ML"},
-  {"name": "Causal",          "ats": "ashby",      "slug": "causal",            "careers_url": "https://www.causal.app/careers",              "industry": "Analytics"},
-  {"name": "Mux",             "ats": "ashby",      "slug": "mux",               "careers_url": "https://www.mux.com/careers",                 "industry": "Developer Tools"},
-  {"name": "Sentry",          "ats": "ashby",      "slug": "sentry",            "careers_url": "https://sentry.io/careers",                   "industry": "Developer Tools"},
-  {"name": "LangChain",       "ats": "ashby",      "slug": "langchain",         "careers_url": "https://www.langchain.com/careers",           "industry": "AI/ML"},
-  {"name": "Redis",           "ats": "ashby",      "slug": "redis",             "careers_url": "https://redis.io/careers",                    "industry": "Database"},
-  {"name": "Composio",        "ats": "ashby",      "slug": "composio",          "careers_url": "https://composio.dev/careers",                "industry": "AI/ML"},
-  {"name": "Astronomer",      "ats": "ashby",      "slug": "astronomer",        "careers_url": "https://www.astronomer.io/careers",           "industry": "Data"},
-  {"name": "E2B",             "ats": "ashby",      "slug": "e2b",               "careers_url": "https://e2b.dev/careers",                     "industry": "AI/ML"},
-  {"name": "LlamaIndex",      "ats": "ashby",      "slug": "llamaindex",        "careers_url": "https://www.llamaindex.ai/careers",           "industry": "AI/ML"},
-  {"name": "Turbopuffer",     "ats": "ashby",      "slug": "turbopuffer",       "careers_url": "https://turbopuffer.com/careers",             "industry": "Database"},
-  {"name": "Langfuse",        "ats": "ashby",      "slug": "langfuse",          "careers_url": "https://langfuse.com/careers",                "industry": "AI/ML"},
-  {"name": "LiteLLM",        "ats": "ashby",      "slug": "litellm",           "careers_url": "https://litellm.ai/careers",                  "industry": "AI/ML"},
-  {"name": "Help Scout",      "ats": "ashby",      "slug": "helpscout",         "careers_url": "https://www.helpscout.com/careers",           "industry": "Customer Success"},
-  {"name": "Pinecone",        "ats": "ashby",      "slug": "pinecone",          "careers_url": "https://www.pinecone.io/careers",             "industry": "Database"},
-  {"name": "Arize AI",        "ats": "ashby",      "slug": "phoenix",           "careers_url": "https://arize.com/careers",                   "industry": "AI/ML"},
-  {"name": "Weaviate",        "ats": "ashby",      "slug": "weaviate",          "careers_url": "https://weaviate.io/company/careers",         "industry": "Database"},
-  {"name": "Patreon",         "ats": "ashby",      "slug": "patreon",           "careers_url": "https://www.patreon.com/careers",             "industry": "Creator Economy"},
-  {"name": "lemlist",         "ats": "ashby",      "slug": "lemlist",           "careers_url": "https://www.lemlist.com/careers",             "industry": "Sales Tech"},
-  {"name": "SurveyMonkey",    "ats": "ashby",      "slug": "surveymonkey",      "careers_url": "https://www.surveymonkey.com/mp/careers",     "industry": "SaaS"},
-  {"name": "Outreach",        "ats": "lever",      "slug": "outreach",          "careers_url": "https://www.outreach.io/company/careers",     "industry": "Sales Tech"},
-  {"name": "Metabase",        "ats": "lever",      "slug": "metabase",          "careers_url": "https://www.metabase.com/careers",            "industry": "Analytics"},
-  {"name": "Toptal",          "ats": "lever",      "slug": "toptal",            "careers_url": "https://www.toptal.com/careers",              "industry": "Marketplace"},
-  {"name": "Immuta",          "ats": "lever",      "slug": "immuta",            "careers_url": "https://www.immuta.com/company/careers",      "industry": "Security"},
-  {"name": "Relay.app",       "ats": "lever",      "slug": "relay",             "careers_url": "https://relay.app/careers",                   "industry": "Automation"},
-  {"name": "Binance",         "ats": "lever",      "slug": "binance",           "careers_url": "https://www.binance.com/en/careers",          "industry": "Crypto"},
-  {"name": "LogRocket",       "ats": "lever",      "slug": "logrocket",         "careers_url": "https://logrocket.com/careers",               "industry": "Developer Tools"},
-  {"name": "Veeva",           "ats": "lever",      "slug": "veeva",             "careers_url": "https://www.veeva.com/careers",               "industry": "Life Sciences"},
-  {"name": "Spotify",         "ats": "lever",      "slug": "spotify",           "careers_url": "https://www.lifeatspotify.com",               "industry": "Entertainment"},
-  {"name": "Alluxio",         "ats": "lever",      "slug": "alluxio",           "careers_url": "https://www.alluxio.io/careers",              "industry": "Data"},
-  {"name": "Mindtickle",      "ats": "lever",      "slug": "mindtickle",        "careers_url": "https://www.mindtickle.com/careers",          "industry": "Sales Tech"},
-  {"name": "Highspot",        "ats": "lever",      "slug": "highspot",          "careers_url": "https://www.highspot.com/careers",            "industry": "Sales Tech"},
-  {"name": "Conversica",      "ats": "lever",      "slug": "conversica",        "careers_url": "https://www.conversica.com/company/careers",  "industry": "AI/ML"}
+  {
+    "name": "Stripe",
+    "ats": "greenhouse",
+    "slug": "stripe",
+    "careers_url": "https://stripe.com/jobs",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Figma",
+    "ats": "greenhouse",
+    "slug": "figma",
+    "careers_url": "https://www.figma.com/careers",
+    "industry": "Design Tools"
+  },
+  {
+    "name": "Brex",
+    "ats": "greenhouse",
+    "slug": "brex",
+    "careers_url": "https://www.brex.com/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Anthropic",
+    "ats": "greenhouse",
+    "slug": "anthropic",
+    "careers_url": "https://www.anthropic.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Robinhood",
+    "ats": "greenhouse",
+    "slug": "robinhood",
+    "careers_url": "https://careers.robinhood.com",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Coinbase",
+    "ats": "greenhouse",
+    "slug": "coinbase",
+    "careers_url": "https://www.coinbase.com/careers",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Airbnb",
+    "ats": "greenhouse",
+    "slug": "airbnb",
+    "careers_url": "https://careers.airbnb.com",
+    "industry": "Travel"
+  },
+  {
+    "name": "Reddit",
+    "ats": "greenhouse",
+    "slug": "reddit",
+    "careers_url": "https://www.redditinc.com/careers",
+    "industry": "Social"
+  },
+  {
+    "name": "Pinterest",
+    "ats": "greenhouse",
+    "slug": "pinterest",
+    "careers_url": "https://www.pinterestcareers.com",
+    "industry": "Social"
+  },
+  {
+    "name": "Dropbox",
+    "ats": "greenhouse",
+    "slug": "dropbox",
+    "careers_url": "https://www.dropbox.com/jobs",
+    "industry": "Cloud Storage"
+  },
+  {
+    "name": "Twilio",
+    "ats": "greenhouse",
+    "slug": "twilio",
+    "careers_url": "https://www.twilio.com/en-us/company/jobs",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Gusto",
+    "ats": "greenhouse",
+    "slug": "gusto",
+    "careers_url": "https://gusto.com/about/careers",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "Lattice",
+    "ats": "greenhouse",
+    "slug": "lattice",
+    "careers_url": "https://lattice.com/careers",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "Scale AI",
+    "ats": "greenhouse",
+    "slug": "scaleai",
+    "careers_url": "https://scale.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Anduril",
+    "ats": "greenhouse",
+    "slug": "andurilindustries",
+    "careers_url": "https://www.anduril.com/careers",
+    "industry": "Defense Tech"
+  },
+  {
+    "name": "HubSpot",
+    "ats": "greenhouse",
+    "slug": "hubspot",
+    "careers_url": "https://www.hubspot.com/careers",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Carta",
+    "ats": "greenhouse",
+    "slug": "carta",
+    "careers_url": "https://carta.com/about/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Vercel",
+    "ats": "greenhouse",
+    "slug": "vercel",
+    "careers_url": "https://vercel.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Airtable",
+    "ats": "greenhouse",
+    "slug": "airtable",
+    "careers_url": "https://airtable.com/careers",
+    "industry": "Productivity"
+  },
+  {
+    "name": "Contentful",
+    "ats": "greenhouse",
+    "slug": "contentful",
+    "careers_url": "https://www.contentful.com/careers",
+    "industry": "CMS"
+  },
+  {
+    "name": "Squarespace",
+    "ats": "greenhouse",
+    "slug": "squarespace",
+    "careers_url": "https://www.squarespace.com/about/careers",
+    "industry": "Commerce"
+  },
+  {
+    "name": "Asana",
+    "ats": "greenhouse",
+    "slug": "asana",
+    "careers_url": "https://asana.com/jobs",
+    "industry": "Productivity"
+  },
+  {
+    "name": "Cloudflare",
+    "ats": "greenhouse",
+    "slug": "cloudflare",
+    "careers_url": "https://www.cloudflare.com/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "PagerDuty",
+    "ats": "greenhouse",
+    "slug": "pagerduty",
+    "careers_url": "https://www.pagerduty.com/careers",
+    "industry": "DevOps"
+  },
+  {
+    "name": "MongoDB",
+    "ats": "greenhouse",
+    "slug": "mongodb",
+    "careers_url": "https://www.mongodb.com/careers",
+    "industry": "Database"
+  },
+  {
+    "name": "Datadog",
+    "ats": "greenhouse",
+    "slug": "datadog",
+    "careers_url": "https://www.datadoghq.com/careers",
+    "industry": "Observability"
+  },
+  {
+    "name": "Okta",
+    "ats": "greenhouse",
+    "slug": "okta",
+    "careers_url": "https://www.okta.com/company/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "Mixpanel",
+    "ats": "greenhouse",
+    "slug": "mixpanel",
+    "careers_url": "https://mixpanel.com/jobs",
+    "industry": "Analytics"
+  },
+  {
+    "name": "Lyft",
+    "ats": "greenhouse",
+    "slug": "lyft",
+    "careers_url": "https://www.lyft.com/careers",
+    "industry": "Transportation"
+  },
+  {
+    "name": "Instacart",
+    "ats": "greenhouse",
+    "slug": "instacart",
+    "careers_url": "https://instacart.careers",
+    "industry": "Commerce"
+  },
+  {
+    "name": "Duolingo",
+    "ats": "greenhouse",
+    "slug": "duolingo",
+    "careers_url": "https://careers.duolingo.com",
+    "industry": "EdTech"
+  },
+  {
+    "name": "Block",
+    "ats": "greenhouse",
+    "slug": "block",
+    "careers_url": "https://block.xyz/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Twitch",
+    "ats": "greenhouse",
+    "slug": "twitch",
+    "careers_url": "https://www.twitch.tv/jobs",
+    "industry": "Entertainment"
+  },
+  {
+    "name": "Chime",
+    "ats": "greenhouse",
+    "slug": "chime",
+    "careers_url": "https://www.chime.com/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Faire",
+    "ats": "greenhouse",
+    "slug": "faire",
+    "careers_url": "https://www.faire.com/careers",
+    "industry": "Commerce"
+  },
+  {
+    "name": "Samsara",
+    "ats": "greenhouse",
+    "slug": "samsara",
+    "careers_url": "https://www.samsara.com/company/careers",
+    "industry": "IoT"
+  },
+  {
+    "name": "Verkada",
+    "ats": "greenhouse",
+    "slug": "verkada",
+    "careers_url": "https://www.verkada.com/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "Rubrik",
+    "ats": "greenhouse",
+    "slug": "rubrik",
+    "careers_url": "https://www.rubrik.com/company/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "Roblox",
+    "ats": "greenhouse",
+    "slug": "roblox",
+    "careers_url": "https://www.roblox.com/careers",
+    "industry": "Gaming"
+  },
+  {
+    "name": "Flexport",
+    "ats": "greenhouse",
+    "slug": "flexport",
+    "careers_url": "https://www.flexport.com/careers",
+    "industry": "Logistics"
+  },
+  {
+    "name": "Amplitude",
+    "ats": "greenhouse",
+    "slug": "amplitude",
+    "careers_url": "https://amplitude.com/careers",
+    "industry": "Analytics"
+  },
+  {
+    "name": "Discord",
+    "ats": "greenhouse",
+    "slug": "discord",
+    "careers_url": "https://discord.com/careers",
+    "industry": "Social"
+  },
+  {
+    "name": "Checkr",
+    "ats": "greenhouse",
+    "slug": "checkr",
+    "careers_url": "https://checkr.com/company/careers",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "GoFundMe",
+    "ats": "greenhouse",
+    "slug": "gofundme",
+    "careers_url": "https://www.gofundme.com/c/go/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Toast",
+    "ats": "greenhouse",
+    "slug": "toast",
+    "careers_url": "https://careers.toasttab.com",
+    "industry": "Restaurant Tech"
+  },
+  {
+    "name": "Waymo",
+    "ats": "greenhouse",
+    "slug": "waymo",
+    "careers_url": "https://waymo.com/careers",
+    "industry": "Autonomous Vehicles"
+  },
+  {
+    "name": "Attentive",
+    "ats": "greenhouse",
+    "slug": "attentive",
+    "careers_url": "https://www.attentivemobile.com/careers",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Klaviyo",
+    "ats": "greenhouse",
+    "slug": "klaviyo",
+    "careers_url": "https://www.klaviyo.com/careers",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Speechify",
+    "ats": "greenhouse",
+    "slug": "speechify",
+    "careers_url": "https://speechify.com/careers",
+    "industry": "EdTech"
+  },
+  {
+    "name": "Databricks",
+    "ats": "greenhouse",
+    "slug": "databricks",
+    "careers_url": "https://www.databricks.com/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "Relativity",
+    "ats": "greenhouse",
+    "slug": "relativity",
+    "careers_url": "https://www.relativity.com/careers",
+    "industry": "Legal Tech"
+  },
+  {
+    "name": "Braze",
+    "ats": "greenhouse",
+    "slug": "braze",
+    "careers_url": "https://www.braze.com/company/careers",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Elastic",
+    "ats": "greenhouse",
+    "slug": "elastic",
+    "careers_url": "https://www.elastic.co/about/careers",
+    "industry": "Search"
+  },
+  {
+    "name": "TripActions",
+    "ats": "greenhouse",
+    "slug": "tripactions",
+    "careers_url": "https://tripactions.com/jobs",
+    "industry": "Travel"
+  },
+  {
+    "name": "GitLab",
+    "ats": "greenhouse",
+    "slug": "gitlab",
+    "careers_url": "https://about.gitlab.com/jobs",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Intercom",
+    "ats": "greenhouse",
+    "slug": "intercom",
+    "careers_url": "https://www.intercom.com/careers",
+    "industry": "Customer Success"
+  },
+  {
+    "name": "Fivetran",
+    "ats": "greenhouse",
+    "slug": "fivetran",
+    "careers_url": "https://www.fivetran.com/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "Nubank",
+    "ats": "greenhouse",
+    "slug": "nubank",
+    "careers_url": "https://nubank.com.br/en/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Justworks",
+    "ats": "greenhouse",
+    "slug": "justworks",
+    "careers_url": "https://justworks.com/careers",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "Chainguard",
+    "ats": "greenhouse",
+    "slug": "chainguard",
+    "careers_url": "https://www.chainguard.dev/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "LinkedIn",
+    "ats": "greenhouse",
+    "slug": "linkedin",
+    "careers_url": "https://careers.linkedin.com",
+    "industry": "Social"
+  },
+  {
+    "name": "Algolia",
+    "ats": "greenhouse",
+    "slug": "algolia",
+    "careers_url": "https://www.algolia.com/careers",
+    "industry": "Search"
+  },
+  {
+    "name": "Pendo",
+    "ats": "greenhouse",
+    "slug": "pendo",
+    "careers_url": "https://www.pendo.io/company/careers",
+    "industry": "Analytics"
+  },
+  {
+    "name": "LaunchDarkly",
+    "ats": "greenhouse",
+    "slug": "launchdarkly",
+    "careers_url": "https://launchdarkly.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Marqeta",
+    "ats": "greenhouse",
+    "slug": "marqeta",
+    "careers_url": "https://www.marqeta.com/company/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "ZipRecruiter",
+    "ats": "greenhouse",
+    "slug": "ziprecruiter",
+    "careers_url": "https://www.ziprecruiter.com/careers",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "Zuora",
+    "ats": "greenhouse",
+    "slug": "zuora",
+    "careers_url": "https://www.zuora.com/about/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "CockroachLabs",
+    "ats": "greenhouse",
+    "slug": "cockroachlabs",
+    "careers_url": "https://www.cockroachlabs.com/careers",
+    "industry": "Database"
+  },
+  {
+    "name": "Salesloft",
+    "ats": "greenhouse",
+    "slug": "salesloft",
+    "careers_url": "https://salesloft.com/careers",
+    "industry": "Sales Tech"
+  },
+  {
+    "name": "Iterable",
+    "ats": "greenhouse",
+    "slug": "iterable",
+    "careers_url": "https://iterable.com/careers",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Axiom",
+    "ats": "greenhouse",
+    "slug": "axiom",
+    "careers_url": "https://axiom.co/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "Turing",
+    "ats": "greenhouse",
+    "slug": "turing",
+    "careers_url": "https://www.turing.com/careers",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "Yext",
+    "ats": "greenhouse",
+    "slug": "yext",
+    "careers_url": "https://www.yext.com/careers",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Yotpo",
+    "ats": "greenhouse",
+    "slug": "yotpo",
+    "careers_url": "https://www.yotpo.com/careers",
+    "industry": "Commerce"
+  },
+  {
+    "name": "Nextdoor",
+    "ats": "greenhouse",
+    "slug": "nextdoor",
+    "careers_url": "https://about.nextdoor.com/careers",
+    "industry": "Social"
+  },
+  {
+    "name": "Webflow",
+    "ats": "greenhouse",
+    "slug": "webflow",
+    "careers_url": "https://webflow.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Customer.io",
+    "ats": "greenhouse",
+    "slug": "customerio",
+    "careers_url": "https://customer.io/jobs",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Starburst",
+    "ats": "greenhouse",
+    "slug": "starburst",
+    "careers_url": "https://www.starburst.io/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "Sendbird",
+    "ats": "greenhouse",
+    "slug": "sendbird",
+    "careers_url": "https://sendbird.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Honeycomb",
+    "ats": "greenhouse",
+    "slug": "honeycomb",
+    "careers_url": "https://www.honeycomb.io/careers",
+    "industry": "Observability"
+  },
+  {
+    "name": "Upwork",
+    "ats": "greenhouse",
+    "slug": "upwork",
+    "careers_url": "https://www.upwork.com/careers",
+    "industry": "Marketplace"
+  },
+  {
+    "name": "PlanetScale",
+    "ats": "greenhouse",
+    "slug": "planetscale",
+    "careers_url": "https://planetscale.com/careers",
+    "industry": "Database"
+  },
+  {
+    "name": "Lob",
+    "ats": "greenhouse",
+    "slug": "lob",
+    "careers_url": "https://www.lob.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Descript",
+    "ats": "greenhouse",
+    "slug": "descript",
+    "careers_url": "https://www.descript.com/jobs",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Karat",
+    "ats": "greenhouse",
+    "slug": "karat",
+    "careers_url": "https://karat.com/careers",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "Dremio",
+    "ats": "greenhouse",
+    "slug": "dremio",
+    "careers_url": "https://www.dremio.com/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "Laika",
+    "ats": "greenhouse",
+    "slug": "laika",
+    "careers_url": "https://heylaika.com/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "Blend",
+    "ats": "greenhouse",
+    "slug": "blend",
+    "careers_url": "https://blend.com/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Netlify",
+    "ats": "greenhouse",
+    "slug": "netlify",
+    "careers_url": "https://www.netlify.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "AssemblyAI",
+    "ats": "greenhouse",
+    "slug": "assemblyai",
+    "careers_url": "https://www.assemblyai.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Calm",
+    "ats": "greenhouse",
+    "slug": "calm",
+    "careers_url": "https://www.calm.com/careers",
+    "industry": "Health"
+  },
+  {
+    "name": "Remote",
+    "ats": "greenhouse",
+    "slug": "remote",
+    "careers_url": "https://remote.com/careers",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "ClickHouse",
+    "ats": "greenhouse",
+    "slug": "clickhouse",
+    "careers_url": "https://clickhouse.com/careers",
+    "industry": "Database"
+  },
+  {
+    "name": "Postman",
+    "ats": "greenhouse",
+    "slug": "postman",
+    "careers_url": "https://www.postman.com/jobs",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Hightouch",
+    "ats": "greenhouse",
+    "slug": "hightouch",
+    "careers_url": "https://hightouch.com/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "New Relic",
+    "ats": "greenhouse",
+    "slug": "newrelic",
+    "careers_url": "https://newrelic.com/careers",
+    "industry": "Observability"
+  },
+  {
+    "name": "LogicMonitor",
+    "ats": "greenhouse",
+    "slug": "logicmonitor",
+    "careers_url": "https://www.logicmonitor.com/careers",
+    "industry": "Observability"
+  },
+  {
+    "name": "Fastly",
+    "ats": "greenhouse",
+    "slug": "fastly",
+    "careers_url": "https://www.fastly.com/about/careers",
+    "industry": "CDN"
+  },
+  {
+    "name": "fal",
+    "ats": "greenhouse",
+    "slug": "fal",
+    "careers_url": "https://fal.ai/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Mattermost",
+    "ats": "greenhouse",
+    "slug": "mattermost",
+    "careers_url": "https://mattermost.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Hootsuite",
+    "ats": "greenhouse",
+    "slug": "hootsuite",
+    "careers_url": "https://hootsuite.com/about/careers",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Brandwatch",
+    "ats": "greenhouse",
+    "slug": "brandwatch",
+    "careers_url": "https://www.brandwatch.com/careers",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Celonis",
+    "ats": "greenhouse",
+    "slug": "celonis",
+    "careers_url": "https://www.celonis.com/careers",
+    "industry": "Enterprise SaaS"
+  },
+  {
+    "name": "Cortex",
+    "ats": "greenhouse",
+    "slug": "cortex",
+    "careers_url": "https://www.cortex.io/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Linear",
+    "ats": "ashby",
+    "slug": "linear",
+    "careers_url": "https://linear.app/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Perplexity",
+    "ats": "ashby",
+    "slug": "perplexity",
+    "careers_url": "https://www.perplexity.ai/about#jobs",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Neon",
+    "ats": "ashby",
+    "slug": "neon",
+    "careers_url": "https://neon.tech/careers",
+    "industry": "Database"
+  },
+  {
+    "name": "Resend",
+    "ats": "ashby",
+    "slug": "resend",
+    "careers_url": "https://resend.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "OpenAI",
+    "ats": "ashby",
+    "slug": "openai",
+    "careers_url": "https://openai.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Notion",
+    "ats": "ashby",
+    "slug": "notion",
+    "careers_url": "https://www.notion.so/careers",
+    "industry": "Productivity"
+  },
+  {
+    "name": "Cohere",
+    "ats": "ashby",
+    "slug": "cohere",
+    "careers_url": "https://cohere.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Ramp",
+    "ats": "ashby",
+    "slug": "ramp",
+    "careers_url": "https://ramp.com/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Cursor",
+    "ats": "ashby",
+    "slug": "cursor",
+    "careers_url": "https://www.cursor.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Vanta",
+    "ats": "ashby",
+    "slug": "vanta",
+    "careers_url": "https://www.vanta.com/company/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "Plaid",
+    "ats": "ashby",
+    "slug": "plaid",
+    "careers_url": "https://plaid.com/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Replit",
+    "ats": "ashby",
+    "slug": "replit",
+    "careers_url": "https://replit.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Cerebras",
+    "ats": "ashby",
+    "slug": "cerebras",
+    "careers_url": "https://www.cerebras.net/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "ClickUp",
+    "ats": "ashby",
+    "slug": "clickup",
+    "careers_url": "https://clickup.com/careers",
+    "industry": "Productivity"
+  },
+  {
+    "name": "Baseten",
+    "ats": "ashby",
+    "slug": "baseten",
+    "careers_url": "https://www.baseten.co/about/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Drata",
+    "ats": "ashby",
+    "slug": "drata",
+    "careers_url": "https://drata.com/company/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "Temporal",
+    "ats": "ashby",
+    "slug": "temporal",
+    "careers_url": "https://temporal.io/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Watershed",
+    "ats": "ashby",
+    "slug": "watershed",
+    "careers_url": "https://watershed.com/careers",
+    "industry": "Climate Tech"
+  },
+  {
+    "name": "Benchling",
+    "ats": "ashby",
+    "slug": "benchling",
+    "careers_url": "https://www.benchling.com/careers",
+    "industry": "Life Sciences"
+  },
+  {
+    "name": "Attio",
+    "ats": "ashby",
+    "slug": "attio",
+    "careers_url": "https://attio.com/careers",
+    "industry": "CRM"
+  },
+  {
+    "name": "Relay",
+    "ats": "ashby",
+    "slug": "relay",
+    "careers_url": "https://relay.app/careers",
+    "industry": "Automation"
+  },
+  {
+    "name": "Modal",
+    "ats": "ashby",
+    "slug": "modal",
+    "careers_url": "https://modal.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Braintrust",
+    "ats": "ashby",
+    "slug": "braintrust",
+    "careers_url": "https://www.braintrust.dev/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Ditto",
+    "ats": "ashby",
+    "slug": "ditto",
+    "careers_url": "https://www.dittowords.com/careers",
+    "industry": "Design Tools"
+  },
+  {
+    "name": "Incident.io",
+    "ats": "ashby",
+    "slug": "incident",
+    "careers_url": "https://incident.io/careers",
+    "industry": "DevOps"
+  },
+  {
+    "name": "Brightwheel",
+    "ats": "ashby",
+    "slug": "brightwheel",
+    "careers_url": "https://mybrightwheel.com/careers",
+    "industry": "EdTech"
+  },
+  {
+    "name": "PostHog",
+    "ats": "ashby",
+    "slug": "posthog",
+    "careers_url": "https://posthog.com/careers",
+    "industry": "Analytics"
+  },
+  {
+    "name": "Persona",
+    "ats": "ashby",
+    "slug": "persona",
+    "careers_url": "https://withpersona.com/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "Zapier",
+    "ats": "ashby",
+    "slug": "zapier",
+    "careers_url": "https://zapier.com/jobs",
+    "industry": "Automation"
+  },
+  {
+    "name": "Oneleet",
+    "ats": "ashby",
+    "slug": "oneleet",
+    "careers_url": "https://oneleet.com/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "Jellyfish",
+    "ats": "ashby",
+    "slug": "jellyfish",
+    "careers_url": "https://jellyfish.co/company/careers",
+    "industry": "Analytics"
+  },
+  {
+    "name": "Substack",
+    "ats": "ashby",
+    "slug": "substack",
+    "careers_url": "https://substack.com/jobs",
+    "industry": "Media"
+  },
+  {
+    "name": "Demandbase",
+    "ats": "ashby",
+    "slug": "demandbase",
+    "careers_url": "https://www.demandbase.com/careers",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Oso",
+    "ats": "ashby",
+    "slug": "oso",
+    "careers_url": "https://www.osohq.com/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "Levels.fyi",
+    "ats": "ashby",
+    "slug": "levels",
+    "careers_url": "https://www.levels.fyi/careers",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "Hedra",
+    "ats": "ashby",
+    "slug": "hedra",
+    "careers_url": "https://www.hedra.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Prefect",
+    "ats": "ashby",
+    "slug": "prefect",
+    "careers_url": "https://www.prefect.io/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "Stytch",
+    "ats": "ashby",
+    "slug": "stytch",
+    "careers_url": "https://stytch.com/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "FullStory",
+    "ats": "ashby",
+    "slug": "fullstory",
+    "careers_url": "https://www.fullstory.com/careers",
+    "industry": "Analytics"
+  },
+  {
+    "name": "OpenSea",
+    "ats": "ashby",
+    "slug": "opensea",
+    "careers_url": "https://opensea.io/careers",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Pika",
+    "ats": "ashby",
+    "slug": "pika",
+    "careers_url": "https://pika.art/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Runway",
+    "ats": "ashby",
+    "slug": "runway",
+    "careers_url": "https://runwayml.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Datafold",
+    "ats": "ashby",
+    "slug": "datafold",
+    "careers_url": "https://www.datafold.com/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "GitBook",
+    "ats": "ashby",
+    "slug": "gitbook",
+    "careers_url": "https://www.gitbook.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Continue",
+    "ats": "ashby",
+    "slug": "continue",
+    "careers_url": "https://continue.dev/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "ReadMe",
+    "ats": "ashby",
+    "slug": "readme",
+    "careers_url": "https://readme.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "ElevenLabs",
+    "ats": "ashby",
+    "slug": "elevenlabs",
+    "careers_url": "https://elevenlabs.io/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Headway",
+    "ats": "ashby",
+    "slug": "headway",
+    "careers_url": "https://headway.co/careers",
+    "industry": "Health"
+  },
+  {
+    "name": "Polymarket",
+    "ats": "ashby",
+    "slug": "polymarket",
+    "careers_url": "https://polymarket.com/careers",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Deepgram",
+    "ats": "ashby",
+    "slug": "deepgram",
+    "careers_url": "https://deepgram.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Suno",
+    "ats": "ashby",
+    "slug": "suno",
+    "careers_url": "https://suno.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Supabase",
+    "ats": "ashby",
+    "slug": "supabase",
+    "careers_url": "https://supabase.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Miro",
+    "ats": "ashby",
+    "slug": "miro",
+    "careers_url": "https://miro.com/careers",
+    "industry": "Collaboration"
+  },
+  {
+    "name": "Cartesia",
+    "ats": "ashby",
+    "slug": "cartesia",
+    "careers_url": "https://cartesia.ai/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Teleport",
+    "ats": "ashby",
+    "slug": "goteleport",
+    "careers_url": "https://goteleport.com/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "DeepL",
+    "ats": "ashby",
+    "slug": "deepl",
+    "careers_url": "https://www.deepl.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Render",
+    "ats": "ashby",
+    "slug": "render",
+    "careers_url": "https://render.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Gorgias",
+    "ats": "ashby",
+    "slug": "gorgias",
+    "careers_url": "https://www.gorgias.com/careers",
+    "industry": "Customer Success"
+  },
+  {
+    "name": "Anyscale",
+    "ats": "ashby",
+    "slug": "anyscale",
+    "careers_url": "https://www.anyscale.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Railway",
+    "ats": "ashby",
+    "slug": "railway",
+    "careers_url": "https://railway.app/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Airbyte",
+    "ats": "ashby",
+    "slug": "airbyte",
+    "careers_url": "https://airbyte.com/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "Statsig",
+    "ats": "ashby",
+    "slug": "statsig",
+    "careers_url": "https://www.statsig.com/careers",
+    "industry": "Analytics"
+  },
+  {
+    "name": "Plane",
+    "ats": "ashby",
+    "slug": "plane",
+    "careers_url": "https://plane.so/careers",
+    "industry": "Productivity"
+  },
+  {
+    "name": "Electric",
+    "ats": "ashby",
+    "slug": "electric",
+    "careers_url": "https://www.electric.ai/careers",
+    "industry": "IT Management"
+  },
+  {
+    "name": "Fathom",
+    "ats": "ashby",
+    "slug": "fathom",
+    "careers_url": "https://fathom.video/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Causal",
+    "ats": "ashby",
+    "slug": "causal",
+    "careers_url": "https://www.causal.app/careers",
+    "industry": "Analytics"
+  },
+  {
+    "name": "Mux",
+    "ats": "ashby",
+    "slug": "mux",
+    "careers_url": "https://www.mux.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Sentry",
+    "ats": "ashby",
+    "slug": "sentry",
+    "careers_url": "https://sentry.io/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "LangChain",
+    "ats": "ashby",
+    "slug": "langchain",
+    "careers_url": "https://www.langchain.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Redis",
+    "ats": "ashby",
+    "slug": "redis",
+    "careers_url": "https://redis.io/careers",
+    "industry": "Database"
+  },
+  {
+    "name": "Composio",
+    "ats": "ashby",
+    "slug": "composio",
+    "careers_url": "https://composio.dev/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Astronomer",
+    "ats": "ashby",
+    "slug": "astronomer",
+    "careers_url": "https://www.astronomer.io/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "E2B",
+    "ats": "ashby",
+    "slug": "e2b",
+    "careers_url": "https://e2b.dev/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "LlamaIndex",
+    "ats": "ashby",
+    "slug": "llamaindex",
+    "careers_url": "https://www.llamaindex.ai/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Turbopuffer",
+    "ats": "ashby",
+    "slug": "turbopuffer",
+    "careers_url": "https://turbopuffer.com/careers",
+    "industry": "Database"
+  },
+  {
+    "name": "Langfuse",
+    "ats": "ashby",
+    "slug": "langfuse",
+    "careers_url": "https://langfuse.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "LiteLLM",
+    "ats": "ashby",
+    "slug": "litellm",
+    "careers_url": "https://litellm.ai/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Help Scout",
+    "ats": "ashby",
+    "slug": "helpscout",
+    "careers_url": "https://www.helpscout.com/careers",
+    "industry": "Customer Success"
+  },
+  {
+    "name": "Pinecone",
+    "ats": "ashby",
+    "slug": "pinecone",
+    "careers_url": "https://www.pinecone.io/careers",
+    "industry": "Database"
+  },
+  {
+    "name": "Arize AI",
+    "ats": "ashby",
+    "slug": "phoenix",
+    "careers_url": "https://arize.com/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Weaviate",
+    "ats": "ashby",
+    "slug": "weaviate",
+    "careers_url": "https://weaviate.io/company/careers",
+    "industry": "Database"
+  },
+  {
+    "name": "Patreon",
+    "ats": "ashby",
+    "slug": "patreon",
+    "careers_url": "https://www.patreon.com/careers",
+    "industry": "Creator Economy"
+  },
+  {
+    "name": "lemlist",
+    "ats": "ashby",
+    "slug": "lemlist",
+    "careers_url": "https://www.lemlist.com/careers",
+    "industry": "Sales Tech"
+  },
+  {
+    "name": "SurveyMonkey",
+    "ats": "ashby",
+    "slug": "surveymonkey",
+    "careers_url": "https://www.surveymonkey.com/mp/careers",
+    "industry": "SaaS"
+  },
+  {
+    "name": "Outreach",
+    "ats": "lever",
+    "slug": "outreach",
+    "careers_url": "https://www.outreach.io/company/careers",
+    "industry": "Sales Tech"
+  },
+  {
+    "name": "Metabase",
+    "ats": "lever",
+    "slug": "metabase",
+    "careers_url": "https://www.metabase.com/careers",
+    "industry": "Analytics"
+  },
+  {
+    "name": "Toptal",
+    "ats": "lever",
+    "slug": "toptal",
+    "careers_url": "https://www.toptal.com/careers",
+    "industry": "Marketplace"
+  },
+  {
+    "name": "Immuta",
+    "ats": "lever",
+    "slug": "immuta",
+    "careers_url": "https://www.immuta.com/company/careers",
+    "industry": "Security"
+  },
+  {
+    "name": "Relay.app",
+    "ats": "lever",
+    "slug": "relay",
+    "careers_url": "https://relay.app/careers",
+    "industry": "Automation"
+  },
+  {
+    "name": "Binance",
+    "ats": "lever",
+    "slug": "binance",
+    "careers_url": "https://www.binance.com/en/careers",
+    "industry": "Crypto"
+  },
+  {
+    "name": "LogRocket",
+    "ats": "lever",
+    "slug": "logrocket",
+    "careers_url": "https://logrocket.com/careers",
+    "industry": "Developer Tools"
+  },
+  {
+    "name": "Veeva",
+    "ats": "lever",
+    "slug": "veeva",
+    "careers_url": "https://www.veeva.com/careers",
+    "industry": "Life Sciences"
+  },
+  {
+    "name": "Spotify",
+    "ats": "lever",
+    "slug": "spotify",
+    "careers_url": "https://www.lifeatspotify.com",
+    "industry": "Entertainment"
+  },
+  {
+    "name": "Alluxio",
+    "ats": "lever",
+    "slug": "alluxio",
+    "careers_url": "https://www.alluxio.io/careers",
+    "industry": "Data"
+  },
+  {
+    "name": "Mindtickle",
+    "ats": "lever",
+    "slug": "mindtickle",
+    "careers_url": "https://www.mindtickle.com/careers",
+    "industry": "Sales Tech"
+  },
+  {
+    "name": "Highspot",
+    "ats": "lever",
+    "slug": "highspot",
+    "careers_url": "https://www.highspot.com/careers",
+    "industry": "Sales Tech"
+  },
+  {
+    "name": "Conversica",
+    "ats": "lever",
+    "slug": "conversica",
+    "careers_url": "https://www.conversica.com/company/careers",
+    "industry": "AI/ML"
+  },
+  {
+    "name": "Zscaler",
+    "ats": "greenhouse",
+    "slug": "zscaler",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Palantir",
+    "ats": "lever",
+    "slug": "palantir",
+    "careers_url": null,
+    "industry": "Software",
+    "active": true
+  },
+  {
+    "name": "Affirm",
+    "ats": "greenhouse",
+    "slug": "affirm",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Sierra",
+    "ats": "ashby",
+    "slug": "sierra",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Decagon",
+    "ats": "ashby",
+    "slug": "decagon",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "SoFi",
+    "ats": "greenhouse",
+    "slug": "sofi",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Nuro",
+    "ats": "greenhouse",
+    "slug": "nuro",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Included Health",
+    "ats": "lever",
+    "slug": "includedhealth",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Neuralink",
+    "ats": "greenhouse",
+    "slug": "neuralink",
+    "careers_url": null,
+    "industry": "Neurotech",
+    "active": true
+  },
+  {
+    "name": "Peloton",
+    "ats": "greenhouse",
+    "slug": "peloton",
+    "careers_url": null,
+    "industry": "Fitness",
+    "active": true
+  },
+  {
+    "name": "Ro",
+    "ats": "lever",
+    "slug": "ro",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Betterment",
+    "ats": "greenhouse",
+    "slug": "betterment",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Sumo Logic",
+    "ats": "greenhouse",
+    "slug": "sumologic",
+    "careers_url": null,
+    "industry": "Observability",
+    "active": true
+  },
+  {
+    "name": "Warp",
+    "ats": "ashby",
+    "slug": "warp",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Instabase",
+    "ats": "greenhouse",
+    "slug": "instabase",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Udemy",
+    "ats": "greenhouse",
+    "slug": "udemy",
+    "careers_url": null,
+    "industry": "EdTech",
+    "active": true
+  },
+  {
+    "name": "Coursera",
+    "ats": "greenhouse",
+    "slug": "coursera",
+    "careers_url": null,
+    "industry": "EdTech",
+    "active": true
+  },
+  {
+    "name": "Gemini",
+    "ats": "greenhouse",
+    "slug": "gemini",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Harvey",
+    "ats": "ashby",
+    "slug": "harvey",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Abridge",
+    "ats": "ashby",
+    "slug": "abridge",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Cognition",
+    "ats": "ashby",
+    "slug": "cognition",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Mercor",
+    "ats": "ashby",
+    "slug": "mercor",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  }
 ]

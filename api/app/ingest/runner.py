@@ -19,6 +19,8 @@ from .normalize import (
     infer_experience_level,
     infer_remote,
     infer_sponsorship,
+    keying_title,
+    normalize_department,
     normalize_location,
     normalize_title,
     parse_posted_at,
@@ -69,7 +71,8 @@ async def _ingest_company(
         result["jobs_seen"] += 1
         t_norm = normalize_title(raw.title)
         l_norm = normalize_location(raw.location)
-        dedup = make_dedup_key(company.id, dedup_title(t_norm, l_norm))
+        # Key off keying_title (preserves the distinguishing team qualifier), NOT t_norm.
+        dedup = make_dedup_key(company.id, dedup_title(keying_title(raw.title), l_norm))
         desc_text = strip_html(raw.description_html)
         sal_min, sal_max = extract_salary(desc_text)
         tags = extract_tech_tags(desc_text)
@@ -86,7 +89,8 @@ async def _ingest_company(
                 location_raw=raw.location,
                 location_normalized=l_norm,
                 remote=infer_remote(raw),
-                department=raw.department,
+                department=normalize_department(raw.department),
+                department_raw=raw.department,
                 employment_type=raw.employment_type,
                 description_html=raw.description_html,
                 description_text=desc_text,

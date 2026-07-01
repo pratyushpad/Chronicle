@@ -79,7 +79,8 @@ class Job(Base):
     location_raw = Column(Text, nullable=True)
     location_normalized = Column(Text, nullable=True)
     remote = Column(Boolean, nullable=True)
-    department = Column(Text, nullable=True)
+    department = Column(Text, nullable=True)  # normalized controlled-vocab category
+    department_raw = Column(Text, nullable=True)  # untouched original ATS value (retune escape hatch)
     employment_type = Column(Text, nullable=True)
     description_html = Column(Text, nullable=True)
     description_text = Column(Text, nullable=True)
@@ -126,6 +127,8 @@ class User(Base):
     email = Column(String, nullable=False, unique=True)
     name = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
+    # sha256 of the browser-extension bearer token (plaintext shown once at issue). Null = no token.
+    extension_token_hash = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     profile = relationship("Profile", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -141,6 +144,8 @@ class Profile(Base):
     full_name = Column(String, nullable=True)
     headline = Column(String, nullable=True)
     location = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    work_authorization = Column(String, nullable=True)  # e.g. "US Citizen", "H-1B", "Need sponsorship"
     remote_pref = Column(Enum(RemotePref), nullable=True)
     seniority_pref = Column(ARRAY(String), nullable=True)
     tracks = Column(ARRAY(String), nullable=True)

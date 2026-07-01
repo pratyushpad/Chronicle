@@ -59,6 +59,30 @@ def dedup_title(title_normalized: str, location_normalized: str | None) -> str:
     return t.strip(" -–—,") or title_normalized
 
 
+# Genuine req-id tail: keyword-prefixed ("- JR12345", "req#5").
+_KEYING_REQ_ID_RE = re.compile(
+    r"[\s\-–—]+(?:req|job|jid|jreq|jr|ref)[#\s]?[\w\-]+\s*$", re.IGNORECASE
+)
+# Number/id-shaped trailing parenthetical ("(12345)", "(R-2024-1)", "(Req #7)").
+_KEYING_NUM_PAREN_RE = re.compile(r"[\s\-–—]+\([^)]*\d[^)]*\)\s*$")
+
+
+def keying_title(title: str) -> str:
+    """Title used to BUILD the dedup key (distinct from `normalize_title`, which is
+    display-facing and strips every trailing parenthetical).
+
+    `normalize_title`'s req-id regex throws away the distinguishing team/qualifier
+    parenthetical — so 'Staff Software Engineer (Data Platform)' and '(Money)' both
+    reduce to 'staff software engineer' and collapse into one card (confirmed prod
+    over-collapse). This variant PRESERVES an alphabetic qualifier and strips only
+    genuine req-id noise (keyword- or number-shaped tails). The location suffix is
+    stripped afterwards by `dedup_title`, so same role cross-posted to N cities still
+    collapses (SIMBA stays one) while different qualifiers stay distinct."""
+    t = _KEYING_REQ_ID_RE.sub("", title)
+    t = _KEYING_NUM_PAREN_RE.sub("", t)
+    return _WHITESPACE_RE.sub(" ", t).strip().lower()
+
+
 def infer_remote(raw_job: RawJob) -> bool | None:
     if raw_job.remote is not None:
         return raw_job.remote
@@ -86,6 +110,56 @@ def infer_experience_level(title: str) -> str | None:
     if _MID_RE.search(title):
         return "Mid Level"
     return None
+
+
+# ── Department normalization (controlled vocabulary) ──────────────────────────
+
+# Leading numeric/req code block, e.g. "20213 ", "REQ-123 - ", "#45 ".
+_DEPT_CODE_RE = re.compile(r"^[\s#]*[A-Za-z]{0,4}-?\d[\w\-]*\s*[-–—:]?\s*")
+
+# Ordered (pattern, canonical) — FIRST match wins, so order resolves overlaps:
+# Security before Engineering ("security engineering" → Security); Marketing before
+# Product/Sales ("product marketing" → Marketing); Sales's "account executive" before
+# Finance's "accounting". Position-independent — never slices to the trailing segment
+# (which is how internal org names like "Square Outside" used to leak through).
+_DEPT_KEYWORDS: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"security|infosec|appsec|trust\s*&?\s*(?:and\s*)?safety"), "Security"),
+    (re.compile(r"design|user experience|\bux\b|\bui\b|creative"), "Design"),
+    (re.compile(r"\bdata\b|analytics|machine learning|data science|artificial intelligence|business intelligence|\bml\b|\bai\b"), "Data"),
+    (re.compile(r"marketing|\bmarket\b|\bbrand\b|growth|communications|\bcontent\b|demand gen|\bseo\b|public relations|social media"), "Marketing"),
+    (re.compile(r"product"), "Product"),
+    (re.compile(r"engineer|software|developer|\bdev\b|devops|\bsre\b|infrastructure|\binfra\b|platform|backend|front[\s-]?end|full[\s-]?stack|\bqa\b|quality assurance|technical|hardware|firmware|robotics|\bsystems?\b"), "Engineering"),
+    (re.compile(r"\bsales\b|account executive|account manager|account director|business development|revenue|\bgtm\b|go[\s-]?to[\s-]?market|\bs&m\b|partnership"), "Sales"),
+    (re.compile(r"finance|financial|accounting|controller|treasury|fp&a|\baudit\b|\btax\b|procurement|payroll"), "Finance"),
+    (re.compile(r"people|human resources|\bhr\b|talent|recruit|learning (?:and|&) development|\bl&d\b|compensation|benefits|workplace|diversity"), "People"),
+    (re.compile(r"legal|counsel|compliance|regulatory|privacy|paralegal"), "Legal"),
+    (re.compile(r"customer success|customer experience|customer service|customer support|customer care|\bcx\b|\bsupport\b|help desk"), "Support"),
+    (re.compile(r"research|\br&d\b|\bscience\b"), "Research"),
+    (re.compile(r"information technology|\bit\b|helpdesk|sysadmin"), "IT"),
+    (re.compile(r"operations|\bops\b|logistics|supply chain|fulfillment|warehouse|manufacturing|facilities"), "Operations"),
+    (re.compile(r"g&a|general (?:and|&) administrative|administrative|\badmin\b|corporate|\boffice\b"), "G&A"),
+]
+
+
+def normalize_department(raw: str | None) -> str | None:
+    """Map a raw ATS department string to a clean controlled-vocabulary category.
+
+    Keyword-matched position-independently against a canonical set, so an internal org
+    segment (e.g. "20213 S&M - Sales - Square Outside") resolves to its category
+    ("Sales") instead of leaking the org name. Unknown values collapse to "Other" so
+    filter facets stay clean; the untouched original is preserved in
+    Job.department_raw for retuning without re-ingesting. Empty/None → None (no facet)."""
+    if not raw:
+        return None
+    s = _DEPT_CODE_RE.sub("", raw)
+    s = _WHITESPACE_RE.sub(" ", s).strip()
+    if not s:
+        return None
+    low = s.lower()
+    for pattern, canonical in _DEPT_KEYWORDS:
+        if pattern.search(low):
+            return canonical
+    return "Other"
 
 
 # ── Heuristic enrichment ──────────────────────────────────────────────────────

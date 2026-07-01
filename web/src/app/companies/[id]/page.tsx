@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCompany, getJobs } from "@/lib/api";
+import { getCompany, getCompanyVelocity, getJobs, type CompanyVelocity } from "@/lib/api";
 import { JobCard } from "@/components/JobCard";
 import { SectionLabel } from "@/components/SectionLabel";
+import { HiringVelocity } from "@/components/HiringVelocity";
 import { Pagination } from "@/components/Pagination";
 import { formatNumber, formatDate } from "@/lib/utils";
 
@@ -24,6 +25,14 @@ export default async function CompanyPage({ params, searchParams }: Props) {
     ]);
   } catch {
     notFound();
+  }
+
+  // Velocity is a progressive enhancement — never fail the page if it errors.
+  let velocity: CompanyVelocity | null = null;
+  try {
+    velocity = await getCompanyVelocity(parseInt(id, 10));
+  } catch {
+    velocity = null;
   }
 
   return (
@@ -73,6 +82,14 @@ export default async function CompanyPage({ params, searchParams }: Props) {
           )}
         </div>
       </div>
+
+      <div className="border-t border-border" />
+
+      {velocity && (velocity.active_now > 0 || velocity.weeks.some((w) => w.opened || w.closed)) && (
+        <div className="mt-8">
+          <HiringVelocity data={velocity} />
+        </div>
+      )}
 
       <div className="border-t border-border" />
 

@@ -166,6 +166,9 @@ export function Nav() {
               <Link href="/tracker" className={linkClass}>
                 Tracker
               </Link>
+              <Link href="/settings" className={linkClass}>
+                Settings
+              </Link>
               <NotificationBell email={session.user!.email!} />
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}

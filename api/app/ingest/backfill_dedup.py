@@ -1,5 +1,11 @@
-"""One-off backfill: recompute every Job.dedup_key with the location-independent
-key so cross-posted city duplicates collapse to one logical role.
+"""One-off backfill: recompute every Job.dedup_key.
+
+Location-independent key so cross-posted city duplicates collapse to one logical role,
+AND (as of the over-collapse fix) keyed off `keying_title`, which preserves the
+distinguishing team qualifier — e.g. 'Staff Software Engineer (Data Platform)' vs
+'(Money)' — so genuinely distinct reqs at one company no longer merge into one card.
+Must key off raw `job.title` (not `job.title_normalized`, which already stripped the
+qualifier).
 
 Run from the api/ directory:  python -m app.ingest.backfill_dedup
 Idempotent — safe to re-run. No schema change (dedup_key column already exists).
@@ -15,7 +21,7 @@ from sqlalchemy import select  # noqa: E402 — after dotenv
 from app.db import get_session  # noqa: E402 — after dotenv (db reads DATABASE_URL at import)
 from app.models import Job  # noqa: E402
 from .dedupe import make_dedup_key  # noqa: E402
-from .normalize import dedup_title, normalize_title  # noqa: E402
+from .normalize import dedup_title, keying_title  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -30,8 +36,8 @@ def main() -> None:
         jobs = session.execute(select(Job)).scalars().all()
         total = len(jobs)
         for i, job in enumerate(jobs, 1):
-            t_norm = job.title_normalized or normalize_title(job.title)
-            new_key = make_dedup_key(job.company_id, dedup_title(t_norm, job.location_normalized))
+            k_title = keying_title(job.title)
+            new_key = make_dedup_key(job.company_id, dedup_title(k_title, job.location_normalized))
             if new_key != job.dedup_key:
                 job.dedup_key = new_key
                 updated += 1
