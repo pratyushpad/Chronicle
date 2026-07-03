@@ -1,0 +1,614 @@
+[
+  {
+    "name": "Radiant",
+    "ats": "ashby",
+    "slug": "radiant",
+    "industry": "Energy"
+  },
+  {
+    "name": "Endor Labs",
+    "ats": "greenhouse",
+    "slug": "endorlabs",
+    "industry": "Security"
+  },
+  {
+    "name": "Alchemy",
+    "ats": "ashby",
+    "slug": "alchemy",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Calendly",
+    "ats": "greenhouse",
+    "slug": "calendly",
+    "industry": "Productivity"
+  },
+  {
+    "name": "Dust",
+    "ats": "ashby",
+    "slug": "dust",
+    "industry": "AI"
+  },
+  {
+    "name": "Granola",
+    "ats": "ashby",
+    "slug": "granola",
+    "industry": "AI"
+  },
+  {
+    "name": "Phantom",
+    "ats": "ashby",
+    "slug": "phantom",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Aerospike",
+    "ats": "greenhouse",
+    "slug": "aerospike",
+    "industry": "Data"
+  },
+  {
+    "name": "Freenome",
+    "ats": "greenhouse",
+    "slug": "freenome",
+    "industry": "Biotech"
+  },
+  {
+    "name": "Character AI",
+    "ats": "ashby",
+    "slug": "character",
+    "industry": "AI"
+  },
+  {
+    "name": "Novo",
+    "ats": "ashby",
+    "slug": "novo",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Bugcrowd",
+    "ats": "greenhouse",
+    "slug": "bugcrowd",
+    "industry": "Security"
+  },
+  {
+    "name": "Photoroom",
+    "ats": "ashby",
+    "slug": "photoroom",
+    "industry": "AI"
+  },
+  {
+    "name": "Melio",
+    "ats": "greenhouse",
+    "slug": "melio",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Wealthfront",
+    "ats": "lever",
+    "slug": "wealthfront",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Column",
+    "ats": "ashby",
+    "slug": "column",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Ritual",
+    "ats": "greenhouse",
+    "slug": "ritual",
+    "industry": "Consumer"
+  },
+  {
+    "name": "Ginkgo Bioworks",
+    "ats": "greenhouse",
+    "slug": "ginkgobioworks",
+    "industry": "Biotech"
+  },
+  {
+    "name": "Oyster",
+    "ats": "ashby",
+    "slug": "oyster",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "Poolside",
+    "ats": "ashby",
+    "slug": "poolside",
+    "industry": "AI"
+  },
+  {
+    "name": "CircleCI",
+    "ats": "greenhouse",
+    "slug": "circleci",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Notable",
+    "ats": "ashby",
+    "slug": "notable",
+    "industry": "AI"
+  },
+  {
+    "name": "Legion",
+    "ats": "greenhouse",
+    "slug": "legion",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "Arcadia",
+    "ats": "lever",
+    "slug": "arcadia",
+    "industry": "Climate"
+  },
+  {
+    "name": "Labelbox",
+    "ats": "greenhouse",
+    "slug": "labelbox",
+    "industry": "AI"
+  },
+  {
+    "name": "Rondo Energy",
+    "ats": "greenhouse",
+    "slug": "rondoenergy",
+    "industry": "Energy"
+  },
+  {
+    "name": "Observe.AI",
+    "ats": "greenhouse",
+    "slug": "observeai",
+    "industry": "AI"
+  },
+  {
+    "name": "Read AI",
+    "ats": "ashby",
+    "slug": "read-ai",
+    "industry": "AI"
+  },
+  {
+    "name": "insitro",
+    "ats": "ashby",
+    "slug": "insitro",
+    "industry": "Biotech"
+  },
+  {
+    "name": "Lithic",
+    "ats": "greenhouse",
+    "slug": "lithic",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Coder",
+    "ats": "ashby",
+    "slug": "coder",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Guild",
+    "ats": "greenhouse",
+    "slug": "guild",
+    "industry": "EdTech"
+  },
+  {
+    "name": "Ledger",
+    "ats": "ashby",
+    "slug": "ledger",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Galileo",
+    "ats": "greenhouse",
+    "slug": "galileo",
+    "industry": "AI"
+  },
+  {
+    "name": "Neon",
+    "ats": "lever",
+    "slug": "neon",
+    "industry": "Data"
+  },
+  {
+    "name": "Vantage",
+    "ats": "ashby",
+    "slug": "vantage",
+    "industry": "Infrastructure"
+  },
+  {
+    "name": "Unit",
+    "ats": "ashby",
+    "slug": "unit",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Descope",
+    "ats": "greenhouse",
+    "slug": "descope",
+    "industry": "Security"
+  },
+  {
+    "name": "Patch",
+    "ats": "greenhouse",
+    "slug": "patch",
+    "industry": "Climate"
+  },
+  {
+    "name": "Tavus",
+    "ats": "ashby",
+    "slug": "tavus",
+    "industry": "AI"
+  },
+  {
+    "name": "Namespace",
+    "ats": "ashby",
+    "slug": "namespace",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Sonatype",
+    "ats": "lever",
+    "slug": "sonatype",
+    "industry": "Security"
+  },
+  {
+    "name": "Imply",
+    "ats": "greenhouse",
+    "slug": "imply",
+    "industry": "Data"
+  },
+  {
+    "name": "Latch Bio",
+    "ats": "ashby",
+    "slug": "latchbio",
+    "industry": "Biotech"
+  },
+  {
+    "name": "Monte Carlo",
+    "ats": "ashby",
+    "slug": "montecarlodata",
+    "industry": "Data"
+  },
+  {
+    "name": "Modern Treasury",
+    "ats": "ashby",
+    "slug": "moderntreasury",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Highnote",
+    "ats": "greenhouse",
+    "slug": "highnote",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Watershed",
+    "ats": "greenhouse",
+    "slug": "watershed",
+    "industry": "Climate"
+  },
+  {
+    "name": "Unstructured",
+    "ats": "ashby",
+    "slug": "unstructured",
+    "industry": "AI"
+  },
+  {
+    "name": "Aven",
+    "ats": "ashby",
+    "slug": "aven",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Bitso",
+    "ats": "greenhouse",
+    "slug": "bitso",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Consensys",
+    "ats": "greenhouse",
+    "slug": "consensys",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Cobot",
+    "ats": "ashby",
+    "slug": "cobot",
+    "industry": "Robotics"
+  },
+  {
+    "name": "Reka AI",
+    "ats": "ashby",
+    "slug": "reka",
+    "industry": "AI"
+  },
+  {
+    "name": "Cybereason",
+    "ats": "greenhouse",
+    "slug": "cybereason",
+    "industry": "Security"
+  },
+  {
+    "name": "Sprig",
+    "ats": "ashby",
+    "slug": "sprig",
+    "industry": "Analytics"
+  },
+  {
+    "name": "Aurora Solar",
+    "ats": "ashby",
+    "slug": "aurorasolar",
+    "industry": "Energy"
+  },
+  {
+    "name": "Graphite",
+    "ats": "ashby",
+    "slug": "graphite",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Gauntlet",
+    "ats": "lever",
+    "slug": "gauntlet",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Expel",
+    "ats": "greenhouse",
+    "slug": "expel",
+    "industry": "Security"
+  },
+  {
+    "name": "Fay",
+    "ats": "greenhouse",
+    "slug": "fay",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Sourcegraph",
+    "ats": "greenhouse",
+    "slug": "sourcegraph91",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Aptos Labs",
+    "ats": "greenhouse",
+    "slug": "aptoslabs",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Sysdig",
+    "ats": "lever",
+    "slug": "sysdig",
+    "industry": "Security"
+  },
+  {
+    "name": "Material Security",
+    "ats": "ashby",
+    "slug": "materialsecurity",
+    "industry": "Security"
+  },
+  {
+    "name": "LanceDB",
+    "ats": "ashby",
+    "slug": "lancedb",
+    "industry": "Data"
+  },
+  {
+    "name": "Motherduck",
+    "ats": "ashby",
+    "slug": "motherduck",
+    "industry": "Data"
+  },
+  {
+    "name": "Orca Security",
+    "ats": "greenhouse",
+    "slug": "orcasecurity",
+    "industry": "Security"
+  },
+  {
+    "name": "Outschool",
+    "ats": "greenhouse",
+    "slug": "outschool",
+    "industry": "EdTech"
+  },
+  {
+    "name": "Ava Labs",
+    "ats": "ashby",
+    "slug": "ava-labs",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Twelve",
+    "ats": "ashby",
+    "slug": "twelve",
+    "industry": "Energy"
+  },
+  {
+    "name": "Alloy",
+    "ats": "lever",
+    "slug": "alloy",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Doppler",
+    "ats": "ashby",
+    "slug": "doppler",
+    "industry": "Security"
+  },
+  {
+    "name": "MasterClass",
+    "ats": "greenhouse",
+    "slug": "masterclass",
+    "industry": "EdTech"
+  },
+  {
+    "name": "Hume AI",
+    "ats": "greenhouse",
+    "slug": "humeai",
+    "industry": "AI"
+  },
+  {
+    "name": "Knock",
+    "ats": "ashby",
+    "slug": "knock",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Aviator",
+    "ats": "ashby",
+    "slug": "aviator",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Magic Eden",
+    "ats": "ashby",
+    "slug": "magiceden",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Atlan",
+    "ats": "ashby",
+    "slug": "atlan",
+    "industry": "Data"
+  },
+  {
+    "name": "Sifflet",
+    "ats": "ashby",
+    "slug": "sifflet",
+    "industry": "Data"
+  },
+  {
+    "name": "Alma",
+    "ats": "greenhouse",
+    "slug": "alma",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Asimov",
+    "ats": "ashby",
+    "slug": "asimov",
+    "industry": "Biotech"
+  },
+  {
+    "name": "Imbue",
+    "ats": "greenhouse",
+    "slug": "imbue",
+    "industry": "AI"
+  },
+  {
+    "name": "Warp",
+    "ats": "greenhouse",
+    "slug": "warp",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Cedar",
+    "ats": "ashby",
+    "slug": "cedar",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Cerebral",
+    "ats": "greenhouse",
+    "slug": "cerebral",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Mem0",
+    "ats": "ashby",
+    "slug": "mem0",
+    "industry": "AI"
+  },
+  {
+    "name": "Trigger.dev",
+    "ats": "ashby",
+    "slug": "triggerdev",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Tinybird",
+    "ats": "lever",
+    "slug": "tinybird",
+    "industry": "Data"
+  },
+  {
+    "name": "Griffin",
+    "ats": "ashby",
+    "slug": "griffin",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Materialize",
+    "ats": "ashby",
+    "slug": "materialize",
+    "industry": "Data"
+  },
+  {
+    "name": "Public",
+    "ats": "greenhouse",
+    "slug": "public",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Cameo",
+    "ats": "greenhouse",
+    "slug": "cameo",
+    "industry": "Consumer"
+  },
+  {
+    "name": "Rasa",
+    "ats": "ashby",
+    "slug": "rasa",
+    "industry": "AI"
+  },
+  {
+    "name": "Matter Labs",
+    "ats": "ashby",
+    "slug": "matter-labs",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Anyscale",
+    "ats": "lever",
+    "slug": "anyscale",
+    "industry": "AI"
+  },
+  {
+    "name": "Hightouch",
+    "ats": "ashby",
+    "slug": "hightouch",
+    "industry": "Data"
+  },
+  {
+    "name": "Medium",
+    "ats": "greenhouse",
+    "slug": "medium",
+    "industry": "Media"
+  },
+  {
+    "name": "Sylvera",
+    "ats": "ashby",
+    "slug": "sylvera",
+    "industry": "Climate"
+  },
+  {
+    "name": "Palmetto",
+    "ats": "greenhouse",
+    "slug": "palmetto",
+    "industry": "Energy"
+  },
+  {
+    "name": "Inngest",
+    "ats": "ashby",
+    "slug": "inngest",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Depot",
+    "ats": "ashby",
+    "slug": "depot",
+    "industry": "DevTools"
+  }
+]

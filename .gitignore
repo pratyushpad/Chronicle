@@ -37,3 +37,8 @@ npm-debug.log*
 
 # PDF / design files (large, not needed in deploy)
 *.pdf
+
+# Claude Code session/local files — internal notes, never for the public repo
+.claude/
+/handoff.md
+/Arch_Job.md

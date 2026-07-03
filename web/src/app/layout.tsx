@@ -3,6 +3,7 @@ import { Playfair_Display, Source_Serif_4, JetBrains_Mono } from "next/font/goog
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { SessionWrapper } from "@/components/SessionWrapper";
+import { getMeta } from "@/lib/api";
 
 const display = Playfair_Display({
   subsets: ["latin"],
@@ -24,9 +25,13 @@ export const metadata: Metadata = {
     "Chronicle aggregates job listings from top tech companies into one searchable feed. Refreshed every 48 hours.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Live company total for the nav badge — cached via getMeta's ISR (revalidate 300).
+  // Tolerate the API being down so the layout never fails to render.
+  const meta = await getMeta().catch(() => null);
+
   return (
     <html
       lang="en"
@@ -40,7 +45,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <SessionWrapper>
-          <Nav />
+          <Nav companyCount={meta?.total_companies ?? null} />
           {children}
         </SessionWrapper>
       </body>

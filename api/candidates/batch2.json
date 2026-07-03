@@ -1,0 +1,626 @@
+[
+  {
+    "name": "Gopuff",
+    "ats": "lever",
+    "slug": "gopuff",
+    "industry": "Delivery"
+  },
+  {
+    "name": "Coupang",
+    "ats": "greenhouse",
+    "slug": "coupang",
+    "industry": "E-commerce"
+  },
+  {
+    "name": "Airwallex",
+    "ats": "ashby",
+    "slug": "airwallex",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Fever",
+    "ats": "greenhouse",
+    "slug": "feverup",
+    "industry": "Consumer"
+  },
+  {
+    "name": "Axon",
+    "ats": "greenhouse",
+    "slug": "axon",
+    "industry": "Security"
+  },
+  {
+    "name": "Lyra Health",
+    "ats": "lever",
+    "slug": "lyrahealth",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Esri",
+    "ats": "greenhouse",
+    "slug": "esri",
+    "industry": "Data"
+  },
+  {
+    "name": "Snowflake",
+    "ats": "ashby",
+    "slug": "snowflake",
+    "industry": "Data"
+  },
+  {
+    "name": "SumUp",
+    "ats": "greenhouse",
+    "slug": "sumup",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Shield AI",
+    "ats": "lever",
+    "slug": "shieldai",
+    "industry": "Defense"
+  },
+  {
+    "name": "HelloFresh",
+    "ats": "greenhouse",
+    "slug": "hellofresh",
+    "industry": "E-commerce"
+  },
+  {
+    "name": "Soho House",
+    "ats": "greenhouse",
+    "slug": "sohohouseco",
+    "industry": "Consumer"
+  },
+  {
+    "name": "AvePoint",
+    "ats": "greenhouse",
+    "slug": "avepoint",
+    "industry": "Software"
+  },
+  {
+    "name": "Rocket Lab",
+    "ats": "greenhouse",
+    "slug": "rocketlab",
+    "industry": "Space"
+  },
+  {
+    "name": "Crusoe",
+    "ats": "ashby",
+    "slug": "crusoe",
+    "industry": "Infrastructure"
+  },
+  {
+    "name": "NICE",
+    "ats": "greenhouse",
+    "slug": "nice",
+    "industry": "Software"
+  },
+  {
+    "name": "One Medical",
+    "ats": "greenhouse",
+    "slug": "onemedical",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Nebius",
+    "ats": "greenhouse",
+    "slug": "nebius",
+    "industry": "AI"
+  },
+  {
+    "name": "On",
+    "ats": "greenhouse",
+    "slug": "onrunning",
+    "industry": "Retail"
+  },
+  {
+    "name": "Sila",
+    "ats": "lever",
+    "slug": "sila",
+    "industry": "Energy"
+  },
+  {
+    "name": "Charlie Health",
+    "ats": "greenhouse",
+    "slug": "charliehealth",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Canonical",
+    "ats": "greenhouse",
+    "slug": "canonical",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Wolt",
+    "ats": "greenhouse",
+    "slug": "wolt",
+    "industry": "Delivery"
+  },
+  {
+    "name": "Remote",
+    "ats": "greenhouse",
+    "slug": "remotecom",
+    "industry": "HR Tech"
+  },
+  {
+    "name": "OKX",
+    "ats": "greenhouse",
+    "slug": "okx",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Zipline",
+    "ats": "greenhouse",
+    "slug": "flyzipline",
+    "industry": "Robotics"
+  },
+  {
+    "name": "Veeam",
+    "ats": "greenhouse",
+    "slug": "veeamsoftware",
+    "industry": "Software"
+  },
+  {
+    "name": "CoreWeave",
+    "ats": "greenhouse",
+    "slug": "coreweave",
+    "industry": "AI"
+  },
+  {
+    "name": "Saronic",
+    "ats": "ashby",
+    "slug": "saronic",
+    "industry": "Defense"
+  },
+  {
+    "name": "Oscar Health",
+    "ats": "greenhouse",
+    "slug": "oscar",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Applied Intuition",
+    "ats": "ashby",
+    "slug": "applied",
+    "industry": "Robotics"
+  },
+  {
+    "name": "Lucid Motors",
+    "ats": "greenhouse",
+    "slug": "lucidmotors",
+    "industry": "Automotive"
+  },
+  {
+    "name": "True Anomaly",
+    "ats": "greenhouse",
+    "slug": "trueanomalyinc",
+    "industry": "Space"
+  },
+  {
+    "name": "Mistral AI",
+    "ats": "lever",
+    "slug": "mistral",
+    "industry": "AI"
+  },
+  {
+    "name": "ClickHouse",
+    "ats": "ashby",
+    "slug": "clickhouse",
+    "industry": "Data"
+  },
+  {
+    "name": "Via",
+    "ats": "greenhouse",
+    "slug": "via",
+    "industry": "Mobility"
+  },
+  {
+    "name": "Ripple",
+    "ats": "greenhouse",
+    "slug": "ripple",
+    "industry": "Crypto"
+  },
+  {
+    "name": "Whoop",
+    "ats": "lever",
+    "slug": "whoop",
+    "industry": "Wearables"
+  },
+  {
+    "name": "Whoop",
+    "ats": "ashby",
+    "slug": "whoop",
+    "industry": "Wearables"
+  },
+  {
+    "name": "CHAOS Industries",
+    "ats": "greenhouse",
+    "slug": "chaosindustries",
+    "industry": "Defense"
+  },
+  {
+    "name": "Base Power",
+    "ats": "ashby",
+    "slug": "base-power",
+    "industry": "Energy"
+  },
+  {
+    "name": "SonderMind",
+    "ats": "ashby",
+    "slug": "sondermind",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Addepar",
+    "ats": "greenhouse",
+    "slug": "addepar1",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Lila Sciences",
+    "ats": "greenhouse",
+    "slug": "lilasciences",
+    "industry": "AI"
+  },
+  {
+    "name": "Zip",
+    "ats": "ashby",
+    "slug": "zip",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Handshake",
+    "ats": "ashby",
+    "slug": "handshake",
+    "industry": "EdTech"
+  },
+  {
+    "name": "Skydio",
+    "ats": "ashby",
+    "slug": "skydio",
+    "industry": "Robotics"
+  },
+  {
+    "name": "Plata",
+    "ats": "greenhouse",
+    "slug": "platacard",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Cato Networks",
+    "ats": "greenhouse",
+    "slug": "catonetworks",
+    "industry": "Security"
+  },
+  {
+    "name": "Kaseya",
+    "ats": "greenhouse",
+    "slug": "kaseya",
+    "industry": "Software"
+  },
+  {
+    "name": "Motional",
+    "ats": "greenhouse",
+    "slug": "motional",
+    "industry": "Robotics"
+  },
+  {
+    "name": "Wayve",
+    "ats": "greenhouse",
+    "slug": "wayve",
+    "industry": "Robotics"
+  },
+  {
+    "name": "Hermeus",
+    "ats": "lever",
+    "slug": "hermeus",
+    "industry": "Aerospace"
+  },
+  {
+    "name": "IonQ",
+    "ats": "greenhouse",
+    "slug": "ionq",
+    "industry": "Quantum"
+  },
+  {
+    "name": "Nubank",
+    "ats": "ashby",
+    "slug": "nubank",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Cresta",
+    "ats": "greenhouse",
+    "slug": "cresta",
+    "industry": "AI"
+  },
+  {
+    "name": "Smartsheet",
+    "ats": "greenhouse",
+    "slug": "smartsheet",
+    "industry": "Productivity"
+  },
+  {
+    "name": "Sonar",
+    "ats": "lever",
+    "slug": "sonarsource",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Netskope",
+    "ats": "greenhouse",
+    "slug": "netskope",
+    "industry": "Security"
+  },
+  {
+    "name": "BillionToOne",
+    "ats": "greenhouse",
+    "slug": "billiontoone",
+    "industry": "Biotech"
+  },
+  {
+    "name": "Modern Animal",
+    "ats": "greenhouse",
+    "slug": "modernanimal",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "WorldQuant",
+    "ats": "greenhouse",
+    "slug": "worldquant",
+    "industry": "FinTech"
+  },
+  {
+    "name": "LG Electronics",
+    "ats": "greenhouse",
+    "slug": "lgelectronics",
+    "industry": "Hardware"
+  },
+  {
+    "name": "Etched",
+    "ats": "ashby",
+    "slug": "etched",
+    "industry": "AI"
+  },
+  {
+    "name": "EliseAI",
+    "ats": "ashby",
+    "slug": "eliseai",
+    "industry": "AI"
+  },
+  {
+    "name": "Field AI",
+    "ats": "lever",
+    "slug": "field-ai",
+    "industry": "Robotics"
+  },
+  {
+    "name": "Grafana Labs",
+    "ats": "greenhouse",
+    "slug": "grafanalabs",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Form Energy",
+    "ats": "ashby",
+    "slug": "formenergy",
+    "industry": "Energy"
+  },
+  {
+    "name": "Apptronik",
+    "ats": "greenhouse",
+    "slug": "apptronik",
+    "industry": "Robotics"
+  },
+  {
+    "name": "PsiQuantum",
+    "ats": "greenhouse",
+    "slug": "psiquantum",
+    "industry": "Quantum"
+  },
+  {
+    "name": "Commvault",
+    "ats": "greenhouse",
+    "slug": "commvault",
+    "industry": "Software"
+  },
+  {
+    "name": "JetBrains",
+    "ats": "greenhouse",
+    "slug": "jetbrains",
+    "industry": "DevTools"
+  },
+  {
+    "name": "OneTrust",
+    "ats": "greenhouse",
+    "slug": "onetrust",
+    "industry": "Security"
+  },
+  {
+    "name": "Redwood Materials",
+    "ats": "greenhouse",
+    "slug": "redwoodmaterials",
+    "industry": "Energy"
+  },
+  {
+    "name": "Oura",
+    "ats": "greenhouse",
+    "slug": "oura",
+    "industry": "Wearables"
+  },
+  {
+    "name": "Varda Space",
+    "ats": "greenhouse",
+    "slug": "vardaspace",
+    "industry": "Space"
+  },
+  {
+    "name": "ZoomInfo",
+    "ats": "greenhouse",
+    "slug": "zoominfo",
+    "industry": "Sales Tech"
+  },
+  {
+    "name": "ISAR Aerospace",
+    "ats": "greenhouse",
+    "slug": "isaraerospace",
+    "industry": "Space"
+  },
+  {
+    "name": "Astranis",
+    "ats": "greenhouse",
+    "slug": "astranis",
+    "industry": "Space"
+  },
+  {
+    "name": "Sprinter Health",
+    "ats": "ashby",
+    "slug": "sprinter-health",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Real Chemistry",
+    "ats": "greenhouse",
+    "slug": "realchemistry",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Hinge Health",
+    "ats": "ashby",
+    "slug": "hinge-health",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Crunchyroll",
+    "ats": "greenhouse",
+    "slug": "crunchyroll",
+    "industry": "Media"
+  },
+  {
+    "name": "SecurityScorecard",
+    "ats": "greenhouse",
+    "slug": "securityscorecard",
+    "industry": "Security"
+  },
+  {
+    "name": "Synthesia",
+    "ats": "ashby",
+    "slug": "synthesia",
+    "industry": "AI"
+  },
+  {
+    "name": "Lovable",
+    "ats": "ashby",
+    "slug": "lovable",
+    "industry": "AI"
+  },
+  {
+    "name": "N26",
+    "ats": "greenhouse",
+    "slug": "n26",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Sigma Computing",
+    "ats": "greenhouse",
+    "slug": "sigmacomputing",
+    "industry": "Data"
+  },
+  {
+    "name": "Orion Innovation",
+    "ats": "greenhouse",
+    "slug": "orioninnovation",
+    "industry": "Software"
+  },
+  {
+    "name": "Commure",
+    "ats": "ashby",
+    "slug": "commure",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Monzo",
+    "ats": "greenhouse",
+    "slug": "monzo",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Harbinger",
+    "ats": "greenhouse",
+    "slug": "harbingermotors",
+    "industry": "Automotive"
+  },
+  {
+    "name": "Motive",
+    "ats": "greenhouse",
+    "slug": "gomotive",
+    "industry": "Logistics"
+  },
+  {
+    "name": "Nourish",
+    "ats": "greenhouse",
+    "slug": "usenourish",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "PubMatic",
+    "ats": "greenhouse",
+    "slug": "pubmatic",
+    "industry": "Marketing"
+  },
+  {
+    "name": "Human Interest",
+    "ats": "greenhouse",
+    "slug": "humaninterest",
+    "industry": "FinTech"
+  },
+  {
+    "name": "Aledade",
+    "ats": "lever",
+    "slug": "aledade",
+    "industry": "HealthTech"
+  },
+  {
+    "name": "Samba TV",
+    "ats": "lever",
+    "slug": "sambatv",
+    "industry": "Media"
+  },
+  {
+    "name": "Abnormal Security",
+    "ats": "greenhouse",
+    "slug": "abnormalsecurity",
+    "industry": "Security"
+  },
+  {
+    "name": "dunnhumby",
+    "ats": "greenhouse",
+    "slug": "dunnhumby",
+    "industry": "Data"
+  },
+  {
+    "name": "Roofstock",
+    "ats": "greenhouse",
+    "slug": "roofstock",
+    "industry": "PropTech"
+  },
+  {
+    "name": "Sweetgreen",
+    "ats": "greenhouse",
+    "slug": "sweetgreen",
+    "industry": "Consumer"
+  },
+  {
+    "name": "JFrog",
+    "ats": "greenhouse",
+    "slug": "jfrog",
+    "industry": "DevTools"
+  },
+  {
+    "name": "Trustpilot",
+    "ats": "greenhouse",
+    "slug": "trustpilot",
+    "industry": "Software"
+  }
+]

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
+import { formatNumber } from "@/lib/utils";
 
 interface Notif {
   id: number;
@@ -124,7 +125,7 @@ function NotificationBell({ email }: { email: string }) {
   );
 }
 
-export function Nav() {
+export function Nav({ companyCount }: { companyCount?: number | null }) {
   const { data: session, status } = useSession();
 
   // Sync user to DB on first sign-in
@@ -194,9 +195,11 @@ export function Nav() {
             </>
           ) : null}
 
-          <span className="ml-1 hidden font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground sm:inline">
-            / 201 companies
-          </span>
+          {companyCount != null && (
+            <span className="ml-1 hidden font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground sm:inline">
+              / {formatNumber(companyCount)} companies
+            </span>
+          )}
         </div>
       </div>
     </nav>

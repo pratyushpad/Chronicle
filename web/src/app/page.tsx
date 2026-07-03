@@ -58,9 +58,10 @@ export default async function Home() {
         <div className="mt-12 grid gap-12 md:grid-cols-12 md:gap-8">
           <p className="font-body text-xl leading-relaxed text-foreground md:col-span-7 lg:text-2xl">
             Chronicle pulls every open role <span className="italic">directly</span>{" "}
-            from 201 companies&rsquo; own career pages — Stripe, Anthropic, OpenAI,
-            Databricks, and more. Verified live every sync. Auto-removed the moment
-            a role closes. No ghost jobs. No recruiters. No noise.
+            from {meta ? formatNumber(meta.total_companies) : "hundreds of"} companies&rsquo;
+            own career pages — Stripe, Anthropic, OpenAI, Databricks, and more. Verified
+            live every sync. Auto-removed the moment a role closes. No ghost jobs. No
+            recruiters. No noise.
           </p>
 
           <div className="flex flex-col gap-4 md:col-span-5 md:items-end md:justify-end">
@@ -158,7 +159,7 @@ export default async function Home() {
             {
               n: "02",
               t: "Verified live each sync",
-              d: "We re-check all 201 sources on every run. If a role is still listed, it's still open. What you see is what's actually hiring.",
+              d: `We re-check all ${meta ? meta.total_companies + " " : ""}sources on every run. If a role is still listed, it's still open. What you see is what's actually hiring.`,
             },
             {
               n: "03",
@@ -308,7 +309,7 @@ export default async function Home() {
             </span>
             <span className="h-px flex-1 bg-foreground" />
             <span className="font-mono text-xs uppercase tracking-[0.25em] text-muted-foreground">
-              {meta?.total_companies ?? 201} companies, hand-picked
+              {meta?.total_companies ? `${formatNumber(meta.total_companies)} companies, hand-picked` : "Hand-picked companies"}
             </span>
           </div>
 
