@@ -36,9 +36,9 @@ const COMMON_SKILLS = [
   "Spark", "Kafka", "dbt", "ROS2", "CUDA",
 ];
 
-type Step = "tracks" | "seniority" | "remote" | "skills" | "sponsor";
+type Step = "tracks" | "seniority" | "remote" | "skills" | "about" | "sponsor";
 
-const STEPS: Step[] = ["tracks", "seniority", "remote", "skills", "sponsor"];
+const STEPS: Step[] = ["tracks", "seniority", "remote", "skills", "about", "sponsor"];
 
 function Toggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
@@ -66,6 +66,7 @@ export default function OnboardingPage() {
   const [skills, setSkills] = useState<string[]>([]);
   const [customSkill, setCustomSkill] = useState("");
   const [needsSponsorship, setNeedsSponsorship] = useState<boolean | null>(null);
+  const [about, setAbout] = useState("");
   const [saving, setSaving] = useState(false);
 
   const current = STEPS[step];
@@ -86,6 +87,7 @@ export default function OnboardingPage() {
         remote_pref: remotePref,
         tech_tags: skills,
         needs_sponsorship: needsSponsorship,
+        about: about.trim() || null,
       }),
     });
     setSaving(false);
@@ -103,7 +105,7 @@ export default function OnboardingPage() {
 
       {current === "tracks" && (
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 1 of 5</p>
+          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 1 of 6</p>
           <h1 className="font-display text-4xl text-foreground mb-2">What do you work on?</h1>
           <p className="font-body text-muted-foreground mb-8">Select all tracks that apply.</p>
           <div className="flex flex-wrap gap-3">
@@ -114,7 +116,7 @@ export default function OnboardingPage() {
 
       {current === "seniority" && (
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 2 of 5</p>
+          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 2 of 6</p>
           <h1 className="font-display text-4xl text-foreground mb-2">Where are you in your career?</h1>
           <p className="font-body text-muted-foreground mb-8">Select all that apply.</p>
           <div className="flex flex-wrap gap-3">
@@ -125,7 +127,7 @@ export default function OnboardingPage() {
 
       {current === "remote" && (
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 3 of 5</p>
+          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 3 of 6</p>
           <h1 className="font-display text-4xl text-foreground mb-2">Remote or on-site?</h1>
           <p className="font-body text-muted-foreground mb-8">We'll use this to rank your recommendations.</p>
           <div className="flex flex-wrap gap-3">
@@ -136,7 +138,7 @@ export default function OnboardingPage() {
 
       {current === "skills" && (
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 4 of 5</p>
+          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 4 of 6</p>
           <h1 className="font-display text-4xl text-foreground mb-2">Your tech stack</h1>
           <p className="font-body text-muted-foreground mb-8">Pick skills from your resume — we'll match them against job requirements.</p>
           <div className="flex flex-wrap gap-3 mb-6">
@@ -159,9 +161,26 @@ export default function OnboardingPage() {
         </div>
       )}
 
+      {current === "about" && (
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 5 of 6</p>
+          <h1 className="font-display text-4xl text-foreground mb-2">What are you looking for?</h1>
+          <p className="font-body text-muted-foreground mb-8">
+            In your own words — team size, problem space, dealbreakers. This feeds your matches
+            directly. Optional, and you can add a resume later in Settings.
+          </p>
+          <textarea
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+            placeholder="e.g. Early-stage startups doing systems or ML infra work. Small teams, high ownership. Not interested in crypto or adtech."
+            className="h-36 w-full resize-y rounded-md border border-border bg-background px-3 py-2 font-body text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+        </div>
+      )}
+
       {current === "sponsor" && (
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 5 of 5</p>
+          <p className="font-mono text-xs uppercase tracking-[0.15em] text-accent mb-3">Step 6 of 6</p>
           <h1 className="font-display text-4xl text-foreground mb-2">Do you need visa sponsorship?</h1>
           <p className="font-body text-muted-foreground mb-8">We'll de-rank roles that mention sponsorship restrictions.</p>
           <div className="flex gap-4">

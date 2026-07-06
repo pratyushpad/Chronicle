@@ -12,9 +12,11 @@ interface Props {
   why?: string;
   /** When set, impressions/clicks/saves are logged against this surface. */
   surface?: InteractionSurface;
+  /** When set, shows a "not interested" control; dismissals push future matches away. */
+  onDismiss?: () => void;
 }
 
-export function JobCard({ job, initialSaved = false, why, surface }: Props) {
+export function JobCard({ job, initialSaved = false, why, surface, onDismiss }: Props) {
   const { data: session } = useSession();
   const isAuthed = !!session?.user?.email;
 
@@ -110,6 +112,21 @@ export function JobCard({ job, initialSaved = false, why, surface }: Props) {
           </div>
 
           <div className="flex items-center gap-1 shrink-0 pointer-events-auto">
+            {onDismiss && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (surface && isAuthed) logInteraction(job.id, "dismiss", surface);
+                  onDismiss();
+                }}
+                title="Not interested — show fewer like this"
+                className="p-1.5 text-muted-foreground transition-colors duration-100 hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            )}
             {/* Single save control: a bookmark IS the tracker's "Saved" stage. */}
             <button onClick={toggleSave} title={saved ? "Saved — click to remove" : "Save to tracker"} disabled={loadingS}
               className={cn(

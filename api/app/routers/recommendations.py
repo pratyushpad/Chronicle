@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_session
-from app.models import Application, Company, Job, User
+from app.models import Application, Company, Interaction, InteractionEvent, Job, User
 from app.routers.users import get_current_user
 from app.schemas import JobListItem, RecommendedJob
 from app.util import root_domain
@@ -222,7 +222,9 @@ def blend_score(cosine: float, rule_total: float, max_rule: float) -> float:
     return ALPHA_COSINE * cosine + BETA_RULE * rule_norm
 
 
-def _rule_scored(session: Session, ctx: RuleContext) -> list[tuple]:
+def _rule_scored(
+    session: Session, ctx: RuleContext, excluded_job_ids: set[int] | None = None
+) -> list[tuple]:
     """Original path: scan recent active jobs, keep positive rule scores."""
     rows = session.execute(
         select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
@@ -234,6 +236,8 @@ def _rule_scored(session: Session, ctx: RuleContext) -> list[tuple]:
 
     scored: list[tuple] = []
     for row in rows:
+        if excluded_job_ids and row.Job.id in excluded_job_ids:
+            continue
         result = rule_score(row.Job, ctx)
         if result is None:
             continue
@@ -249,7 +253,8 @@ def _two_stage_scored(
     session: Session,
     profile_embedding,
     ctx: RuleContext,
-    engaged_job_ids: set[int],
+    excluded_job_ids: set[int],
+    has_engagements: bool,
 ) -> list[tuple]:
     """For-You v2: pgvector cosine retrieval, then cosine+rule blend rerank."""
     distance = Job.embedding.cosine_distance(profile_embedding)
@@ -268,8 +273,8 @@ def _two_stage_scored(
 
     candidates: list[tuple] = []
     for row in rows:
-        if row.Job.id in engaged_job_ids:
-            continue  # don't re-recommend what the user already saved/applied to
+        if row.Job.id in excluded_job_ids:
+            continue  # already saved/applied, or explicitly dismissed
         result = rule_score(row.Job, ctx)
         if result is None:
             continue
@@ -282,7 +287,7 @@ def _two_stage_scored(
     for cosine, rule_total, why, row in candidates:
         total = blend_score(cosine, rule_total, max_rule)
         rule_norm = max(rule_total, 0.0) / max_rule if max_rule > 0 else 0.0
-        if engaged_job_ids and ALPHA_COSINE * cosine > BETA_RULE * rule_norm:
+        if has_engagements and ALPHA_COSINE * cosine > BETA_RULE * rule_norm:
             why = f"{why} · {SEMANTIC_WHY}"
         scored.append((total, why, row.Job, row.company_name, row.company_careers_url))
     scored.sort(key=lambda x: x[0], reverse=True)
@@ -324,6 +329,17 @@ def get_recommendations(
         if dept:
             affinity_departments.add(dept.lower())
 
+    # Jobs the user explicitly dismissed never come back, on either path.
+    dismissed_job_ids: set[int] = {
+        jid
+        for (jid,) in session.execute(
+            select(Interaction.job_id).where(
+                Interaction.user_id == user.id,
+                Interaction.event == InteractionEvent.dismiss,
+            )
+        ).all()
+    }
+
     ctx = RuleContext(
         tracks=profile.tracks or [],
         user_tech=profile.tech_tags or [],
@@ -337,9 +353,15 @@ def get_recommendations(
     )
 
     if profile.embedding is not None:
-        scored = _two_stage_scored(session, profile.embedding, ctx, engaged_job_ids)
+        scored = _two_stage_scored(
+            session,
+            profile.embedding,
+            ctx,
+            excluded_job_ids=engaged_job_ids | dismissed_job_ids,
+            has_engagements=bool(engaged_job_ids),
+        )
     else:
-        scored = _rule_scored(session, ctx)
+        scored = _rule_scored(session, ctx, dismissed_job_ids)
 
     # Collapse cross-posted duplicates: keep the highest-scored posting per role
     # so the same job across N countries doesn't flood the feed.

@@ -170,11 +170,20 @@ class Profile(Base):
     salary_floor = Column(Integer, nullable=True)
     needs_sponsorship = Column(Boolean, nullable=True)
     links = Column(JSONB, nullable=True)
+    # Free text: "what I'm looking for" — embedded into the profile vector.
+    about = Column(Text, nullable=True)
+    # Extracted resume text (never the file itself); embedded in chunks.
+    resume_text = Column(Text, nullable=True)
+    resume_updated_at = Column(DateTime(timezone=True), nullable=True)
     # profile-text + engaged-jobs centroid vector; see app/ml/profile_embedding.py
     embedding = Column(Vector(384), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     user = relationship("User", back_populates="profile")
+
+    @property
+    def resume_chars(self) -> int | None:
+        return len(self.resume_text) if self.resume_text else None
 
 
 class Application(Base):

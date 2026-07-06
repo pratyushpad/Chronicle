@@ -22,6 +22,9 @@ interface Profile {
   phone?: string | null;
   work_authorization?: string | null;
   links?: Record<string, string> | null;
+  about?: string | null;
+  resume_chars?: number | null;
+  resume_updated_at?: string | null;
 }
 
 export default function SettingsPage() {
@@ -37,6 +40,8 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile>({});
   const [savedMsg, setSavedMsg] = useState("");
   const [profileBusy, setProfileBusy] = useState(false);
+  const [resumeBusy, setResumeBusy] = useState(false);
+  const [resumeMsg, setResumeMsg] = useState("");
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -93,10 +98,41 @@ export default function SettingsPage() {
         phone: profile.phone ?? null,
         work_authorization: profile.work_authorization ?? null,
         links: profile.links ?? null,
+        about: profile.about ?? null,
       }),
     });
     setSavedMsg(res.ok ? "Saved." : "Save failed.");
     setProfileBusy(false);
+  };
+
+  const uploadResume = async (file: File) => {
+    setResumeBusy(true);
+    setResumeMsg("");
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/user/resume", { method: "POST", body: form });
+    if (res.ok) {
+      const d = await res.json();
+      setProfile((p) => ({ ...p, resume_chars: d.resume_chars, resume_updated_at: d.resume_updated_at }));
+      setResumeMsg("Resume saved — matching updated.");
+    } else {
+      const d = await res.json().catch(() => null);
+      setResumeMsg(d?.detail ?? "Upload failed.");
+    }
+    setResumeBusy(false);
+  };
+
+  const removeResume = async () => {
+    setResumeBusy(true);
+    setResumeMsg("");
+    const res = await fetch("/api/user/resume", { method: "DELETE" });
+    if (res.ok) {
+      setProfile((p) => ({ ...p, resume_chars: null, resume_updated_at: null }));
+      setResumeMsg("Resume removed.");
+    } else {
+      setResumeMsg("Remove failed.");
+    }
+    setResumeBusy(false);
   };
 
   if (status === "loading") {
@@ -161,6 +197,71 @@ export default function SettingsPage() {
               Revoke
             </button>
           )}
+        </div>
+      </section>
+
+      {/* ── Matching profile ── */}
+      <section className="mb-16">
+        <SectionLabel className="mb-6">Matching Profile</SectionLabel>
+        <p className="mb-6 font-body text-sm text-muted-foreground">
+          This is what powers your <strong className="text-foreground">For You</strong> feed.
+          The more it knows, the better the matches.
+        </p>
+
+        <label className={`${labelCls} mb-1 block`}>What are you looking for?</label>
+        <textarea
+          className={`${inputCls} h-28 resize-y py-2`}
+          placeholder="e.g. Early-stage startups doing systems or ML infra work. Small teams, high ownership. Not interested in crypto or adtech."
+          value={profile.about ?? ""}
+          onChange={(e) => setProfile((p) => ({ ...p, about: e.target.value }))}
+        />
+        <p className="mt-1 mb-6 font-body text-xs text-muted-foreground">
+          Free text — it's embedded directly into your matching vector, so write it like you'd tell a friend.
+        </p>
+
+        <label className={`${labelCls} mb-1 block`}>Resume</label>
+        <div className="border border-foreground p-4">
+          {profile.resume_chars ? (
+            <p className="mb-3 font-body text-sm text-foreground">
+              Resume on file ({profile.resume_chars.toLocaleString()} characters
+              {profile.resume_updated_at &&
+                `, updated ${new Date(profile.resume_updated_at).toLocaleDateString()}`}
+              ).
+            </p>
+          ) : (
+            <p className="mb-3 font-body text-sm text-muted-foreground">
+              No resume yet. Upload a PDF or .txt — we extract and keep only the text, never the file.
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-3">
+            <label className={`${btnOutline} cursor-pointer`}>
+              {resumeBusy ? "Working…" : profile.resume_chars ? "Replace resume" : "Upload resume"}
+              <input
+                type="file"
+                accept=".pdf,.txt,application/pdf,text/plain"
+                className="hidden"
+                disabled={resumeBusy}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) uploadResume(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {profile.resume_chars ? (
+              <button onClick={removeResume} disabled={resumeBusy} className={btnOutline}>
+                Remove
+              </button>
+            ) : null}
+            {resumeMsg && <span className={labelCls}>{resumeMsg}</span>}
+          </div>
+        </div>
+
+        <div className="mt-6 flex items-center gap-4">
+          <button onClick={saveProfile} disabled={profileBusy} className={btnSolid}>
+            {profileBusy ? "Saving…" : "Save profile"}
+          </button>
+          {savedMsg && <span className={labelCls}>{savedMsg}</span>}
         </div>
       </section>
 

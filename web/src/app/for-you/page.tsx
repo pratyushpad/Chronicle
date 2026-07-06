@@ -12,6 +12,7 @@ interface Rec { job: JobListItem; score: number; why: string; }
 export default function ForYouPage() {
   const { data: session, status } = useSession();
   const [recs, setRecs] = useState<Rec[]>([]);
+  const [dismissed, setDismissed] = useState<Set<number>>(new Set());
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,7 +61,7 @@ export default function ForYouPage() {
     return (
       <main className="mx-auto max-w-2xl px-6 py-32 text-center">
         <p className="font-display text-3xl text-foreground mb-3">Tell us what you're looking for</p>
-        <p className="font-body text-muted-foreground mb-8">Answer 5 quick questions and we'll surface the roles most likely to fit.</p>
+        <p className="font-body text-muted-foreground mb-8">Answer 6 quick questions and we'll surface the roles most likely to fit.</p>
         <Link href="/onboarding" className="inline-flex min-h-[44px] items-center rounded-md bg-accent px-8 font-body text-sm font-medium text-white hover:bg-accent-secondary transition-all">
           Set up my profile →
         </Link>
@@ -83,7 +84,7 @@ export default function ForYouPage() {
         </Link>
       </div>
 
-      {recs.length === 0 ? (
+      {recs.filter((r) => !dismissed.has(r.job.id)).length === 0 ? (
         <div className="text-center py-24">
           <p className="font-display text-2xl text-foreground mb-2">No matches yet</p>
           <p className="font-body text-muted-foreground mb-6">Try updating your profile with more tracks or skills.</p>
@@ -91,16 +92,24 @@ export default function ForYouPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {recs.map(({ job, why }) => (
-            <JobCard key={job.id} job={job} why={why} surface="feed" />
-          ))}
+          {recs
+            .filter((r) => !dismissed.has(r.job.id))
+            .map(({ job, why }) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                why={why}
+                surface="feed"
+                onDismiss={() => setDismissed((d) => new Set(d).add(job.id))}
+              />
+            ))}
         </div>
       )}
 
       <div className="mt-12 text-center">
         <p className="font-mono text-xs text-muted-foreground">
-          Scores are computed from your profile — no ML, fully explainable.{" "}
-          <Link href="/onboarding" className="text-accent hover:underline">Refine your profile</Link>
+          Matched from your profile, resume, and activity — every card says why.{" "}
+          <Link href="/settings" className="text-accent hover:underline">Refine your profile</Link>
         </p>
       </div>
     </main>

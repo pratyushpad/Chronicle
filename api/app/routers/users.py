@@ -1,7 +1,7 @@
 import logging
 import os
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -114,12 +114,65 @@ def upsert_profile(body: ProfileIn, user: User = Depends(get_current_user), sess
     session.commit()
     session.refresh(profile)
 
-    # Refresh the profile's semantic vector; never fail the save over it.
+    _refresh_embedding_best_effort(session, user.id)
+    return profile
+
+
+def _refresh_embedding_best_effort(session: Session, user_id: int) -> None:
+    """Refresh the profile's semantic vector; never fail the request over it."""
     try:
         from app.ml.profile_embedding import refresh_profile_embedding
 
-        refresh_profile_embedding(session, user.id)
+        refresh_profile_embedding(session, user_id)
     except Exception:
-        logging.getLogger(__name__).exception("profile embedding refresh failed for user %d", user.id)
+        logging.getLogger(__name__).exception("profile embedding refresh failed for user %d", user_id)
 
+
+def _get_or_create_profile(session: Session, user_id: int) -> Profile:
+    profile = session.execute(select(Profile).where(Profile.user_id == user_id)).scalar_one_or_none()
+    if profile is None:
+        profile = Profile(user_id=user_id, updated_at=datetime.now(timezone.utc))
+        session.add(profile)
+    return profile
+
+
+@router.post("/me/resume", response_model=ProfileOut)
+async def upload_resume(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    session: Session = Depends(_db),
+):
+    """Extract text from an uploaded resume (.pdf/.txt) and store it.
+
+    Only the extracted text is kept — the file itself is discarded.
+    """
+    from app.resume import extract_resume_text
+
+    data = await file.read()
+    try:
+        text = extract_resume_text(data, file.filename or "", file.content_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    profile = _get_or_create_profile(session, user.id)
+    profile.resume_text = text
+    profile.resume_updated_at = datetime.now(timezone.utc)
+    profile.updated_at = datetime.now(timezone.utc)
+    session.commit()
+    session.refresh(profile)
+    _refresh_embedding_best_effort(session, user.id)
+    return profile
+
+
+@router.delete("/me/resume", response_model=ProfileOut)
+def delete_resume(user: User = Depends(get_current_user), session: Session = Depends(_db)):
+    profile = user.profile
+    if profile is None:
+        raise HTTPException(status_code=404, detail="No profile")
+    profile.resume_text = None
+    profile.resume_updated_at = None
+    profile.updated_at = datetime.now(timezone.utc)
+    session.commit()
+    session.refresh(profile)
+    _refresh_embedding_best_effort(session, user.id)
     return profile

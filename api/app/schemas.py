@@ -158,11 +158,15 @@ class ProfileIn(BaseModel):
     salary_floor: int | None = None
     needs_sponsorship: bool | None = None
     links: dict[str, str] | None = None
+    about: str | None = None
 
 
 class ProfileOut(ProfileIn):
     user_id: int
     updated_at: datetime
+    # resume metadata only — the extracted text stays server-side
+    resume_chars: int | None = None
+    resume_updated_at: datetime | None = None
     model_config = {"from_attributes": True}
 
 
