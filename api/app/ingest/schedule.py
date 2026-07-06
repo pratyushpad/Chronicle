@@ -14,6 +14,21 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger(__name__)
 
 
+def _refresh_embeddings() -> None:
+    """Nightly sweep: embed any jobs still missing vectors, then refresh
+    every profile embedding (picks up new saves/applies)."""
+    from app.ml.embed_jobs import embed_missing_jobs
+    from app.ml.profile_embedding import refresh_all_profile_embeddings
+
+    session = get_session()
+    try:
+        jobs = embed_missing_jobs(session)
+        profiles = refresh_all_profile_embeddings(session)
+        log.info("embedding sweep: %d jobs embedded, %d profiles refreshed", jobs, profiles)
+    finally:
+        session.close()
+
+
 async def _once() -> None:
     session = get_session()
     try:
@@ -22,6 +37,7 @@ async def _once() -> None:
         await run_alerts(session, run.started_at)
     finally:
         session.close()
+    _refresh_embeddings()
 
 
 async def _loop() -> None:
@@ -37,8 +53,9 @@ async def _loop() -> None:
             session.close()
 
     scheduler.add_job(_job, "interval", hours=48)
+    scheduler.add_job(_refresh_embeddings, "cron", hour=9, minute=30)  # nightly, 09:30 UTC
     scheduler.start()
-    log.info("Scheduler started — will run every 48h")
+    log.info("Scheduler started — ingest every 48h, embedding sweep nightly")
     await asyncio.Event().wait()
 
 

@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -112,4 +113,13 @@ def upsert_profile(body: ProfileIn, user: User = Depends(get_current_user), sess
         session.add(profile)
     session.commit()
     session.refresh(profile)
+
+    # Refresh the profile's semantic vector; never fail the save over it.
+    try:
+        from app.ml.profile_embedding import refresh_profile_embedding
+
+        refresh_profile_embedding(session, user.id)
+    except Exception:
+        logging.getLogger(__name__).exception("profile embedding refresh failed for user %d", user.id)
+
     return profile

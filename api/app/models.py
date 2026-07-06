@@ -156,6 +156,8 @@ class Profile(Base):
     salary_floor = Column(Integer, nullable=True)
     needs_sponsorship = Column(Boolean, nullable=True)
     links = Column(JSONB, nullable=True)
+    # profile-text + engaged-jobs centroid vector; see app/ml/profile_embedding.py
+    embedding = Column(Vector(384), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     user = relationship("User", back_populates="profile")

@@ -1,9 +1,16 @@
 """
-Rule-based "For You" recommendations.
-Score = w1*track_match + w2*tech_jaccard + w3*seniority_match + w4*remote_fit + w5*recency - sponsorship_penalty
+"For You" recommendations.
+
+Rule score = w1*track_match + w2*tech_jaccard + w3*seniority_match + w4*remote_fit + w5*recency - penalties
 Fully deterministic, fully explainable — every match ships a human-readable "why" string.
+
+When the profile has an embedding (app/ml/profile_embedding.py), a two-stage
+path runs instead: pgvector retrieves the top candidates by cosine, then each
+is reranked by ALPHA_COSINE * cosine + BETA_RULE * normalized rule score.
+Falls back to the pure rule scan when no embedding exists.
 """
 import math
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
@@ -29,6 +36,12 @@ RECENCY_HALF_LIFE_DAYS = 30.0
 # Behavioral signal: boost roles at companies/departments the user already engaged with.
 COMPANY_AFFINITY_BOOST = 0.75
 DEPARTMENT_AFFINITY_BOOST = 0.5
+# Two-stage blend (For-You v2): weight of profile-vector cosine vs normalized rule score.
+ALPHA_COSINE = 0.6
+BETA_RULE = 0.4
+# pgvector candidate pool for stage 1.
+CANDIDATE_POOL = 200
+SEMANTIC_WHY = "semantically similar to jobs you saved"
 
 TRACK_KEYWORDS: dict[str, list[str]] = {
     "swe":       ["software", "engineer", "developer", "backend", "frontend", "fullstack", "platform", "infrastructure", "web"],
@@ -143,6 +156,139 @@ def _build_why(track_s: float, shared_tech: list[str], seniority_s: float, locat
     return " · ".join(parts)
 
 
+@dataclass
+class RuleContext:
+    """Everything the rule scorer needs, decoupled from ORM/session so the
+    eval harness can score fixture jobs with the exact production logic."""
+
+    tracks: list[str] = field(default_factory=list)
+    user_tech: list[str] = field(default_factory=list)
+    seniority_pref: list[str] = field(default_factory=list)
+    remote_pref: str = "any"
+    location_pref: str | None = None
+    needs_sponsorship: bool = False
+    salary_floor: int | None = None
+    affinity_companies: dict[int, str] = field(default_factory=dict)
+    affinity_departments: set[str] = field(default_factory=set)
+
+
+def rule_score(job, ctx: RuleContext) -> tuple[float, str] | None:
+    """Rule-based score + why string for one job; None = hard-filtered out.
+
+    `job` is any object with the Job columns used below (ORM row or fixture).
+    """
+    if ctx.salary_floor and job.salary_max and job.salary_max < ctx.salary_floor:
+        return None
+
+    track_s = _track_match(job, ctx.tracks)
+    tech_s, shared_tech = _tech_jaccard(job.tech_tags, ctx.user_tech)
+    seniority_s = _seniority_match(job, ctx.seniority_pref)
+    location_s = _location_fit(job, ctx.location_pref)
+    remote_s = _remote_fit(job, ctx.remote_pref)
+    recency = _recency_decay(job.posted_at)
+
+    affinity = 0.0
+    affinity_company = ctx.affinity_companies.get(job.company_id)
+    if affinity_company:
+        affinity += COMPANY_AFFINITY_BOOST
+    if job.department and job.department.lower() in ctx.affinity_departments:
+        affinity += DEPARTMENT_AFFINITY_BOOST
+
+    penalty = 0.0
+    if ctx.needs_sponsorship and job.sponsorship_flag == "likely_no":
+        penalty += SPONSORSHIP_PENALTY
+    # Heavy penalty for seniority mismatch — don't show Senior roles to interns
+    if ctx.seniority_pref and job.experience_level and seniority_s == 0.0:
+        penalty += SENIORITY_MISMATCH_PENALTY
+
+    total = (
+        W_TRACK * track_s
+        + W_TECH * tech_s
+        + W_SENIORITY * seniority_s
+        + W_LOCATION * location_s
+        + W_REMOTE * remote_s
+        + W_RECENCY * recency
+        + affinity
+        - penalty
+    )
+    why = _build_why(track_s, shared_tech, seniority_s, location_s, recency, ctx.tracks, affinity_company, ctx.location_pref)
+    return total, why
+
+
+def blend_score(cosine: float, rule_total: float, max_rule: float) -> float:
+    """Stage-2 rerank score: cosine blended with the rule score normalized
+    against the best rule score in the candidate pool."""
+    rule_norm = max(rule_total, 0.0) / max_rule if max_rule > 0 else 0.0
+    return ALPHA_COSINE * cosine + BETA_RULE * rule_norm
+
+
+def _rule_scored(session: Session, ctx: RuleContext) -> list[tuple]:
+    """Original path: scan recent active jobs, keep positive rule scores."""
+    rows = session.execute(
+        select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
+        .join(Company, Job.company_id == Company.id)
+        .where(Job.is_active == True)
+        .order_by(Job.posted_at.desc().nullslast())
+        .limit(500)
+    ).all()
+
+    scored: list[tuple] = []
+    for row in rows:
+        result = rule_score(row.Job, ctx)
+        if result is None:
+            continue
+        total, why = result
+        if total <= 0:
+            continue
+        scored.append((total, why, row.Job, row.company_name, row.company_careers_url))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return scored
+
+
+def _two_stage_scored(
+    session: Session,
+    profile_embedding,
+    ctx: RuleContext,
+    engaged_job_ids: set[int],
+) -> list[tuple]:
+    """For-You v2: pgvector cosine retrieval, then cosine+rule blend rerank."""
+    distance = Job.embedding.cosine_distance(profile_embedding)
+    rows = session.execute(
+        select(
+            Job,
+            Company.name.label("company_name"),
+            Company.careers_url.label("company_careers_url"),
+            distance.label("distance"),
+        )
+        .join(Company, Job.company_id == Company.id)
+        .where(Job.is_active == True, Job.embedding.isnot(None))
+        .order_by(distance)
+        .limit(CANDIDATE_POOL)
+    ).all()
+
+    candidates: list[tuple] = []
+    for row in rows:
+        if row.Job.id in engaged_job_ids:
+            continue  # don't re-recommend what the user already saved/applied to
+        result = rule_score(row.Job, ctx)
+        if result is None:
+            continue
+        cosine = 1.0 - row.distance
+        candidates.append((cosine, *result, row))
+
+    max_rule = max((rule_total for _, rule_total, _, _ in candidates), default=0.0)
+
+    scored: list[tuple] = []
+    for cosine, rule_total, why, row in candidates:
+        total = blend_score(cosine, rule_total, max_rule)
+        rule_norm = max(rule_total, 0.0) / max_rule if max_rule > 0 else 0.0
+        if engaged_job_ids and ALPHA_COSINE * cosine > BETA_RULE * rule_norm:
+            why = f"{why} · {SEMANTIC_WHY}"
+        scored.append((total, why, row.Job, row.company_name, row.company_careers_url))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return scored
+
+
 def _db():
     s = get_session()
     try:
@@ -161,85 +307,39 @@ def get_recommendations(
     if not profile:
         return []
 
-    tracks = profile.tracks or []
-    user_tech = profile.tech_tags or []
-    seniority_pref = profile.seniority_pref or []
-    remote_pref = profile.remote_pref.value if profile.remote_pref else "any"
-    location_pref = profile.location
-    needs_sponsorship = profile.needs_sponsorship or False
-    salary_floor = profile.salary_floor
-
     # Behavioral signal: companies/departments the user has saved or applied to.
     # Saved + tracked now live in one store (applications, status='saved' = bookmark).
     affinity_companies: dict[int, str] = {}
     affinity_departments: set[str] = set()
-    for company_id, dept, name in session.execute(
-        select(Job.company_id, Job.department, Company.name)
+    engaged_job_ids: set[int] = set()
+    for job_id, company_id, dept, name in session.execute(
+        select(Job.id, Job.company_id, Job.department, Company.name)
         .join(Application, Application.job_id == Job.id)
         .join(Company, Job.company_id == Company.id)
         .where(Application.user_id == user.id)
     ).all():
+        engaged_job_ids.add(job_id)
         if company_id is not None:
             affinity_companies[company_id] = name
         if dept:
             affinity_departments.add(dept.lower())
 
-    rows = session.execute(
-        select(Job, Company.name.label("company_name"), Company.industry.label("company_industry"), Company.careers_url.label("company_careers_url"))
-        .join(Company, Job.company_id == Company.id)
-        .where(Job.is_active == True)
-        .order_by(Job.posted_at.desc().nullslast())
-        .limit(500)
-    ).all()
+    ctx = RuleContext(
+        tracks=profile.tracks or [],
+        user_tech=profile.tech_tags or [],
+        seniority_pref=profile.seniority_pref or [],
+        remote_pref=profile.remote_pref.value if profile.remote_pref else "any",
+        location_pref=profile.location,
+        needs_sponsorship=profile.needs_sponsorship or False,
+        salary_floor=profile.salary_floor,
+        affinity_companies=affinity_companies,
+        affinity_departments=affinity_departments,
+    )
 
-    scored: list[tuple] = []
-    for row in rows:
-        job = row.Job
-        company_name = row.company_name
-
-        # Filter: salary floor
-        if salary_floor and job.salary_max and job.salary_max < salary_floor:
-            continue
-
-        track_s = _track_match(job, tracks)
-        tech_s, shared_tech = _tech_jaccard(job.tech_tags, user_tech)
-        seniority_s = _seniority_match(job, seniority_pref)
-        location_s = _location_fit(job, location_pref)
-        remote_s = _remote_fit(job, remote_pref)
-        recency = _recency_decay(job.posted_at)
-
-        # Behavioral affinity boost (skip the exact job the user already saved/applied to).
-        affinity = 0.0
-        affinity_company = affinity_companies.get(job.company_id)
-        if affinity_company:
-            affinity += COMPANY_AFFINITY_BOOST
-        if job.department and job.department.lower() in affinity_departments:
-            affinity += DEPARTMENT_AFFINITY_BOOST
-
-        penalty = 0.0
-        if needs_sponsorship and job.sponsorship_flag == "likely_no":
-            penalty += SPONSORSHIP_PENALTY
-        # Heavy penalty for seniority mismatch — don't show Senior roles to interns
-        if seniority_pref and job.experience_level and seniority_s == 0.0:
-            penalty += SENIORITY_MISMATCH_PENALTY
-
-        total = (
-            W_TRACK * track_s
-            + W_TECH * tech_s
-            + W_SENIORITY * seniority_s
-            + W_LOCATION * location_s
-            + W_REMOTE * remote_s
-            + W_RECENCY * recency
-            + affinity
-            - penalty
-        )
-        if total <= 0:
-            continue
-
-        why = _build_why(track_s, shared_tech, seniority_s, location_s, recency, tracks, affinity_company, location_pref)
-        scored.append((total, why, job, company_name, row.company_careers_url))
-
-    scored.sort(key=lambda x: x[0], reverse=True)
+    if profile.embedding is not None:
+        scored = _two_stage_scored(session, profile.embedding, ctx, engaged_job_ids)
+    else:
+        scored = _rule_scored(session, ctx)
 
     # Collapse cross-posted duplicates: keep the highest-scored posting per role
     # so the same job across N countries doesn't flood the feed.
