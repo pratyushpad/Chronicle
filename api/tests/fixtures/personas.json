@@ -1,0 +1,164 @@
+{
+  "personas": [
+    {
+      "name": "new_grad_swe",
+      "profile": {
+        "headline": "New grad software engineer looking for backend or fullstack roles",
+        "tracks": ["swe"],
+        "tech_tags": ["python", "java", "go", "postgresql", "react"],
+        "seniority_pref": ["new_grad"],
+        "location": "San Francisco, CA"
+      },
+      "jobs": [
+        {"title": "Software Engineer, New Grad", "company_name": "Stripe", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["java", "go"], "description": "Join our new grad cohort building payment APIs and backend services at scale. You'll ship production code in your first week."},
+        {"title": "Software Engineer I", "company_name": "Datadog", "department": "Engineering", "location": "New York, NY", "tech_tags": ["go", "python"], "description": "Entry level backend engineer on the metrics ingestion team. Great mentorship for early-career engineers."},
+        {"title": "Associate Software Engineer", "company_name": "Atlassian", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["java", "kotlin"], "description": "Early career program for engineers with under two years of experience building Jira backend services."},
+        {"title": "Software Engineer, Early Career", "company_name": "Airbnb", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["java", "react"], "description": "Fullstack role on the guest experience team designed for recent graduates."},
+        {"title": "Backend Engineer, University Grad", "company_name": "Plaid", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["go", "postgresql"], "description": "New graduate role building bank integrations and financial data pipelines in Go."},
+        {"title": "Fullstack Engineer, New Grad 2026", "company_name": "Figma", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["typescript", "react"], "description": "Build collaborative editing features end to end as part of our 2026 new grad class."},
+        {"title": "Software Development Engineer, Entry Level", "company_name": "Amazon", "department": "Engineering", "location": "Seattle, WA", "tech_tags": ["java", "aws"], "description": "Entry level SDE building fulfillment services. No prior industry experience required."},
+        {"title": "Junior Backend Developer", "company_name": "Ramp", "department": "Engineering", "location": "New York, NY", "tech_tags": ["python", "postgresql"], "description": "Junior engineer on the card issuing platform. Python, Postgres, and a strong mentorship culture."},
+        {"title": "Software Engineer, Grad Program", "company_name": "Bloomberg", "department": "Engineering", "location": "New York, NY", "tech_tags": ["c++", "python"], "description": "Graduate software engineering program rotating across market data and trading systems teams."},
+        {"title": "New Grad Software Engineer, Product", "company_name": "Notion", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["typescript", "react"], "description": "Ship user-facing product features across the stack in your first year out of school."},
+        {"title": "Software Engineer, Campus Hire", "company_name": "Uber", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["go", "java"], "description": "Campus hire position on the rider backend team building trip matching services."},
+        {"title": "Entry Level Software Engineer", "company_name": "Salesforce", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["java", "javascript"], "description": "Futureforce entry level engineer building CRM platform services."},
+        {"title": "Software Engineer, New Grad, Infrastructure", "company_name": "Discord", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["python", "rust"], "description": "New grad role on real-time messaging infrastructure serving millions of concurrent users."},
+        {"title": "Associate Engineer, Backend", "company_name": "Twilio", "department": "Engineering", "location": "Denver, CO", "tech_tags": ["java", "aws"], "description": "Early-in-career backend engineer on the messaging delivery platform."},
+        {"title": "Software Engineer I, Payments", "company_name": "Square", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["java", "kotlin"], "description": "Entry level engineer building card processing services with strong code review culture."},
+        {"title": "Graduate Software Engineer", "company_name": "Palantir", "department": "Engineering", "location": "Palo Alto, CA", "tech_tags": ["java", "typescript"], "description": "Grad engineer building data integration products across backend and frontend."},
+        {"title": "Software Engineer, Early in Career", "company_name": "Cloudflare", "department": "Engineering", "location": "Austin, TX", "tech_tags": ["go", "rust"], "description": "Early career engineer working on edge services and API gateways."},
+        {"title": "New Graduate Backend Engineer", "company_name": "DoorDash", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["kotlin", "python"], "description": "New grad backend engineer on logistics and dispatch systems."},
+        {"title": "Software Engineer, University Graduate, Core Product", "company_name": "Dropbox", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["python", "go"], "description": "University graduate role on file sync and sharing infrastructure."},
+        {"title": "Junior Fullstack Engineer", "company_name": "Vercel", "department": "Engineering", "location": "Remote", "tech_tags": ["typescript", "react", "nextjs"], "description": "Junior engineer improving the deployment dashboard and platform APIs."}
+      ]
+    },
+    {
+      "name": "ml_intern",
+      "profile": {
+        "headline": "MS student seeking machine learning internships in NLP or recommender systems",
+        "tracks": ["ml"],
+        "tech_tags": ["python", "pytorch", "transformers", "sql"],
+        "seniority_pref": ["intern"],
+        "location": "New York, NY"
+      },
+      "jobs": [
+        {"title": "Machine Learning Intern", "company_name": "Spotify", "department": "Data", "location": "New York, NY", "tech_tags": ["python", "pytorch"], "description": "Summer internship on the music recommendations team training ranking models on listening data."},
+        {"title": "ML Engineering Intern, Recommendations", "company_name": "Netflix", "department": "Data", "location": "Los Gatos, CA", "tech_tags": ["python", "spark"], "description": "Intern with the personalization team improving candidate generation for the homepage ranker."},
+        {"title": "Applied Science Intern, NLP", "company_name": "Amazon", "department": "Data", "location": "New York, NY", "tech_tags": ["python", "pytorch", "transformers"], "description": "Research internship fine-tuning large language models for product search relevance."},
+        {"title": "Machine Learning Research Intern", "company_name": "Meta", "department": "Data", "location": "Menlo Park, CA", "tech_tags": ["pytorch", "python"], "description": "Research intern exploring multimodal transformers with the FAIR team; publication encouraged."},
+        {"title": "Data Science Intern, Ranking", "company_name": "Pinterest", "department": "Data", "location": "San Francisco, CA", "tech_tags": ["python", "sql"], "description": "Intern on home feed ranking running experiments on engagement models."},
+        {"title": "AI/ML Intern", "company_name": "NVIDIA", "department": "Engineering", "location": "Santa Clara, CA", "tech_tags": ["python", "pytorch", "cuda"], "description": "Internship optimizing deep learning inference kernels and model deployment pipelines."},
+        {"title": "Machine Learning Intern, Search", "company_name": "Airbnb", "department": "Data", "location": "San Francisco, CA", "tech_tags": ["python", "tensorflow"], "description": "Intern improving search ranking models for stays and experiences."},
+        {"title": "NLP Research Intern", "company_name": "Grammarly", "department": "Data", "location": "New York, NY", "tech_tags": ["python", "transformers"], "description": "Intern researching grammatical error correction with sequence-to-sequence models."},
+        {"title": "ML Intern, Trust and Safety", "company_name": "Roblox", "department": "Data", "location": "San Mateo, CA", "tech_tags": ["python", "pytorch"], "description": "Intern building abuse detection classifiers over chat and asset uploads."},
+        {"title": "Machine Learning Engineer Intern", "company_name": "Snap", "department": "Engineering", "location": "New York, NY", "tech_tags": ["python", "pytorch"], "description": "Intern on the ranking infrastructure team shipping features to the content feed model."},
+        {"title": "Applied ML Intern, Ads", "company_name": "Reddit", "department": "Data", "location": "New York, NY", "tech_tags": ["python", "spark"], "description": "Intern improving click-through prediction for the ads marketplace."},
+        {"title": "Research Intern, Speech", "company_name": "Apple", "department": "Data", "location": "Cupertino, CA", "tech_tags": ["python", "pytorch"], "description": "Intern with the Siri speech team on end-to-end speech recognition models."},
+        {"title": "Machine Learning Intern, Computer Vision", "company_name": "Tesla", "department": "Engineering", "location": "Palo Alto, CA", "tech_tags": ["python", "pytorch"], "description": "Intern training perception models for Autopilot from fleet data."},
+        {"title": "Data Science Intern, Experimentation", "company_name": "Lyft", "department": "Data", "location": "San Francisco, CA", "tech_tags": ["python", "sql"], "description": "Intern building causal inference tooling for marketplace experiments."},
+        {"title": "ML Platform Intern", "company_name": "Databricks", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["python", "spark", "mlflow"], "description": "Intern on the MLflow team building model registry and serving features."},
+        {"title": "Machine Learning Intern, Forecasting", "company_name": "Instacart", "department": "Data", "location": "Remote", "tech_tags": ["python", "sql"], "description": "Intern improving demand forecasting models for grocery fulfillment."},
+        {"title": "AI Research Intern, LLM Evaluation", "company_name": "Scale AI", "department": "Data", "location": "San Francisco, CA", "tech_tags": ["python", "transformers"], "description": "Intern designing evaluation harnesses and benchmarks for large language models."},
+        {"title": "Machine Learning Intern, Fraud", "company_name": "Stripe", "department": "Data", "location": "New York, NY", "tech_tags": ["python", "xgboost"], "description": "Intern on Radar improving fraud detection models for card payments."},
+        {"title": "Deep Learning Intern", "company_name": "Cruise", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["python", "pytorch"], "description": "Intern on prediction models for autonomous vehicle behavior planning."},
+        {"title": "ML Intern, Personalization", "company_name": "Duolingo", "department": "Data", "location": "Pittsburgh, PA", "tech_tags": ["python", "pytorch"], "description": "Intern personalizing lesson difficulty with bandit algorithms and learner models."}
+      ]
+    },
+    {
+      "name": "data_engineer",
+      "profile": {
+        "headline": "Data engineer with four years building batch and streaming pipelines",
+        "tracks": ["data"],
+        "tech_tags": ["python", "sql", "spark", "airflow", "kafka", "dbt"],
+        "seniority_pref": ["mid", "senior"],
+        "location": "Austin, TX"
+      },
+      "jobs": [
+        {"title": "Senior Data Engineer", "company_name": "Shopify", "department": "Data", "location": "Remote", "tech_tags": ["spark", "airflow", "dbt"], "description": "Own merchant analytics pipelines processing billions of events daily on Spark and dbt."},
+        {"title": "Data Engineer, Analytics Platform", "company_name": "HubSpot", "department": "Data", "location": "Austin, TX", "tech_tags": ["python", "sql", "airflow"], "description": "Build and operate the ELT platform powering company-wide analytics."},
+        {"title": "Senior Data Engineer, Streaming", "company_name": "Confluent", "department": "Engineering", "location": "Austin, TX", "tech_tags": ["kafka", "flink", "java"], "description": "Design streaming data products on Kafka and Flink for real-time analytics."},
+        {"title": "Data Platform Engineer", "company_name": "Robinhood", "department": "Data", "location": "Menlo Park, CA", "tech_tags": ["python", "spark", "kafka"], "description": "Scale the lakehouse and streaming ingestion that powers trading analytics."},
+        {"title": "Data Engineer II", "company_name": "Etsy", "department": "Data", "location": "Brooklyn, NY", "tech_tags": ["python", "airflow", "bigquery"], "description": "Mid-level engineer building marketplace data models and orchestrated pipelines."},
+        {"title": "Senior Analytics Engineer", "company_name": "Monzo", "department": "Data", "location": "Remote", "tech_tags": ["dbt", "sql", "bigquery"], "description": "Own dbt models and metric definitions for the lending business."},
+        {"title": "Data Engineer, Warehouse", "company_name": "Snowflake", "department": "Data", "location": "San Mateo, CA", "tech_tags": ["sql", "python"], "description": "Build internal data products and pipeline frameworks on Snowflake."},
+        {"title": "Senior Data Engineer, Batch Compute", "company_name": "Netflix", "department": "Data", "location": "Los Gatos, CA", "tech_tags": ["spark", "scala", "airflow"], "description": "Evolve the big data platform running hundreds of thousands of Spark jobs daily."},
+        {"title": "Staff Data Engineer", "company_name": "Chime", "department": "Data", "location": "Austin, TX", "tech_tags": ["python", "spark", "kafka"], "description": "Technical lead for banking data pipelines with strong reliability requirements."},
+        {"title": "Data Engineer, Experimentation Platform", "company_name": "Faire", "department": "Data", "location": "Remote", "tech_tags": ["python", "airflow", "dbt"], "description": "Build the metrics pipelines behind the A/B testing platform."},
+        {"title": "Senior ETL Developer", "company_name": "Capital One", "department": "Data", "location": "Plano, TX", "tech_tags": ["python", "spark", "aws"], "description": "Modernize batch ETL onto Spark and AWS-managed services."},
+        {"title": "Data Engineer, Real-time Pipelines", "company_name": "DoorDash", "department": "Data", "location": "Austin, TX", "tech_tags": ["kafka", "flink", "python"], "description": "Build low-latency delivery ETA features from streaming order events."},
+        {"title": "Senior Data Infrastructure Engineer", "company_name": "Notion", "department": "Data", "location": "San Francisco, CA", "tech_tags": ["python", "kafka", "clickhouse"], "description": "Own event collection and the ClickHouse analytics store."},
+        {"title": "Data Engineer, Customer Data Platform", "company_name": "Segment", "department": "Engineering", "location": "Remote", "tech_tags": ["go", "kafka"], "description": "Build identity resolution and audience pipelines for the CDP."},
+        {"title": "Analytics Engineer", "company_name": "Figma", "department": "Data", "location": "San Francisco, CA", "tech_tags": ["dbt", "sql", "snowflake"], "description": "Model product usage data in dbt and partner with PMs on metrics."},
+        {"title": "Senior Data Engineer, ML Features", "company_name": "Affirm", "department": "Data", "location": "Remote", "tech_tags": ["python", "spark", "airflow"], "description": "Build the feature store pipelines feeding underwriting models."},
+        {"title": "Data Engineer, Ingestion", "company_name": "Datadog", "department": "Data", "location": "New York, NY", "tech_tags": ["go", "kafka"], "description": "Scale multi-tenant telemetry ingestion pipelines."},
+        {"title": "Senior Data Engineer, Growth", "company_name": "Duolingo", "department": "Data", "location": "Pittsburgh, PA", "tech_tags": ["python", "airflow", "bigquery"], "description": "Own growth analytics datasets and attribution pipelines."},
+        {"title": "Data Engineer III", "company_name": "Expedia", "department": "Data", "location": "Austin, TX", "tech_tags": ["spark", "scala", "airflow"], "description": "Senior IC building travel booking data marts and streaming joins."},
+        {"title": "Lakehouse Engineer", "company_name": "Databricks", "department": "Data", "location": "San Francisco, CA", "tech_tags": ["spark", "delta", "python"], "description": "Build internal lakehouse infrastructure with Delta Lake and Unity Catalog."}
+      ]
+    },
+    {
+      "name": "frontend_engineer",
+      "profile": {
+        "headline": "Frontend engineer focused on React, TypeScript, and design systems",
+        "tracks": ["swe", "design"],
+        "tech_tags": ["typescript", "react", "nextjs", "css", "graphql"],
+        "seniority_pref": ["mid"],
+        "location": "Remote"
+      },
+      "jobs": [
+        {"title": "Frontend Engineer, Design Systems", "company_name": "Shopify", "department": "Engineering", "location": "Remote", "tech_tags": ["react", "typescript"], "description": "Build and maintain Polaris, our design system used by every product team."},
+        {"title": "Software Engineer, Frontend", "company_name": "Linear", "department": "Engineering", "location": "Remote", "tech_tags": ["typescript", "react"], "description": "Craft fast, polished project management UI with obsessive attention to interaction detail."},
+        {"title": "Frontend Engineer II", "company_name": "Vercel", "department": "Engineering", "location": "Remote", "tech_tags": ["nextjs", "react", "typescript"], "description": "Build the Next.js dashboard experience and collaborate on framework features."},
+        {"title": "UI Engineer", "company_name": "Stripe", "department": "Engineering", "location": "Remote", "tech_tags": ["react", "typescript", "css"], "description": "Ship checkout and dashboard interfaces with a strong design partnership."},
+        {"title": "Frontend Engineer, Editor", "company_name": "Figma", "department": "Engineering", "location": "San Francisco, CA", "tech_tags": ["typescript", "webgl"], "description": "Work on the canvas editor performance and rendering pipeline."},
+        {"title": "Product Engineer, Web", "company_name": "Notion", "department": "Engineering", "location": "New York, NY", "tech_tags": ["react", "typescript"], "description": "Build collaborative docs features across the web client."},
+        {"title": "Senior Frontend Developer", "company_name": "GitLab", "department": "Engineering", "location": "Remote", "tech_tags": ["vue", "javascript"], "description": "Improve the merge request and CI visualization experience."},
+        {"title": "Frontend Engineer, Growth", "company_name": "Duolingo", "department": "Engineering", "location": "Pittsburgh, PA", "tech_tags": ["react", "typescript"], "description": "Run web funnel experiments and build onboarding flows."},
+        {"title": "Design Engineer", "company_name": "Framer", "department": "Design", "location": "Remote", "tech_tags": ["react", "typescript", "css"], "description": "Bridge design and engineering building interactive site-building tools."},
+        {"title": "Frontend Infrastructure Engineer", "company_name": "Airbnb", "department": "Engineering", "location": "Remote", "tech_tags": ["typescript", "react", "webpack"], "description": "Own build tooling, bundle performance, and the component platform."},
+        {"title": "Web Engineer, Accessibility", "company_name": "Slack", "department": "Engineering", "location": "Remote", "tech_tags": ["react", "typescript"], "description": "Make the Slack client fully accessible; deep ARIA and keyboard-navigation work."},
+        {"title": "Frontend Engineer, Checkout", "company_name": "Squarespace", "department": "Engineering", "location": "New York, NY", "tech_tags": ["react", "graphql"], "description": "Build the commerce checkout experience and payment UI components."},
+        {"title": "Software Engineer, Web Performance", "company_name": "Cloudflare", "department": "Engineering", "location": "Remote", "tech_tags": ["javascript", "typescript"], "description": "Improve core web vitals across dashboard properties and build perf tooling."},
+        {"title": "React Engineer, Mobile Web", "company_name": "Instagram", "department": "Engineering", "location": "Menlo Park, CA", "tech_tags": ["react", "graphql"], "description": "Build the mobile web experience with React and Relay."},
+        {"title": "Frontend Engineer, Data Viz", "company_name": "Observable", "department": "Engineering", "location": "Remote", "tech_tags": ["d3", "typescript", "svelte"], "description": "Build charting primitives and notebook UI for data exploration."},
+        {"title": "Product Engineer, Design Tools", "company_name": "Canva", "department": "Engineering", "location": "Remote", "tech_tags": ["typescript", "react"], "description": "Ship editor features used by 100M designers with a strong frontend architecture."},
+        {"title": "Frontend Platform Engineer", "company_name": "Ramp", "department": "Engineering", "location": "New York, NY", "tech_tags": ["react", "typescript", "graphql"], "description": "Own the component library, routing architecture, and frontend CI."},
+        {"title": "Software Engineer, Web", "company_name": "Discord", "department": "Engineering", "location": "Remote", "tech_tags": ["react", "typescript"], "description": "Build messaging surfaces and voice UI in the desktop web client."},
+        {"title": "Frontend Engineer, Maps", "company_name": "Mapbox", "department": "Engineering", "location": "Remote", "tech_tags": ["typescript", "webgl"], "description": "Build map rendering controls and the studio styling interface."},
+        {"title": "Fullstack Engineer, Frontend-leaning", "company_name": "Loom", "department": "Engineering", "location": "Remote", "tech_tags": ["react", "typescript", "graphql"], "description": "Build video recording and sharing flows; mostly frontend with some API work."}
+      ]
+    },
+    {
+      "name": "infra_sre",
+      "profile": {
+        "headline": "Site reliability engineer running Kubernetes platforms and observability",
+        "tracks": ["devops"],
+        "tech_tags": ["kubernetes", "terraform", "go", "aws", "prometheus"],
+        "seniority_pref": ["senior"],
+        "location": "Seattle, WA"
+      },
+      "jobs": [
+        {"title": "Senior Site Reliability Engineer", "company_name": "Reddit", "department": "Engineering", "location": "Remote", "tech_tags": ["kubernetes", "go", "prometheus"], "description": "Own reliability for core serving infrastructure; run incident response and capacity planning."},
+        {"title": "SRE, Compute Platform", "company_name": "Shopify", "department": "Engineering", "location": "Remote", "tech_tags": ["kubernetes", "go"], "description": "Operate the multi-cluster Kubernetes platform powering flash-sale traffic."},
+        {"title": "Senior Infrastructure Engineer", "company_name": "Figma", "department": "Engineering", "location": "Seattle, WA", "tech_tags": ["terraform", "aws", "kubernetes"], "description": "Build the AWS foundation, IaC standards, and golden paths for service teams."},
+        {"title": "Senior Platform Engineer", "company_name": "Grafana Labs", "department": "Engineering", "location": "Remote", "tech_tags": ["kubernetes", "go", "prometheus"], "description": "Run Grafana Cloud's Kubernetes fleet and observability stack."},
+        {"title": "Site Reliability Engineer, Databases", "company_name": "GitHub", "department": "Engineering", "location": "Remote", "tech_tags": ["mysql", "kubernetes"], "description": "Keep the MySQL fleet behind github.com fast and reliable."},
+        {"title": "Senior DevOps Engineer", "company_name": "Chime", "department": "Engineering", "location": "Seattle, WA", "tech_tags": ["terraform", "aws", "kubernetes"], "description": "Own CI/CD, IaC, and production readiness for banking services."},
+        {"title": "Infrastructure Engineer, Observability", "company_name": "Datadog", "department": "Engineering", "location": "New York, NY", "tech_tags": ["go", "kubernetes"], "description": "Build internal metrics and tracing infrastructure at massive scale."},
+        {"title": "Senior SRE, Edge", "company_name": "Cloudflare", "department": "Engineering", "location": "Seattle, WA", "tech_tags": ["linux", "go", "prometheus"], "description": "Operate the global edge network across 300+ cities."},
+        {"title": "Platform Engineer, Developer Experience", "company_name": "Airbnb", "department": "Engineering", "location": "Seattle, WA", "tech_tags": ["kubernetes", "go", "terraform"], "description": "Build deployment tooling and service scaffolding for a thousand engineers."},
+        {"title": "Senior Production Engineer", "company_name": "Meta", "department": "Engineering", "location": "Seattle, WA", "tech_tags": ["linux", "python"], "description": "Hybrid SWE/SRE role owning reliability for the ads delivery stack."},
+        {"title": "Senior Cloud Infrastructure Engineer", "company_name": "Snowflake", "department": "Engineering", "location": "Bellevue, WA", "tech_tags": ["aws", "terraform", "kubernetes"], "description": "Design the multi-cloud provisioning layer for the data platform."},
+        {"title": "SRE, Payments Reliability", "company_name": "Stripe", "department": "Engineering", "location": "Seattle, WA", "tech_tags": ["ruby", "terraform", "aws"], "description": "Keep payment APIs at five nines; deep incident and chaos engineering work."},
+        {"title": "Senior Kubernetes Engineer", "company_name": "Red Hat", "department": "Engineering", "location": "Remote", "tech_tags": ["kubernetes", "go", "operators"], "description": "Contribute to OpenShift and build cluster lifecycle operators."},
+        {"title": "Infrastructure Engineer, CI/CD", "company_name": "Netflix", "department": "Engineering", "location": "Los Gatos, CA", "tech_tags": ["spinnaker", "aws", "java"], "description": "Evolve continuous delivery tooling for thousands of daily deploys."},
+        {"title": "Senior Reliability Engineer, Game Services", "company_name": "Riot Games", "department": "Engineering", "location": "Seattle, WA", "tech_tags": ["kubernetes", "go", "aws"], "description": "Run global game server fleets and matchmaking infrastructure."},
+        {"title": "Staff SRE, Storage", "company_name": "Dropbox", "department": "Engineering", "location": "Seattle, WA", "tech_tags": ["python", "grpc"], "description": "Own reliability for exabyte-scale block storage."},
+        {"title": "Senior Infrastructure Engineer, Networking", "company_name": "Tailscale", "department": "Engineering", "location": "Remote", "tech_tags": ["go", "wireguard"], "description": "Build the coordination plane and DERP relay fleet."},
+        {"title": "DevOps Engineer, Kubernetes Platform", "company_name": "Epic Games", "department": "Engineering", "location": "Cary, NC", "tech_tags": ["kubernetes", "terraform", "aws"], "description": "Operate the Fortnite services platform through global launch events."},
+        {"title": "Senior SRE, Data Infrastructure", "company_name": "LinkedIn", "department": "Engineering", "location": "Bellevue, WA", "tech_tags": ["kafka", "kubernetes", "python"], "description": "Keep Kafka and stream processing clusters healthy at trillion-message scale."},
+        {"title": "Principal Infrastructure Engineer", "company_name": "HashiCorp", "department": "Engineering", "location": "Remote", "tech_tags": ["terraform", "go", "vault"], "description": "Set technical direction for the internal platform running HCP services."}
+      ]
+    }
+  ]
+}
