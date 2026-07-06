@@ -21,10 +21,19 @@ companies registry (ATS + slug)
   normalize (title/department/location) ──► dedupe (fuzzy match across sources)
         │
         ▼
-   PostgreSQL (jobs, companies, ingest_runs)
+  embed (ONNX int8 MiniLM, 384-dim, at ingest + nightly sweep)
         │
         ▼
-   FastAPI read layer (filters, search, meta) ──► Next.js feed UI
+   PostgreSQL + pgvector (jobs + embeddings, HNSW cosine index)
+        │
+        ├──► keyword search (ILIKE) ─┐
+        ├──► semantic search (cosine)├─► RRF fusion ──► hybrid results
+        │                            ┘
+        ├──► For-You v2: profile vector (profile text + engaged-jobs centroid)
+        │      → top-200 cosine retrieval → 0.6·cosine + 0.4·rule-score rerank
+        │
+        ▼
+   FastAPI read layer ──► Next.js feed UI (mode toggle, "why" strings)
 ```
 
 Ingestion is **profile-agnostic** — every open role a company posts is stored, across all
@@ -40,7 +49,20 @@ departments. Filtering happens at read time in the API/UI, so the company regist
   distinct openings.
 - **Accounts & tracking** — Google OAuth, saved jobs, an application tracker (kanban-style
   statuses), saved searches, and email alerts for new matching roles.
-- **Recommendations** — a "For You" feed based on profile + activity.
+- **Semantic + hybrid search** — every job is embedded (all-MiniLM-L6-v2, int8 ONNX — no
+  torch, free-tier friendly) into pgvector; search offers keyword, pure semantic, and a
+  hybrid mode that fuses both rankings with Reciprocal Rank Fusion. p95 < 35 ms on a
+  50k-job corpus.
+- **Recommendations ("For You" v2)** — two-stage matching: pgvector retrieves candidates
+  by cosine against a profile vector (profile text + a weighted centroid of saved/applied
+  jobs), then a blend of semantic similarity and the explainable rule score reranks them.
+  Every card keeps a human-readable "why" string.
+- **Measured, not vibes** — an offline eval harness (`api/scripts/eval_matching.py`)
+  scores rule-based vs semantic vs hybrid ranking on held-out engagements and synthetic
+  personas: hybrid lifts NDCG@10 from 0.853 to 0.943 and MRR from 0.900 to 1.000 over the
+  rule baseline. See [docs/eval_results.md](docs/eval_results.md).
+- **Interaction logging** — impressions/clicks/saves are captured per surface
+  (feed/search) as training data for a future learned ranker.
 - **Hiring velocity** — per-company opened/closed-role trends.
 - **Browser autofill extension** — fills Greenhouse/Lever/Ashby application forms from a
   Chronicle profile and saves the role to the tracker in one click. **Fill-only by
@@ -56,7 +78,9 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 |---|---|
 | Backend | Python + FastAPI, async `httpx` for concurrent ATS fan-out |
 | Dedup | rapidfuzz |
-| Database | PostgreSQL + SQLAlchemy 2.0 + Alembic |
+| Embeddings | all-MiniLM-L6-v2 (int8 ONNX via onnxruntime + tokenizers — no torch, ~150 MB RSS) |
+| Database | PostgreSQL + pgvector (HNSW) + SQLAlchemy 2.0 + Alembic |
+| Auth (web→API) | HMAC-signed short-lived internal tokens (`api/app/internal_auth.py`) |
 | Scheduler | APScheduler (in-process worker, also runs as a one-shot CLI) |
 | Frontend | Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui |
 | Auth | NextAuth v5 (Google OAuth) |
@@ -92,12 +116,15 @@ brew services start postgresql@16   # or your platform's equivalent
 
 # 2. API
 cd api
-cp .env.example .env                # set DATABASE_URL for your local Postgres
+cp .env.example .env                # set DATABASE_URL + INTERNAL_API_SECRET
 pip install -e ".[dev]"
+python -m app.ml.download           # fetch the ONNX embedding model (~23 MB, one-time)
+python -m alembic upgrade head      # includes CREATE EXTENSION vector (needs pgvector)
 uvicorn app.main:app --reload --port 8000
 
-# 3. Ingest (populates the registry with real job data)
+# 3. Ingest (populates the registry with real job data, embeds new jobs)
 python -m app.ingest.schedule --once
+python -m scripts.backfill_embeddings   # embed any pre-existing corpus
 
 # 4. Web
 cd web
@@ -117,11 +144,16 @@ cd web && npx tsc --noEmit
 The FastAPI backend exposes a read API for the feed plus authenticated endpoints for
 accounts:
 
-- `GET /jobs`, `GET /jobs/{id}`, `GET /meta` — the public feed, filterable and paginated
+- `GET /jobs` (`?mode=keyword|semantic|hybrid`), `GET /jobs/{id}`, `GET /meta` — the
+  public feed, filterable and paginated; semantic/hybrid rank by pgvector cosine + RRF
 - `GET /companies`, `GET /companies/{id}`, `GET /companies/{id}/velocity`
 - `GET/POST /saved`, `GET/POST/PUT/DELETE /applications`, `GET/POST/DELETE /searches`
-- `GET /recommendations`, `GET /notifications`
+- `GET /recommendations`, `GET /notifications`, `POST /interactions/batch`
 - `GET/POST/DELETE /users/me/extension-token`, `POST /extension/saved` — browser extension
+
+Authenticated endpoints require an `X-Internal-Auth` token — an HMAC-SHA256-signed,
+5-minute claim minted by the Next.js server proxy (`web/src/lib/internal-token.ts`) and
+verified by the API (`api/app/internal_auth.py`). Raw identity headers are never trusted.
 
 See `api/app/routers/` for the full set of endpoints and request/response schemas.
 
