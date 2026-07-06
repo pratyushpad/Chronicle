@@ -122,6 +122,8 @@ class JobListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+    # set to "semantic"/"hybrid" when vector ranking produced this page
+    search_mode: str | None = None
 
 
 # ── User / Profile ────────────────────────────────────────────────────────────

@@ -61,6 +61,7 @@ def _last_run_start(session: Session) -> datetime | None:
 @router.get("/jobs", response_model=JobListResponse)
 def list_jobs(
     q: Optional[str] = Query(None),
+    mode: str = Query("keyword", pattern="^(keyword|semantic|hybrid)$"),
     company: Optional[str] = Query(None),
     company_id: Optional[int] = Query(None),
     department: Optional[str] = Query(None),
@@ -81,8 +82,10 @@ def list_jobs(
     order_col = Job.posted_at if sort == "posted_at" else Job.first_seen_at
 
     # All filter statements join Company because several filters reference it.
-    def _apply_filters(s):
-        if q:
+    # include_q=False leaves out the title match — the semantic arm ranks by
+    # vector similarity instead of substring.
+    def _apply_filters(s, include_q: bool = True):
+        if q and include_q:
             s = s.where(Job.title.ilike(f"%{q}%"))
         if company:
             s = s.where(Company.name.ilike(f"%{company}%"))
@@ -113,7 +116,21 @@ def list_jobs(
             s = s.where(Job.first_seen_at >= last_start)
         return s
 
-    base = lambda *cols: _apply_filters(select(*cols).join(Company).where(Job.is_active == True))
+    base = lambda *cols, **kw: _apply_filters(
+        select(*cols).join(Company).where(Job.is_active == True), **kw
+    )
+
+    if mode in ("semantic", "hybrid") and q:
+        return _fused_search(
+            session=session,
+            base=base,
+            mode=mode,
+            q=q,
+            order_col=order_col,
+            last_start=last_start,
+            page=page,
+            page_size=page_size,
+        )
 
     # Total = distinct roles, collapsing cross-posted city duplicates.
     keys_sub = base(Job.dedup_key).subquery()
@@ -137,8 +154,19 @@ def list_jobs(
         .limit(page_size)
     )
     rows = session.execute(page_stmt).all()
+    return _build_response(session, rows, last_start, total, page, page_size)
 
-    # Aggregate the sibling locations for each role on this page.
+
+def _build_response(
+    session: Session,
+    rows,
+    last_start: datetime | None,
+    total: int,
+    page: int,
+    page_size: int,
+    search_mode: str | None = None,
+) -> JobListResponse:
+    """Assemble JobListItems (+ sibling-location aggregation) for one page of rows."""
     keys = [row.Job.dedup_key for row in rows]
     loc_map: dict[str, list[str]] = {}
     if keys:
@@ -185,7 +213,80 @@ def list_jobs(
         page=page,
         page_size=page_size,
         total_pages=max(1, ceil(total / page_size)),
+        search_mode=search_mode,
     )
+
+
+# Per-arm candidate depth for semantic/hybrid search. Relevance-ranked modes
+# intentionally top out around this many distinct roles per query.
+_FUSION_ARM_LIMIT = 200
+
+
+def _fused_search(
+    session: Session,
+    base,
+    mode: str,
+    q: str,
+    order_col,
+    last_start: datetime | None,
+    page: int,
+    page_size: int,
+) -> JobListResponse:
+    """Semantic / hybrid ranking: pgvector cosine arm (+ keyword arm), RRF-fused.
+
+    Unlike the keyword path (representative = most recent posting), the
+    representative per dedup_key here is the best-matching posting.
+    """
+    from app.ml.embedder import get_embedder
+    from app.search.rrf import rrf_fuse
+
+    qvec = get_embedder().encode([q])[0]
+
+    semantic_rows = session.execute(
+        base(Job.id, Job.dedup_key, include_q=False)
+        .where(Job.embedding.isnot(None))
+        .order_by(Job.embedding.cosine_distance(qvec))
+        .limit(_FUSION_ARM_LIMIT)
+    ).all()
+
+    rankings = [[row.id for row in semantic_rows]]
+    dedup_of = {row.id: row.dedup_key for row in semantic_rows}
+
+    if mode == "hybrid":
+        keyword_rows = session.execute(
+            base(Job.id, Job.dedup_key)
+            .order_by(order_col.desc().nullslast(), Job.id.desc())
+            .limit(_FUSION_ARM_LIMIT)
+        ).all()
+        rankings.append([row.id for row in keyword_rows])
+        dedup_of.update({row.id: row.dedup_key for row in keyword_rows})
+
+    fused_ids = rrf_fuse(rankings)
+
+    # First occurrence per dedup_key wins (best match, not most recent).
+    seen_keys: set[str] = set()
+    deduped_ids: list[int] = []
+    for job_id in fused_ids:
+        key = dedup_of[job_id]
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        deduped_ids.append(job_id)
+
+    total = len(deduped_ids)
+    page_ids = deduped_ids[(page - 1) * page_size : page * page_size]
+
+    rows = []
+    if page_ids:
+        fetched = session.execute(
+            select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
+            .join(Company)
+            .where(Job.id.in_(page_ids))
+        ).all()
+        by_id = {row.Job.id: row for row in fetched}
+        rows = [by_id[i] for i in page_ids if i in by_id]
+
+    return _build_response(session, rows, last_start, total, page, page_size, search_mode=mode)
 
 
 @router.get("/jobs/{job_id}", response_model=JobDetail)

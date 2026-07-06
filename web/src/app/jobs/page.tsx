@@ -15,6 +15,10 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
   const page = parseInt(searchParams.page ?? "1", 10);
   const params = {
     q: searchParams.q,
+    mode:
+      searchParams.q && ["semantic", "hybrid"].includes(searchParams.mode)
+        ? (searchParams.mode as "semantic" | "hybrid")
+        : undefined,
     company: searchParams.company,
     company_id: searchParams.company_id ? parseInt(searchParams.company_id, 10) : undefined,
     department: searchParams.department,
@@ -60,6 +64,11 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
       <div className="mt-6 flex items-center justify-between">
         <p className="font-body text-sm text-muted-foreground">
           {formatNumber(data.total)} role{data.total !== 1 ? "s" : ""}
+          {data.search_mode && (
+            <span className="ml-2 border border-foreground px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-foreground">
+              {data.search_mode} match
+            </span>
+          )}
         </p>
         {meta.last_run?.started_at && (
           <p className="font-mono text-xs text-muted-foreground tracking-[0.05em]">

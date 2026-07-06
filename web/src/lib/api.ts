@@ -92,10 +92,12 @@ export interface JobListResponse {
   page: number;
   page_size: number;
   total_pages: number;
+  search_mode?: "semantic" | "hybrid" | null;
 }
 
 export interface JobParams {
   q?: string;
+  mode?: "keyword" | "semantic" | "hybrid";
   company?: string;
   company_id?: number;
   department?: string;

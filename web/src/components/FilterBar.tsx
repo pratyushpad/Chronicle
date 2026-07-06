@@ -16,6 +16,12 @@ interface FilterBarProps {
   selectedCompanyName?: string;
 }
 
+const SEARCH_MODES = [
+  { value: "keyword", label: "Keyword", title: "Exact title matches" },
+  { value: "hybrid", label: "Hybrid", title: "Keyword + semantic matches, fused" },
+  { value: "semantic", label: "Semantic", title: "Meaning-based matches via embeddings" },
+] as const;
+
 const QUICK_PILLS = [
   { label: "Internships", params: { level: "intern" } },
   { label: "New Grad", params: { level: "new_grad" } },
@@ -67,16 +73,38 @@ function Filters({
     "h-11 w-full border border-foreground bg-background px-3 font-body text-sm text-foreground placeholder:italic placeholder:text-muted-foreground transition-all duration-100 focus:outline-none focus:border-2";
   const selectClass = cn(inputClass, "cursor-pointer appearance-none");
 
+  const mode = current.get("mode") ?? "keyword";
+
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      <input
-        type="text"
-        placeholder="Search roles…"
-        value={search}
-        onChange={(e) => onSearch(e.target.value)}
-        className={inputClass}
-        aria-label="Search roles"
-      />
+      <div>
+        <input
+          type="text"
+          placeholder="Search roles…"
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          className={inputClass}
+          aria-label="Search roles"
+        />
+        <div className="mt-1.5 flex" role="group" aria-label="Search match mode">
+          {SEARCH_MODES.map((m) => (
+            <button
+              key={m.value}
+              onClick={() => onChange("mode", m.value === "keyword" ? "" : m.value)}
+              aria-pressed={mode === m.value}
+              title={m.title}
+              className={cn(
+                "border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-100 -ml-px first:ml-0",
+                mode === m.value
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <select
         value={selectedCompanyName ?? current.get("company") ?? ""}
