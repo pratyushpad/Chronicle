@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
+import { apiFetch } from "@/lib/server-api";
 
 export async function POST() {
   const session = await auth();
@@ -12,9 +11,8 @@ export async function POST() {
   const { email, name, image } = session.user;
   const user = session.user as any;
 
-  const res = await fetch(`${API}/users/sync`, {
+  const res = await apiFetch("/users/sync", email, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email,
       name: name ?? null,
@@ -22,7 +20,6 @@ export async function POST() {
       provider: user.provider ?? "google",
       provider_id: user.providerAccountId ?? email,
     }),
-    cache: "no-store",
   });
 
   if (!res.ok) {
@@ -38,10 +35,7 @@ export async function GET() {
     return NextResponse.json(null);
   }
 
-  const res = await fetch(`${API}/users/me`, {
-    headers: { "X-User-Email": session.user.email },
-    cache: "no-store",
-  });
+  const res = await apiFetch("/users/me", session.user.email);
 
   if (!res.ok) return NextResponse.json(null);
   return NextResponse.json(await res.json());

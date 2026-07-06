@@ -6,7 +6,7 @@ import { SectionLabel } from "@/components/SectionLabel";
 const API_BASE =
   process.env.NEXT_PUBLIC_EXTENSION_API_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:8002";
+  "http://localhost:8000";
 
 const labelCls = "font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground";
 const inputCls =

@@ -1,14 +1,16 @@
 services:
   db:
-    image: postgres:16
+    # pgvector-enabled Postgres (needed for jobs.embedding); plain postgres:16 before.
+    # Changing image/credentials requires recreating the volume: docker compose down -v
+    image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_DB: openroles
-      POSTGRES_USER: openroles
-      POSTGRES_PASSWORD: openroles
+      POSTGRES_DB: chronicle
+      POSTGRES_USER: chronicle
+      POSTGRES_PASSWORD: chronicle
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U openroles"]
+      test: ["CMD-SHELL", "pg_isready -U chronicle"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -16,7 +18,8 @@ services:
   api:
     build: ./api
     environment:
-      DATABASE_URL: postgresql+psycopg2://openroles:openroles@db/openroles
+      DATABASE_URL: postgresql+psycopg2://chronicle:chronicle@db/chronicle
+      INTERNAL_API_SECRET: chronicle_local_dev_secret
     ports:
       - "8000:8000"
     depends_on:
@@ -27,7 +30,7 @@ services:
     build: ./api
     command: python -m app.ingest.schedule
     environment:
-      DATABASE_URL: postgresql+psycopg2://openroles:openroles@db/openroles
+      DATABASE_URL: postgresql+psycopg2://chronicle:chronicle@db/chronicle
     depends_on:
       db:
         condition: service_healthy
@@ -36,6 +39,7 @@ services:
     build: ./web
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
+      INTERNAL_API_SECRET: chronicle_local_dev_secret
     ports:
       - "3000:3000"
     depends_on:

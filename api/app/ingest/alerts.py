@@ -19,7 +19,9 @@ from app.db import get_session
 log = logging.getLogger(__name__)
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM = os.getenv("RESEND_FROM", "Folio <alerts@folioapp.dev>")
+# Display name is Chronicle; the sending address stays on the Resend-verified
+# folioapp.dev domain until a Chronicle domain is verified there.
+RESEND_FROM = os.getenv("RESEND_FROM", "Chronicle <alerts@folioapp.dev>")
 APP_URL = os.getenv("APP_URL", "http://localhost:3001")
 
 
@@ -68,7 +70,7 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
 
     html = f"""
     <div style='max-width:560px;margin:0 auto;font-family:system-ui,sans-serif;background:#fafaf8;padding:32px 24px'>
-      <p style='font-family:Georgia,serif;font-size:28px;color:#1a1a1a;margin:0 0 4px'>Folio</p>
+      <p style='font-family:Georgia,serif;font-size:28px;color:#1a1a1a;margin:0 0 4px'>Chronicle</p>
       <p style='font-size:13px;color:#b8860b;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 32px'>JOB ALERT · {search.name}</p>
       <p style='font-size:15px;color:#6b6b6b;margin:0 0 24px'>
         {len(jobs)} new role{'s' if len(jobs) != 1 else ''} since your last alert:
@@ -82,7 +84,7 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
         </a>
       </p>
       <p style='font-size:11px;color:#b0a898;margin-top:32px'>
-        You're receiving this because you saved a search on Folio.
+        You're receiving this because you saved a search on Chronicle.
         <a href='{APP_URL}/saved' style='color:#b0a898'>Manage alerts</a>
       </p>
     </div>"""

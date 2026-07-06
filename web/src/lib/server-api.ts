@@ -1,10 +1,13 @@
 /**
  * Server-side fetch helper for authenticated FastAPI calls.
- * Passes X-User-Email header so FastAPI can identify the caller.
+ * Signs an X-Internal-Auth token asserting the caller's email; FastAPI
+ * verifies the HMAC signature and expiry (see api/app/internal_auth.py).
  * Only call from Next.js API routes (server-side); never from client components.
  */
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
+import { signInternalToken } from "./internal-token";
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export async function apiFetch(
   path: string,
@@ -15,7 +18,7 @@ export async function apiFetch(
     ...options,
     headers: {
       "Content-Type": "application/json",
-      "X-User-Email": userEmail,
+      "X-Internal-Auth": signInternalToken(userEmail),
       ...(options.headers ?? {}),
     },
     cache: "no-store",
