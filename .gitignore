@@ -45,3 +45,4 @@ npm-debug.log*
 .claude/
 /handoff.md
 /Arch_Job.md
+node-compile-cache/
