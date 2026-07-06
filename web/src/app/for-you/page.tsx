@@ -92,7 +92,7 @@ export default function ForYouPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {recs.map(({ job, why }) => (
-            <JobCard key={job.id} job={job} why={why} />
+            <JobCard key={job.id} job={job} why={why} surface="feed" />
           ))}
         </div>
       )}

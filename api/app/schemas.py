@@ -1,6 +1,6 @@
 from datetime import date, datetime
-from typing import Any
-from pydantic import BaseModel
+from typing import Any, Literal
+from pydantic import BaseModel, Field
 
 
 class CompanyItem(BaseModel):
@@ -292,3 +292,15 @@ class SavedSearchOut(BaseModel):
     last_alerted_at: datetime | None
     created_at: datetime
     model_config = {"from_attributes": True}
+
+
+# ── Interactions ──────────────────────────────────────────────────────────────
+
+class InteractionIn(BaseModel):
+    job_id: int
+    event: Literal["impression", "click", "save", "apply", "dismiss"]
+    surface: Literal["feed", "search", "alert"]
+
+
+class InteractionBatchIn(BaseModel):
+    events: list[InteractionIn] = Field(..., max_length=100)

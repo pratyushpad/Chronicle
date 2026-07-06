@@ -16,6 +16,7 @@ from app.routers.applications import router as apps_router  # noqa: E402
 from app.routers.recommendations import router as recs_router  # noqa: E402
 from app.routers.notifications import router as notif_router  # noqa: E402
 from app.routers.extension import router as extension_router  # noqa: E402
+from app.routers.interactions import router as interactions_router  # noqa: E402
 
 app = FastAPI(title="Chronicle API", version="2.0.0")
 
@@ -45,6 +46,7 @@ app.include_router(apps_router)
 app.include_router(recs_router)
 app.include_router(notif_router)
 app.include_router(extension_router)
+app.include_router(interactions_router)
 
 
 @app.on_event("startup")

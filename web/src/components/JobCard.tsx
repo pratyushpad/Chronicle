@@ -4,14 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { cn, formatDate, formatLocation, formatDepartment } from "@/lib/utils";
 import type { JobListItem } from "@/lib/api";
+import { logInteraction, type InteractionSurface } from "@/lib/interactions";
 
 interface Props {
   job: JobListItem;
   initialSaved?: boolean;
   why?: string;
+  /** When set, impressions/clicks/saves are logged against this surface. */
+  surface?: InteractionSurface;
 }
 
-export function JobCard({ job, initialSaved = false, why }: Props) {
+export function JobCard({ job, initialSaved = false, why, surface }: Props) {
   const { data: session } = useSession();
   const isAuthed = !!session?.user?.email;
 
@@ -28,6 +31,10 @@ export function JobCard({ job, initialSaved = false, why }: Props) {
     } catch {}
   }, [job.id, isAuthed]);
 
+  useEffect(() => {
+    if (surface && isAuthed) logInteraction(job.id, "impression", surface);
+  }, [job.id, surface, isAuthed]);
+
   const toggleSave = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     if (loadingS) return;
@@ -43,11 +50,12 @@ export function JobCard({ job, initialSaved = false, why }: Props) {
     setLoadingS(true);
     try {
       await fetch(`/api/saved/${job.id}`, { method: saved ? "DELETE" : "POST" });
+      if (!saved && surface) logInteraction(job.id, "save", surface);
       setSaved(!saved);
     } finally {
       setLoadingS(false);
     }
-  }, [saved, job.id, isAuthed, loadingS]);
+  }, [saved, job.id, isAuthed, loadingS, surface]);
 
   const domain = job.company_domain;
   const logoUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null;
@@ -62,7 +70,12 @@ export function JobCard({ job, initialSaved = false, why }: Props) {
 
   return (
     <article className="group relative border border-foreground border-l-4 bg-card transition-colors duration-100 hover:bg-muted">
-      <Link href={`/jobs/${job.id}`} className="absolute inset-0 z-0" aria-label={`${job.title} at ${job.company_name}`} />
+      <Link
+        href={`/jobs/${job.id}`}
+        className="absolute inset-0 z-0"
+        aria-label={`${job.title} at ${job.company_name}`}
+        onClick={() => surface && isAuthed && logInteraction(job.id, "click", surface)}
+      />
       <div className="relative z-10 p-5 pointer-events-none">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">

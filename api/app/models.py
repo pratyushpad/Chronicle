@@ -45,6 +45,20 @@ class AlertFrequency(str, enum.Enum):
     weekly = "weekly"
 
 
+class InteractionEvent(str, enum.Enum):
+    impression = "impression"
+    click = "click"
+    save = "save"
+    apply = "apply"
+    dismiss = "dismiss"
+
+
+class InteractionSurface(str, enum.Enum):
+    feed = "feed"
+    search = "search"
+    alert = "alert"
+
+
 class Company(Base):
     __tablename__ = "companies"
     __table_args__ = (UniqueConstraint("ats", "slug"),)
@@ -234,3 +248,16 @@ class EmailOutbox(Base):
     error = Column(Text, nullable=True)
     attempts = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+
+
+class Interaction(Base):
+    __tablename__ = "interactions"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    job_id = Column(Integer, ForeignKey("jobs.id"), nullable=False)
+    event = Column(Enum(InteractionEvent), nullable=False)
+    surface = Column(Enum(InteractionSurface), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+
+    __table_args__ = (Index("ix_interactions_user_created", "user_id", "created_at"),)

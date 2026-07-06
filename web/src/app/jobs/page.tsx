@@ -91,7 +91,7 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
       ) : (
         <div className="mt-6 flex flex-col gap-4">
           {data.items.map((job) => (
-            <JobCard key={job.id} job={job} />
+            <JobCard key={job.id} job={job} surface="search" />
           ))}
         </div>
       )}
