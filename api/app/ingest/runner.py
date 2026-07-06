@@ -117,6 +117,15 @@ async def _ingest_company(
 
     session.commit()
 
+    # Embed the rows we just inserted (embedding IS NULL). Best-effort:
+    # a missing/broken model must never fail an ingest run.
+    try:
+        from app.ml.embed_jobs import embed_missing_jobs
+
+        embed_missing_jobs(session, company_id=company.id)
+    except Exception:
+        log.exception("embedding failed for company %s (ingest itself succeeded)", company.slug)
+
     # Cross-source dedup: prefer earliest first_seen_at for same dedup_key
     # (handled via on_conflict: we keep existing first_seen_at untouched on update)
 

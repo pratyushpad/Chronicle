@@ -13,6 +13,9 @@ build/
 # Alembic
 api/alembic/versions/__pycache__/
 
+# ONNX embedding model (downloaded at build time via app/ml/download.py)
+api/models/
+
 # Node
 node_modules/
 .next/

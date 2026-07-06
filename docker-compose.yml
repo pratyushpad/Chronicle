@@ -7,6 +7,8 @@ services:
       POSTGRES_DB: chronicle
       POSTGRES_USER: chronicle
       POSTGRES_PASSWORD: chronicle
+    ports:
+      - "5433:5432" # host 5433 so a native localhost:5432 Postgres can coexist
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
