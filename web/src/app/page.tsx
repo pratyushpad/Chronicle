@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { getMeta, getCompanies, type Meta, type CompanyItem } from "@/lib/api";
 import { formatNumber } from "@/lib/utils";
+import { HeroHeadline } from "@/components/landing/HeroHeadline";
+import { BarFill } from "@/components/landing/BarFill";
+import { CountUp } from "@/components/motion/CountUp";
+import { Reveal } from "@/components/motion/Reveal";
 
 export default async function Home() {
   let meta: Meta | null = null;
@@ -41,13 +45,7 @@ export default async function Home() {
           </span>
         </div>
 
-        <h1 className="mt-12 font-display text-6xl font-medium leading-[0.95] tracking-tight text-foreground sm:text-7xl md:mt-16 md:text-8xl lg:text-9xl">
-          Every open
-          <br />
-          role. Every
-          <br />
-          <span className="italic">company.</span>
-        </h1>
+        <HeroHeadline />
 
         <div className="mt-12 flex items-center gap-6 md:mt-16">
           <span className="h-1 w-24 bg-foreground md:w-40" />
@@ -99,9 +97,10 @@ export default async function Home() {
             </div>
 
             <div className="mt-16 border-b border-background/20 pb-16">
-              <div className="font-display text-7xl font-medium leading-none tracking-tight md:text-8xl lg:text-9xl">
-                {formatNumber(meta.total_active_jobs)}
-              </div>
+              <CountUp
+                value={meta.total_active_jobs}
+                className="font-display text-7xl font-medium leading-none tracking-tight md:text-8xl lg:text-9xl"
+              />
               <div className="mt-4 font-mono text-xs uppercase tracking-[0.2em] text-background/60">
                 Open roles indexed across {meta.total_companies} companies
               </div>
@@ -166,9 +165,10 @@ export default async function Home() {
               t: "Auto-expired when gone",
               d: "The instant a role disappears from the source, it disappears here. No stale listings, no dead links, no ghost jobs.",
             },
-          ].map((step) => (
-            <div
+          ].map((step, i) => (
+            <Reveal
               key={step.n}
+              index={i}
               className="group bg-background p-8 transition-colors duration-100 hover:bg-foreground hover:text-background"
             >
               <div className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors duration-100 group-hover:text-background/60">
@@ -180,7 +180,7 @@ export default async function Home() {
               <p className="mt-4 font-body text-base leading-relaxed text-muted-foreground transition-colors duration-100 group-hover:text-background/80">
                 {step.d}
               </p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -208,8 +208,8 @@ export default async function Home() {
                 Open roles by industry
               </div>
               <ul className="mt-8 space-y-5">
-                {topIndustries.map((ind) => (
-                  <li key={ind.industry}>
+                {topIndustries.map((ind, i) => (
+                  <Reveal as="li" key={ind.industry} index={i}>
                     <div className="flex items-baseline justify-between gap-4">
                       <span className="font-display text-lg text-foreground md:text-xl">
                         {ind.industry}
@@ -218,13 +218,8 @@ export default async function Home() {
                         {formatNumber(ind.count)}
                       </span>
                     </div>
-                    <div className="mt-2 h-2 w-full bg-muted">
-                      <div
-                        className="h-full bg-foreground"
-                        style={{ width: `${Math.max(4, (ind.count / maxIndustry) * 100)}%` }}
-                      />
-                    </div>
-                  </li>
+                    <BarFill pct={Math.max(4, (ind.count / maxIndustry) * 100)} />
+                  </Reveal>
                 ))}
               </ul>
             </div>
@@ -285,15 +280,15 @@ export default async function Home() {
               t: "Salary, where shared",
               d: "When a company discloses a salary band, we surface it on the card. No guessing, no bait-and-switch.",
             },
-          ].map((item) => (
-            <div key={item.t} className="border-t-2 border-foreground pt-6">
+          ].map((item, i) => (
+            <Reveal key={item.t} index={i} className="border-t-2 border-foreground pt-6">
               <h3 className="font-display text-2xl font-medium leading-snug text-foreground">
                 {item.t}
               </h3>
               <p className="mt-4 font-body text-base leading-relaxed text-muted-foreground">
                 {item.d}
               </p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -313,7 +308,7 @@ export default async function Home() {
             </span>
           </div>
 
-          <div className="mt-12 grid grid-cols-2 gap-px border border-foreground bg-foreground sm:grid-cols-3 lg:grid-cols-4">
+          <Reveal className="mt-12 grid grid-cols-2 gap-px border border-foreground bg-foreground sm:grid-cols-3 lg:grid-cols-4">
             {marquee.map((c) => (
               <Link
                 key={c.id}
@@ -328,7 +323,7 @@ export default async function Home() {
                 </span>
               </Link>
             ))}
-          </div>
+          </Reveal>
 
           <div className="mt-10">
             <Link

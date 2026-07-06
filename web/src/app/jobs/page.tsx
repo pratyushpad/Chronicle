@@ -5,6 +5,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { SectionLabel } from "@/components/SectionLabel";
 import { Pagination } from "@/components/Pagination";
 import { JobListSkeleton } from "@/components/JobCardSkeleton";
+import { Reveal } from "@/components/motion/Reveal";
 import { formatNumber } from "@/lib/utils";
 
 interface PageProps {
@@ -84,14 +85,18 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
       </div>
 
       {data.items.length === 0 ? (
-        <div className="py-24 text-center">
-          <p className="font-display text-2xl text-muted-foreground">No roles found</p>
-          <p className="mt-2 font-body text-sm text-muted-foreground">Try adjusting your filters</p>
+        <div className="mt-6 border-y-2 border-foreground py-24 text-center">
+          <p className="font-display text-3xl text-foreground">No roles found</p>
+          <p className="mt-3 font-body text-sm text-muted-foreground">
+            Try adjusting or clearing your filters.
+          </p>
         </div>
       ) : (
         <div className="mt-6 flex flex-col gap-4">
-          {data.items.map((job) => (
-            <JobCard key={job.id} job={job} surface="search" />
+          {data.items.map((job, i) => (
+            <Reveal key={job.id} index={i}>
+              <JobCard job={job} surface="search" />
+            </Reveal>
           ))}
         </div>
       )}

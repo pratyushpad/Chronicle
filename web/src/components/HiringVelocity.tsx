@@ -1,10 +1,16 @@
+"use client";
+import { m, useReducedMotion } from "motion/react";
 import type { CompanyVelocity } from "@/lib/api";
 import { SectionLabel } from "@/components/SectionLabel";
+import { CountUp } from "@/components/motion/CountUp";
+import { duration, ease } from "@/lib/motion";
 
 // Hand-rolled SVG — no chart dependency, matches the monochrome aesthetic.
 // Each week is a paired column: a filled bar for roles opened, a hollow bar for
-// roles closed, drawn on a shared scale.
+// roles closed, drawn on a shared scale. Bars grow (scaleY) from the baseline on
+// scroll-into-view; the summary stats count up.
 export function HiringVelocity({ data }: { data: CompanyVelocity }) {
+  const reduce = useReducedMotion();
   const weeks = data.weeks;
   if (!weeks.length) return null;
 
@@ -20,6 +26,19 @@ export function HiringVelocity({ data }: { data: CompanyVelocity }) {
     const d = new Date(iso + "T00:00:00Z");
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
   };
+
+  // Grow from the bar's own baseline. `fill-box` makes transform-origin resolve
+  // against the rect rather than the SVG viewport.
+  const barStyle = { transformBox: "fill-box", transformOrigin: "bottom" } as const;
+  const barAnim = (i: number) =>
+    reduce
+      ? {}
+      : {
+          initial: { scaleY: 0 },
+          whileInView: { scaleY: 1 },
+          viewport: { once: true, margin: "-10%" },
+          transition: { duration: duration.slow, ease, delay: Math.min(i * 0.03, 0.3) },
+        };
 
   return (
     <section className="mb-10">
@@ -47,9 +66,9 @@ export function HiringVelocity({ data }: { data: CompanyVelocity }) {
           return (
             <g key={w.week}>
               {/* opened — filled */}
-              <rect x={cx - barW - 1} y={chartH - oh} width={barW} height={oh} fill="currentColor" />
+              <m.rect x={cx - barW - 1} y={chartH - oh} width={barW} height={oh} fill="currentColor" style={barStyle} {...barAnim(i)} />
               {/* closed — hollow */}
-              <rect
+              <m.rect
                 x={cx + 1}
                 y={chartH - ch}
                 width={barW}
@@ -57,6 +76,8 @@ export function HiringVelocity({ data }: { data: CompanyVelocity }) {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.25"
+                style={barStyle}
+                {...barAnim(i)}
               />
               <text
                 x={cx}
@@ -84,7 +105,7 @@ export function HiringVelocity({ data }: { data: CompanyVelocity }) {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="border border-foreground p-3">
-      <div className="font-display text-2xl text-foreground">{value}</div>
+      <CountUp value={value} className="font-display text-2xl text-foreground" />
       <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div>
     </div>
   );

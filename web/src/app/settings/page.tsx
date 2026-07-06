@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { SectionLabel } from "@/components/SectionLabel";
+import { ResumeDropzone } from "@/components/ResumeDropzone";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_EXTENSION_API_URL ??
@@ -40,8 +41,6 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile>({});
   const [savedMsg, setSavedMsg] = useState("");
   const [profileBusy, setProfileBusy] = useState(false);
-  const [resumeBusy, setResumeBusy] = useState(false);
-  const [resumeMsg, setResumeMsg] = useState("");
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -103,36 +102,6 @@ export default function SettingsPage() {
     });
     setSavedMsg(res.ok ? "Saved." : "Save failed.");
     setProfileBusy(false);
-  };
-
-  const uploadResume = async (file: File) => {
-    setResumeBusy(true);
-    setResumeMsg("");
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch("/api/user/resume", { method: "POST", body: form });
-    if (res.ok) {
-      const d = await res.json();
-      setProfile((p) => ({ ...p, resume_chars: d.resume_chars, resume_updated_at: d.resume_updated_at }));
-      setResumeMsg("Resume saved — matching updated.");
-    } else {
-      const d = await res.json().catch(() => null);
-      setResumeMsg(d?.detail ?? "Upload failed.");
-    }
-    setResumeBusy(false);
-  };
-
-  const removeResume = async () => {
-    setResumeBusy(true);
-    setResumeMsg("");
-    const res = await fetch("/api/user/resume", { method: "DELETE" });
-    if (res.ok) {
-      setProfile((p) => ({ ...p, resume_chars: null, resume_updated_at: null }));
-      setResumeMsg("Resume removed.");
-    } else {
-      setResumeMsg("Remove failed.");
-    }
-    setResumeBusy(false);
   };
 
   if (status === "loading") {
@@ -220,42 +189,11 @@ export default function SettingsPage() {
         </p>
 
         <label className={`${labelCls} mb-1 block`}>Resume</label>
-        <div className="border border-foreground p-4">
-          {profile.resume_chars ? (
-            <p className="mb-3 font-body text-sm text-foreground">
-              Resume on file ({profile.resume_chars.toLocaleString()} characters
-              {profile.resume_updated_at &&
-                `, updated ${new Date(profile.resume_updated_at).toLocaleDateString()}`}
-              ).
-            </p>
-          ) : (
-            <p className="mb-3 font-body text-sm text-muted-foreground">
-              No resume yet. Upload a PDF or .txt — we extract and keep only the text, never the file.
-            </p>
-          )}
-          <div className="flex flex-wrap items-center gap-3">
-            <label className={`${btnOutline} cursor-pointer`}>
-              {resumeBusy ? "Working…" : profile.resume_chars ? "Replace resume" : "Upload resume"}
-              <input
-                type="file"
-                accept=".pdf,.txt,application/pdf,text/plain"
-                className="hidden"
-                disabled={resumeBusy}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) uploadResume(f);
-                  e.target.value = "";
-                }}
-              />
-            </label>
-            {profile.resume_chars ? (
-              <button onClick={removeResume} disabled={resumeBusy} className={btnOutline}>
-                Remove
-              </button>
-            ) : null}
-            {resumeMsg && <span className={labelCls}>{resumeMsg}</span>}
-          </div>
-        </div>
+        <ResumeDropzone
+          resume_chars={profile.resume_chars ?? null}
+          resume_updated_at={profile.resume_updated_at ?? null}
+          onChange={(info) => setProfile((p) => ({ ...p, ...info }))}
+        />
 
         <div className="mt-6 flex items-center gap-4">
           <button onClick={saveProfile} disabled={profileBusy} className={btnSolid}>

@@ -2,8 +2,10 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { m, useReducedMotion } from "motion/react";
 import { cn, formatDate, formatLocation, formatDepartment } from "@/lib/utils";
 import type { JobListItem } from "@/lib/api";
+import { duration, ease } from "@/lib/motion";
 import { logInteraction, type InteractionSurface } from "@/lib/interactions";
 
 interface Props {
@@ -19,6 +21,7 @@ interface Props {
 export function JobCard({ job, initialSaved = false, why, surface, onDismiss }: Props) {
   const { data: session } = useSession();
   const isAuthed = !!session?.user?.email;
+  const reduce = useReducedMotion();
 
   const [saved, setSaved] = useState(initialSaved);
   const [loadingS, setLoadingS] = useState(false);
@@ -71,7 +74,12 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss }: 
   const salaryMax = (job as any).salary_max as number | undefined;
 
   return (
-    <article className="group relative border border-foreground border-l-4 bg-card transition-colors duration-100 hover:bg-muted">
+    <m.article
+      className="group relative border border-foreground border-l-4 bg-card transition-colors duration-100 hover:bg-muted"
+      whileHover={reduce ? undefined : { y: -2 }}
+      whileTap={reduce ? undefined : { y: 0 }}
+      transition={{ duration: duration.fast, ease }}
+    >
       <Link
         href={`/jobs/${job.id}`}
         className="absolute inset-0 z-0"
@@ -133,14 +141,32 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss }: 
                 "p-1.5 transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
                 saved ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <m.svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                animate={reduce ? undefined : { scale: saved ? [1, 1.3, 1] : 1 }}
+                transition={{ duration: duration.base, ease }}>
                 <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-              </svg>
+              </m.svg>
             </button>
           </div>
         </div>
 
-        {why && <p className="mt-2 font-body text-sm italic text-muted-foreground">{why}</p>}
+        {why && (
+          <div className="mt-2">
+            <span className="inline-block bg-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-background">
+              For You
+            </span>
+            {/* Ink-draw: a black rule strokes in beneath the match badge, a small
+                editorial flourish that says "this was chosen for you" (transform-only). */}
+            <m.span
+              aria-hidden
+              className="mt-1 block h-px w-full origin-left bg-foreground"
+              initial={reduce ? false : { scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: duration.slow, ease, delay: duration.fast }}
+            />
+            <p className="mt-2 font-body text-sm italic text-muted-foreground">{why}</p>
+          </div>
+        )}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {job.is_new && (
@@ -188,6 +214,6 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss }: 
           </a>
         </div>
       </div>
-    </article>
+    </m.article>
   );
 }

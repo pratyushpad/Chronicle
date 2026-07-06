@@ -2,9 +2,11 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { m, useReducedMotion } from "motion/react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { SectionLabel } from "./SectionLabel";
 import { cn, formatLocation, formatDepartment } from "@/lib/utils";
+import { duration, ease } from "@/lib/motion";
 
 interface FilterBarProps {
   departments: string[];
@@ -54,6 +56,7 @@ function Filters({
   onChange: (key: string, value: string) => void;
   current: URLSearchParams;
 }) {
+  const reduce = useReducedMotion();
   // Local, debounced search so typing stays smooth while the URL updates lazily.
   const [search, setSearch] = useState(current.get("q") ?? "");
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -74,6 +77,7 @@ function Filters({
   const selectClass = cn(inputClass, "cursor-pointer appearance-none");
 
   const mode = current.get("mode") ?? "keyword";
+  const activeModeIndex = Math.max(0, SEARCH_MODES.findIndex((o) => o.value === mode));
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -86,23 +90,38 @@ function Filters({
           className={inputClass}
           aria-label="Search roles"
         />
-        <div className="mt-1.5 flex" role="group" aria-label="Search match mode">
-          {SEARCH_MODES.map((m) => (
-            <button
-              key={m.value}
-              onClick={() => onChange("mode", m.value === "keyword" ? "" : m.value)}
-              aria-pressed={mode === m.value}
-              title={m.title}
-              className={cn(
-                "border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-100 -ml-px first:ml-0",
-                mode === m.value
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {m.label}
-            </button>
-          ))}
+        <div className="relative mt-1.5 flex" role="group" aria-label="Search match mode">
+          {/* Sliding black indicator — transform-only (no layout animation), so it
+              stays in the lightweight domAnimation feature set. */}
+          {!reduce && (
+            <m.span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 left-0 bg-foreground"
+              style={{ width: `${100 / SEARCH_MODES.length}%` }}
+              initial={false}
+              animate={{ x: `${activeModeIndex * 100}%` }}
+              transition={{ duration: duration.base, ease }}
+            />
+          )}
+          {SEARCH_MODES.map((opt) => {
+            const active = mode === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => onChange("mode", opt.value === "keyword" ? "" : opt.value)}
+                aria-pressed={active}
+                title={opt.title}
+                className={cn(
+                  "relative z-10 flex-1 border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-100 -ml-px first:ml-0",
+                  active ? "text-background" : "text-muted-foreground hover:text-foreground",
+                  // Reduced-motion has no sliding indicator, so paint the active fill statically.
+                  reduce && active && "bg-foreground"
+                )}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
