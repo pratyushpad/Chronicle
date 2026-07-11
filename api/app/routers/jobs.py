@@ -85,11 +85,16 @@ def list_jobs(
     order_col = Job.posted_at if sort == "posted_at" else Job.first_seen_at
 
     # All filter statements join Company because several filters reference it.
-    # include_q=False leaves out the title match — the semantic arm ranks by
-    # vector similarity instead of substring.
-    def _apply_filters(s, include_q: bool = True):
+    # include_q=False leaves out the free-text match — the semantic arm ranks by
+    # vector similarity instead. use_fts picks the free-text matcher: True = Postgres
+    # full-text (`search_tsv @@ websearch_to_tsquery`), False = the legacy ILIKE title
+    # substring used only as a defensive fallback when FTS is unavailable.
+    def _apply_filters(s, include_q: bool = True, use_fts: bool = True):
         if q and include_q:
-            s = s.where(Job.title.ilike(f"%{q}%"))
+            if use_fts:
+                s = s.where(Job.search_tsv.op("@@")(func.websearch_to_tsquery("english", q)))
+            else:
+                s = s.where(Job.title.ilike(f"%{q}%"))
         if company:
             s = s.where(Company.name.ilike(f"%{company}%"))
         if company_id:
@@ -138,12 +143,27 @@ def list_jobs(
         except Exception:
             # Never let a missing/broken embedding model 500 the feed: degrade
             # semantic/hybrid to keyword ranking so the live app keeps working.
+            session.rollback()
             logger.warning(
                 "semantic search failed for mode=%s; falling back to keyword", mode,
                 exc_info=True,
             )
 
-    return _keyword_search(session, base, order_col, last_start, page, page_size)
+    # Keyword mode with a query → relevance-ranked full-text search, with a defensive
+    # fall-through to the legacy ILIKE recency feed if FTS is unavailable (e.g. the
+    # migration has not been applied yet).
+    if q:
+        try:
+            return _fts_keyword_search(session, base, q, last_start, page, page_size)
+        except Exception:
+            session.rollback()
+            logger.warning("FTS keyword search failed; falling back to ILIKE", exc_info=True)
+
+    # Reached with no query (plain recency feed) or as the ILIKE fallback above; either
+    # way the free-text matcher here is the legacy ILIKE path.
+    return _keyword_search(
+        session, base, order_col, last_start, page, page_size, use_fts=False
+    )
 
 
 def _keyword_search(
@@ -153,10 +173,11 @@ def _keyword_search(
     last_start: datetime | None,
     page: int,
     page_size: int,
+    use_fts: bool = False,
 ) -> JobListResponse:
     """Recency-ordered keyword feed: one representative posting per dedup_key."""
     # Total = distinct roles, collapsing cross-posted city duplicates.
-    keys_sub = base(Job.dedup_key).subquery()
+    keys_sub = base(Job.dedup_key, use_fts=use_fts).subquery()
     total = session.execute(
         select(func.count(func.distinct(keys_sub.c.dedup_key)))
     ).scalar_one()
@@ -164,7 +185,7 @@ def _keyword_search(
     # One representative row per dedup_key (the most recent posting), then page
     # those representatives ordered by recency.
     rep_ids = (
-        base(Job.id, Job.dedup_key)
+        base(Job.id, Job.dedup_key, use_fts=use_fts)
         .distinct(Job.dedup_key)
         .order_by(Job.dedup_key, order_col.desc().nullslast())
     ).subquery()
@@ -173,6 +194,46 @@ def _keyword_search(
         .join(Company)
         .where(Job.id.in_(select(rep_ids.c.id)))
         .order_by(order_col.desc().nullslast(), Job.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    rows = session.execute(page_stmt).all()
+    return _build_response(session, rows, last_start, total, page, page_size)
+
+
+def _fts_keyword_search(
+    session: Session,
+    base,
+    q: str,
+    last_start: datetime | None,
+    page: int,
+    page_size: int,
+) -> JobListResponse:
+    """Relevance-ranked keyword feed: Postgres full-text, ordered by ts_rank_cd.
+
+    Unlike the recency feed, the representative per dedup_key is the best-ranked
+    posting (not the most recent). Any execution error (e.g. the migration not yet
+    applied) propagates to the caller, which falls back to the ILIKE recency path.
+    """
+    tsq = func.websearch_to_tsquery("english", q)
+    rank = func.ts_rank_cd(Job.search_tsv, tsq)
+
+    keys_sub = base(Job.dedup_key).subquery()
+    total = session.execute(
+        select(func.count(func.distinct(keys_sub.c.dedup_key)))
+    ).scalar_one()
+
+    # Best-ranked representative per dedup_key.
+    rep_ids = (
+        base(Job.id, Job.dedup_key)
+        .distinct(Job.dedup_key)
+        .order_by(Job.dedup_key, rank.desc())
+    ).subquery()
+    page_stmt = (
+        select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
+        .join(Company)
+        .where(Job.id.in_(select(rep_ids.c.id)))
+        .order_by(rank.desc(), Job.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -276,9 +337,13 @@ def _fused_search(
     dedup_of = {row.id: row.dedup_key for row in semantic_rows}
 
     if mode == "hybrid":
+        # Lexical arm: real full-text relevance (ts_rank_cd), so RRF fuses genuine
+        # keyword ranks with the vector ranks — not substring-then-recency.
+        tsq = func.websearch_to_tsquery("english", q)
+        keyword_rank = func.ts_rank_cd(Job.search_tsv, tsq)
         keyword_rows = session.execute(
             base(Job.id, Job.dedup_key)
-            .order_by(order_col.desc().nullslast(), Job.id.desc())
+            .order_by(keyword_rank.desc(), Job.id.desc())
             .limit(_FUSION_ARM_LIMIT)
         ).all()
         rankings.append([row.id for row in keyword_rows])

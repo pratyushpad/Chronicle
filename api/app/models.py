@@ -1,16 +1,29 @@
 import enum
 from datetime import date, datetime, timezone
 from sqlalchemy import (
-    Boolean, Column, Date, DateTime, Enum, ForeignKey,
+    Boolean, Column, Computed, Date, DateTime, Enum, ForeignKey,
     Index, Integer, String, Text, UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, relationship
 from pgvector.sqlalchemy import Vector
 
 
 def _now():
     return datetime.now(timezone.utc)
+
+
+# Weighted full-text vector expression for Job. Weight A = title (most important),
+# C = department + normalized location, D = description body. company_name lives on the
+# Company table and a generated column cannot reference another table, so it is covered by
+# the separate `company` ILIKE filter instead. This exact SQL is mirrored in the Alembic
+# migration that creates the GENERATED column.
+JOB_SEARCH_TSV_SQL = (
+    "setweight(to_tsvector('english', coalesce(title,'')), 'A') || "
+    "setweight(to_tsvector('english', "
+    "coalesce(department,'') || ' ' || coalesce(location_normalized,'')), 'C') || "
+    "setweight(to_tsvector('english', coalesce(description_text,'')), 'D')"
+)
 
 
 class Base(DeclarativeBase):
@@ -113,6 +126,12 @@ class Job(Base):
     first_seen_at = Column(DateTime(timezone=True), nullable=False)
     last_seen_at = Column(DateTime(timezone=True), nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)
+    # sha256 of the embed text; lets incremental ingest re-embed only changed content
+    # (not just rows where embedding IS NULL). NULL for legacy rows until first re-ingest.
+    content_hash = Column(String(64), nullable=True)
+    # DB-generated weighted full-text vector for lexical (FTS) keyword ranking. Computed +
+    # persisted (STORED) so it is read-only to the ORM and never included in INSERT/UPDATE.
+    search_tsv = Column(TSVECTOR, Computed(JOB_SEARCH_TSV_SQL, persisted=True), nullable=True)
 
     company = relationship("Company", back_populates="jobs")
 
