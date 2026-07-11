@@ -26,9 +26,9 @@ companies registry (ATS + slug)
         ▼
    PostgreSQL + pgvector (jobs + embeddings, HNSW cosine index)
         │
-        ├──► keyword search (ILIKE) ─┐
-        ├──► semantic search (cosine)├─► RRF fusion ──► hybrid results
-        │                            ┘
+        ├──► keyword search (Postgres FTS, ts_rank_cd) ─┐
+        ├──► semantic search (cosine) ──────────────────├─► RRF fusion ──► hybrid results
+        │                                               ┘
         ├──► For-You v2: profile vector (profile text + engaged-jobs centroid)
         │      → top-200 cosine retrieval → 0.6·cosine + 0.4·rule-score rerank
         │
@@ -42,28 +42,38 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 
 ## Features
 
-- **Live registry** of 220+ companies (~15k open roles), ingested on a recurring schedule
-  with per-company fault isolation (one broken board never blocks the run).
+- **Live registry** of 220+ verified companies (~15k open roles), auto-refreshed every
+  24–48h with per-company fault isolation (one broken board never blocks the run). The
+  refresh is incremental and idempotent: it upserts changed roles, soft-closes roles that
+  vanished from a board (only for boards it actually reached that run), re-embeds only
+  content-changed roles, and prunes long-closed roles to stay within Neon's free storage.
+  (A curated pipeline to scale the registry toward 1000+ verified boards is in
+  `api/candidates/` — see Registry expansion.)
 - **Cross-source deduplication** — the same req posted to multiple ATS boards, or the
   same role posted to multiple cities, collapses into one card without merging genuinely
   distinct openings.
 - **Accounts & tracking** — Google OAuth, saved jobs, an application tracker (kanban-style
   statuses), saved searches, and email alerts for new matching roles.
-- **Semantic + hybrid search** — every job is embedded (all-MiniLM-L6-v2, int8 ONNX — no
-  torch, free-tier friendly) into pgvector; search offers keyword, pure semantic, and a
-  hybrid mode that fuses both rankings with Reciprocal Rank Fusion. An HNSW cosine index
-  keeps vector retrieval fast; semantic/hybrid degrade gracefully to keyword if the
-  embedding model is unavailable.
+- **Full-text + semantic hybrid search** — keyword search is real Postgres full-text
+  ranking: a weighted, GENERATED `tsvector` (title > company/department > body) with a GIN
+  index, ranked by `ts_rank_cd(websearch_to_tsquery(...))` — lexical relevance, not substring
+  matching. Every job is also embedded (all-MiniLM-L6-v2, int8 ONNX — no torch, free-tier
+  friendly) into pgvector. Search offers keyword (FTS), pure semantic, and a hybrid mode that
+  fuses the **full-text** and vector rankings with Reciprocal Rank Fusion. An HNSW cosine index
+  keeps vector retrieval fast; FTS falls back to ILIKE and semantic/hybrid degrade to keyword if
+  the relevant index or embedding model is unavailable. (Lexical ranking is Postgres
+  `ts_rank_cd` — full-text, not literal BM25.)
 - **Recommendations ("For You" v2)** — two-stage matching: pgvector retrieves candidates
   by cosine against a profile vector (profile text + a weighted centroid of saved/applied
   jobs), then a blend of semantic similarity and the explainable rule score reranks them.
   Every card keeps a human-readable "why" string.
 - **Measured, not vibes** — an offline eval harness (`api/scripts/eval_matching.py`)
   scores rule-based vs semantic vs hybrid ranking on held-out engagements, with bootstrap
-  95% confidence intervals. Across 10 synthetic personas, hybrid lifts NDCG@10 from 0.76 to
-  0.83 and MRR from 0.88 to 1.00 over the rule baseline (recall@50 0.91 → 1.00). The same
-  harness runs in `db` mode against real logged engagements. See
-  [docs/eval_results.md](docs/eval_results.md).
+  95% confidence intervals. Across 24 synthetic personas across diverse role families and
+  seniorities, hybrid lifts recall@50 from 0.71 to 0.96 and MRR from 0.80 to 0.98 over the
+  rule baseline, with NDCG@10 0.58 → 0.81 (semantic and hybrid are close on the persona set;
+  the gap widens on real engagement data). The same harness runs in `db` mode against real
+  logged engagements. See [docs/eval_results.md](docs/eval_results.md).
 - **Interaction logging** — impressions/clicks/saves are captured per surface
   (feed/search) as training data for a future learned ranker.
 - **Hiring velocity** — per-company opened/closed-role trends.
@@ -84,7 +94,7 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 | Embeddings | all-MiniLM-L6-v2 (int8 ONNX via onnxruntime + tokenizers — no torch, ~150 MB RSS) |
 | Database | PostgreSQL + pgvector (HNSW) + SQLAlchemy 2.0 + Alembic |
 | Auth (web→API) | HMAC-signed short-lived internal tokens (`api/app/internal_auth.py`) |
-| Scheduler | APScheduler (in-process worker, also runs as a one-shot CLI) |
+| Scheduler | External cron (GitHub Actions + cron-job.org) → secured `POST /admin/ingest`; APScheduler also runs as a one-shot CLI |
 | Frontend | Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui |
 | Auth | NextAuth v5 (Google OAuth) |
 | Extension | Manifest V3 + TypeScript, esbuild |
@@ -149,6 +159,8 @@ accounts:
 
 - `GET /jobs` (`?mode=keyword|semantic|hybrid`), `GET /jobs/{id}`, `GET /meta` — the
   public feed, filterable and paginated; semantic/hybrid rank by pgvector cosine + RRF
+- `GET /health` — cheap, DB-free liveness probe (used by the external keep-warm)
+- `POST /admin/ingest` — secured trigger for an incremental refresh (see Refresh & ops)
 - `GET /companies`, `GET /companies/{id}`, `GET /companies/{id}/velocity`
 - `GET/POST /saved`, `GET/POST/PUT/DELETE /applications`, `GET/POST/DELETE /searches`
 - `GET /recommendations`, `GET /notifications`, `POST /interactions/batch`
@@ -164,5 +176,33 @@ See `api/app/routers/` for the full set of endpoints and request/response schema
 
 Companies are added via a verify-then-write gate (`api/app/ingest/verify_and_add_companies.py`):
 a candidate is only written to the registry after being live-probed against its ATS and
-confirmed to have at least one open role. See `api/candidates/README.md` for how the
-current batches were sourced.
+confirmed to have at least one open role (new companies default to inactive until confirmed).
+See `api/candidates/README.md` for how the current batches were sourced and how to run the
+`candidates/pool_scale.json` scale-up pool through the probe → verify pipeline.
+
+## Refresh & operations
+
+**Keep-warm.** Render's free tier spins the API down after ~15 min idle. The primary
+keep-warm is an external **cron-job.org** monitor hitting `GET /health` every 5 min (free,
+fires reliably); the `.github/workflows/keep-warm.yml` GitHub Action is a backup, since
+GitHub scheduled crons drop fires on low-activity repos. To set it up: create a cron-job.org
+job, method GET, URL `https://<api-host>/health`, every 5 minutes. The frontend also shows
+skeletons and retries once on timeout, so a cold start never renders a blank screen.
+
+**Auto-refresh (every 24–48h).** `POST /admin/ingest` triggers an incremental, idempotent
+refresh in the background (returns `202` immediately; a DB run-lock prevents overlap). It is
+guarded by a dedicated `INGEST_SECRET` (header `X-Ingest-Secret`; 401 without it). The
+`.github/workflows/ingest.yml` scheduled workflow calls it daily with the repo secret
+`INGEST_SECRET` (also set as a Render env var). Because GitHub crons are unreliable, a second
+daily cron-job.org trigger to the same endpoint is a safe backup — the run-lock + idempotent
+upsert make a double-fire harmless. A `budget_seconds` query param bounds wall-clock time so a
+large run fits a Render window and continues (stalest-first) on the next invocation.
+
+**Storage caveat.** Neon's free tier is ~0.5 GB. At 1000+ companies the full posting history
+would exceed it, so ingest **prunes** roles that have been closed and unseen for >30 days
+(hard-delete; embeddings drop with the row). Only active + recently-closed roles stay hot.
+Retaining longer history requires a paid Neon tier.
+
+**Migrations.** Schema changes are Alembic migrations; against prod Neon they are applied
+manually (`alembic upgrade head`) after a snapshot. The FTS `search_tsv` column, its GIN
+index, and `content_hash` ship as migrations `c1a2b3d4e5f6` and `d2b3c4e5f6a7`.
