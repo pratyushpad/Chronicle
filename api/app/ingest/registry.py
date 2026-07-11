@@ -38,5 +38,10 @@ def seed_companies_if_empty(session: Session) -> None:
     session.commit()
 
 
-def load_active_companies(session: Session) -> list[Company]:
-    return list(session.execute(select(Company).where(Company.active == True)).scalars())
+def load_active_companies(session: Session, stale_first: bool = False) -> list[Company]:
+    stmt = select(Company).where(Company.active == True)
+    if stale_first:
+        # Stalest boards first (never-ingested → NULL sorts first), so a budget-limited
+        # run refreshes the oldest data and the cursor advances via last_ingested_at.
+        stmt = stmt.order_by(Company.last_ingested_at.asc().nulls_first())
+    return list(session.execute(stmt).scalars())

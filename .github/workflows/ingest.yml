@@ -1,0 +1,38 @@
+name: ingest
+
+# Triggers an incremental corpus refresh once a day (48h is also acceptable) by calling
+# the secured POST /admin/ingest. The endpoint wakes the Render instance, runs the refresh
+# in the background, and returns 202 immediately. GitHub scheduled crons drop fires on
+# low-activity repos (the same reason keep-warm moved to cron-job.org), so:
+#   - the cron minute is off-the-hour (17) to dodge GitHub's most-contended slots,
+#   - workflow_dispatch lets you fire it manually, and
+#   - a second daily trigger from cron-job.org hitting the same endpoint is a fine backup
+#     — the DB run-lock + idempotent upsert make a double-fire harmless (see README).
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  trigger-ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger POST /admin/ingest
+        env:
+          API_URL: ${{ vars.API_URL }}
+          INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
+        run: |
+          if [ -z "$INGEST_SECRET" ]; then
+            echo "INGEST_SECRET repo secret is not set" >&2
+            exit 1
+          fi
+          BASE="${API_URL:-https://folio-dev-lo9x.onrender.com}"
+          # Bound wall-clock time so a large run fits a Render free-tier window; the rest
+          # continues stalest-first on the next invocation.
+          URL="$BASE/admin/ingest?budget_seconds=600"
+          echo "Triggering $URL"
+          code=$(curl -sS --max-time 120 -o /tmp/resp.json -w "%{http_code}" \
+            -X POST -H "X-Ingest-Secret: $INGEST_SECRET" "$URL" || echo "000")
+          echo "HTTP $code"; cat /tmp/resp.json || true
+          # 202 = started, 409 = a run was already in progress (both fine). Anything else fails.
+          [ "$code" = "202" ] || [ "$code" = "409" ]

@@ -516,6 +516,13 @@ _META_CACHE: dict[str, tuple[float, MetaResponse]] = {}
 _META_TTL_SECONDS = 300
 
 
+def invalidate_meta_cache() -> None:
+    """Drop the cached /meta payload. Called at the end of an ingest run so the freshness
+    label and "NEW SINCE LAST RUN" counts reflect the new run immediately instead of
+    waiting out the TTL."""
+    _META_CACHE.pop("meta", None)
+
+
 @router.get("/meta", response_model=MetaResponse)
 def get_meta(session: Session = Depends(_db)):
     import time
