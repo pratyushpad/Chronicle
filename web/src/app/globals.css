@@ -93,6 +93,27 @@
 }
 
 @layer utilities {
+  /* SplitText word wrappers must be inline-block for yPercent reveals to transform. */
+  .hero-word {
+    display: inline-block;
+    will-change: transform;
+  }
+
+  /* Marquee falls back to a static, wrapped, readable wall when motion is reduced. */
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-viewport {
+      overflow: visible;
+    }
+    .marquee-track {
+      flex-wrap: wrap;
+      width: 100%;
+      row-gap: 1.25rem;
+    }
+    .marquee-dup {
+      display: none;
+    }
+  }
+
   /* Grid texture for editorial / detail sections. */
   .texture-grid {
     background-image:

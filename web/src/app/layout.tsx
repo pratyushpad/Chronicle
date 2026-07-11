@@ -3,6 +3,7 @@ import { Playfair_Display, Source_Serif_4, JetBrains_Mono } from "next/font/goog
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { SessionWrapper } from "@/components/SessionWrapper";
+import { RouteCurtain } from "@/components/gsap/RouteCurtain";
 import { getMeta } from "@/lib/api";
 
 const display = Playfair_Display({
@@ -45,6 +46,7 @@ export default async function RootLayout({
           Skip to content
         </a>
         <SessionWrapper>
+          <RouteCurtain />
           <Nav companyCount={meta?.total_companies ?? null} />
           {children}
         </SessionWrapper>

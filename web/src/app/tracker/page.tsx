@@ -25,6 +25,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CountUp } from "@/components/motion/CountUp";
+import { useDropSettle } from "@/hooks/useDropSettle";
 
 type AppStatus = "saved" | "applied" | "interviewing" | "offer" | "rejected" | "archived";
 
@@ -64,6 +65,8 @@ export default function TrackerPage() {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   // Status the dragged card started in — lets us persist only real moves and revert on failure.
   const dragOrigin = useRef<AppStatus | null>(null);
+  // Post-drop settle flourish (GSAP, inner element only — never fights dnd-kit's transform).
+  const settleCard = useDropSettle();
 
   const sensors = useSensors(
     // Small distance so taps on the notes/buttons don't start a drag.
@@ -167,6 +170,7 @@ export default function TrackerPage() {
 
     if (origin && final !== origin) {
       persistStatus(active.id as number, final, origin);
+      settleCard(active.id as number);
     }
   };
 
@@ -297,7 +301,15 @@ function SortableCard({ app, notes, setNotes, saveNotes, updateStatus, remove }:
   const next = NEXT_STATUS[app.status];
 
   return (
-    <div ref={setNodeRef} style={style} className="border border-foreground border-t-2 bg-card p-4">
+    <div
+      ref={setNodeRef}
+      style={style}
+      data-app-card={app.id}
+      className="border border-foreground border-t-2 bg-card p-4"
+    >
+      {/* data-card-body is the post-drop settle target — scaling this inner node keeps
+          GSAP off the root's transform, which dnd-kit owns. */}
+      <div data-card-body>
       {/* Drag handle = the title block. Keyboard users can pick up and move it;
           the notes/buttons below stay fully interactive. */}
       <div
@@ -337,6 +349,7 @@ function SortableCard({ app, notes, setNotes, saveNotes, updateStatus, remove }:
         <a href={app.job.apply_url} target="_blank" rel="noopener noreferrer"
           className="ml-auto font-mono text-[9px] uppercase tracking-[0.1em] text-foreground underline-offset-4 hover:underline">Apply →</a>
         <button onClick={() => remove(app.id)} aria-label="Remove" className="font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors">✕</button>
+      </div>
       </div>
     </div>
   );

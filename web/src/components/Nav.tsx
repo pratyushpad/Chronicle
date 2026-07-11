@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { formatNumber } from "@/lib/utils";
+import { Magnetic } from "@/components/gsap/Magnetic";
 
 interface Notif {
   id: number;
@@ -186,12 +187,14 @@ export function Nav({ companyCount }: { companyCount?: number | null }) {
               <Link href="/tracker" className={linkClass}>
                 Tracker
               </Link>
-              <button
-                onClick={() => signIn("google")}
-                className="inline-flex min-h-[36px] items-center justify-center bg-foreground px-5 font-mono text-xs font-medium uppercase tracking-[0.15em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
-              >
-                Sign in
-              </button>
+              <Magnetic>
+                <button
+                  onClick={() => signIn("google")}
+                  className="inline-flex min-h-[36px] items-center justify-center bg-foreground px-5 font-mono text-xs font-medium uppercase tracking-[0.15em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
+                >
+                  Sign in
+                </button>
+              </Magnetic>
             </>
           ) : null}
 

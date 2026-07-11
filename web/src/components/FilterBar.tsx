@@ -6,7 +6,8 @@ import { m, useReducedMotion } from "motion/react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { SectionLabel } from "./SectionLabel";
 import { cn, formatLocation, formatDepartment } from "@/lib/utils";
-import { duration, ease, staggerContainer, staggerItem, springPress } from "@/lib/motion";
+import { staggerContainer, staggerItem, springPress } from "@/lib/motion";
+import { gsap, useGSAP } from "@/lib/gsapConfig";
 
 interface FilterBarProps {
   departments: string[];
@@ -56,7 +57,6 @@ function Filters({
   onChange: (key: string, value: string) => void;
   current: URLSearchParams;
 }) {
-  const reduce = useReducedMotion();
   // Local, debounced search so typing stays smooth while the URL updates lazily.
   const [search, setSearch] = useState(current.get("q") ?? "");
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -79,6 +79,28 @@ function Filters({
   const mode = current.get("mode") ?? "keyword";
   const activeModeIndex = Math.max(0, SEARCH_MODES.findIndex((o) => o.value === mode));
 
+  // GSAP-owned segmented indicator: it slides to the active mode on transform only. A
+  // one-axis indicator slide is a tween, not a layout reflow, so gsap.to is the right
+  // primitive here (Flip is reserved for the tracker's post-drop column reflow). The
+  // first render and reduced-motion both snap into place with no animation.
+  const indicatorRef = useRef<HTMLSpanElement>(null);
+  const firstIndicator = useRef(true);
+  useGSAP(
+    () => {
+      const el = indicatorRef.current;
+      if (!el) return;
+      const xPercent = activeModeIndex * 100;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (firstIndicator.current || reduceMotion) {
+        firstIndicator.current = false;
+        gsap.set(el, { xPercent });
+        return;
+      }
+      gsap.to(el, { xPercent, duration: 0.24, ease: "chronicle", overwrite: true });
+    },
+    { dependencies: [activeModeIndex] },
+  );
+
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <div>
@@ -91,18 +113,15 @@ function Filters({
           aria-label="Search roles"
         />
         <div className="relative mt-1.5 flex" role="group" aria-label="Search match mode">
-          {/* Sliding black indicator — transform-only (no layout animation), so it
-              stays in the lightweight domAnimation feature set. */}
-          {!reduce && (
-            <m.span
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 left-0 bg-foreground"
-              style={{ width: `${100 / SEARCH_MODES.length}%` }}
-              initial={false}
-              animate={{ x: `${activeModeIndex * 100}%` }}
-              transition={{ duration: duration.base, ease }}
-            />
-          )}
+          {/* GSAP-driven sliding black indicator — transform-only. Always rendered and
+              positioned (instantly under reduced-motion), so the active fill is correct
+              without a per-button background. */}
+          <span
+            ref={indicatorRef}
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-0 bg-foreground"
+            style={{ width: `${100 / SEARCH_MODES.length}%` }}
+          />
           {SEARCH_MODES.map((opt) => {
             const active = mode === opt.value;
             return (
@@ -114,8 +133,6 @@ function Filters({
                 className={cn(
                   "relative z-10 flex-1 border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-100 -ml-px first:ml-0",
                   active ? "text-background" : "text-muted-foreground hover:text-foreground",
-                  // Reduced-motion has no sliding indicator, so paint the active fill statically.
-                  reduce && active && "bg-foreground"
                 )}
               >
                 {opt.label}

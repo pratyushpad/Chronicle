@@ -3,8 +3,12 @@ import { getMeta, getCompanies, type Meta, type CompanyItem } from "@/lib/api";
 import { formatNumber } from "@/lib/utils";
 import { HeroHeadline } from "@/components/landing/HeroHeadline";
 import { BarFill } from "@/components/landing/BarFill";
-import { CountUp } from "@/components/motion/CountUp";
 import { Reveal } from "@/components/motion/Reveal";
+import { SmoothScrollStage } from "@/components/gsap/SmoothScrollStage";
+import { HeroRule } from "@/components/gsap/HeroRule";
+import { ScrubCounter } from "@/components/gsap/ScrubCounter";
+import { Marquee } from "@/components/gsap/Marquee";
+import { BatchReveal } from "@/components/gsap/BatchReveal";
 
 export default async function Home() {
   let meta: Meta | null = null;
@@ -32,10 +36,14 @@ export default async function Home() {
     .slice(0, 28);
 
   return (
+    <SmoothScrollStage>
     <main id="main" className="relative overflow-hidden">
       {/* ─── Hero ─── */}
       <section className="mx-auto max-w-6xl px-6 pb-24 pt-20 md:px-8 md:pb-32 md:pt-28 lg:px-12">
-        <div className="flex items-center gap-4">
+        <div
+          data-speed="1.08"
+          className="flex items-center gap-4"
+        >
           <span className="font-mono text-xs uppercase tracking-[0.25em] text-foreground">
             Job Intelligence
           </span>
@@ -47,11 +55,7 @@ export default async function Home() {
 
         <HeroHeadline />
 
-        <div className="mt-12 flex items-center gap-6 md:mt-16">
-          <span className="h-1 w-24 bg-foreground md:w-40" />
-          <span className="h-3 w-3 border-2 border-foreground" />
-          <span className="h-1 flex-1 bg-foreground" />
-        </div>
+        <HeroRule />
 
         <div className="mt-12 grid gap-12 md:grid-cols-12 md:gap-8">
           <p className="font-body text-xl leading-relaxed text-foreground md:col-span-7 lg:text-2xl">
@@ -97,7 +101,7 @@ export default async function Home() {
             </div>
 
             <div className="mt-16 border-b border-background/20 pb-16">
-              <CountUp
+              <ScrubCounter
                 value={meta.total_active_jobs}
                 className="font-display text-7xl font-medium leading-none tracking-tight md:text-8xl lg:text-9xl"
               />
@@ -148,7 +152,7 @@ export default async function Home() {
           We don&rsquo;t scrape job boards. We read the source.
         </h2>
 
-        <div className="mt-16 grid grid-cols-1 gap-px border border-foreground bg-foreground md:grid-cols-3">
+        <BatchReveal className="mt-16 grid grid-cols-1 gap-px border border-foreground bg-foreground md:grid-cols-3">
           {[
             {
               n: "01",
@@ -165,10 +169,10 @@ export default async function Home() {
               t: "Auto-expired when gone",
               d: "The instant a role disappears from the source, it disappears here. No stale listings, no dead links, no ghost jobs.",
             },
-          ].map((step, i) => (
-            <Reveal
+          ].map((step) => (
+            <div
               key={step.n}
-              index={i}
+              data-batch
               className="group bg-background p-8 transition-colors duration-100 hover:bg-foreground hover:text-background"
             >
               <div className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors duration-100 group-hover:text-background/60">
@@ -180,9 +184,9 @@ export default async function Home() {
               <p className="mt-4 font-body text-base leading-relaxed text-muted-foreground transition-colors duration-100 group-hover:text-background/80">
                 {step.d}
               </p>
-            </Reveal>
+            </div>
           ))}
-        </div>
+        </BatchReveal>
       </section>
 
       <div className="h-1 w-full bg-foreground" />
@@ -266,7 +270,7 @@ export default async function Home() {
           <span className="h-px flex-1 bg-foreground" />
         </div>
 
-        <div className="mt-16 grid grid-cols-1 gap-x-12 gap-y-12 md:grid-cols-3">
+        <BatchReveal className="mt-16 grid grid-cols-1 gap-x-12 gap-y-12 md:grid-cols-3">
           {[
             {
               t: "Always live",
@@ -280,17 +284,17 @@ export default async function Home() {
               t: "Salary, where shared",
               d: "When a company discloses a salary band, we surface it on the card. No guessing, no bait-and-switch.",
             },
-          ].map((item, i) => (
-            <Reveal key={item.t} index={i} className="border-t-2 border-foreground pt-6">
+          ].map((item) => (
+            <div key={item.t} data-batch className="border-t-2 border-foreground pt-6">
               <h3 className="font-display text-2xl font-medium leading-snug text-foreground">
                 {item.t}
               </h3>
               <p className="mt-4 font-body text-base leading-relaxed text-muted-foreground">
                 {item.d}
               </p>
-            </Reveal>
+            </div>
           ))}
-        </div>
+        </BatchReveal>
       </section>
 
       <div className="h-1 w-full bg-foreground" />
@@ -308,22 +312,7 @@ export default async function Home() {
             </span>
           </div>
 
-          <Reveal className="mt-12 grid grid-cols-2 gap-px border border-foreground bg-foreground sm:grid-cols-3 lg:grid-cols-4">
-            {marquee.map((c) => (
-              <Link
-                key={c.id}
-                href={`/jobs?company_id=${c.id}`}
-                className="group flex flex-col justify-between gap-6 bg-background p-6 transition-colors duration-100 hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:-outline-offset-[3px]"
-              >
-                <span className="font-display text-2xl font-medium leading-tight">
-                  {c.name}
-                </span>
-                <span className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground transition-colors duration-100 group-hover:text-background/60">
-                  {formatNumber(c.active_job_count)} open
-                </span>
-              </Link>
-            ))}
-          </Reveal>
+          <Marquee items={marquee.map((c) => ({ id: c.id, name: c.name }))} />
 
           <div className="mt-10">
             <Link
@@ -364,5 +353,6 @@ export default async function Home() {
         </div>
       </section>
     </main>
+    </SmoothScrollStage>
   );
 }
