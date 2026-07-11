@@ -52,6 +52,14 @@ async def security_headers(request, call_next):
     )
     return response
 
+@app.get("/health")
+def health() -> dict:
+    """Cheap, DB-free liveness probe for the external keep-warm pinger (cron-job.org).
+    Deliberately touches nothing so hitting it every ~5 min wakes the Render instance
+    without any query load."""
+    return {"status": "ok"}
+
+
 app.include_router(jobs_router)
 app.include_router(users_router)
 app.include_router(saved_router)

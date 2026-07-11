@@ -2008,6 +2008,2163 @@
           "description": "Research multimodal models that combine vision and language."
         }
       ]
+    },
+    {
+      "name": "senior_backend_eng",
+      "profile": {
+        "headline": "Senior backend engineer, distributed systems and high-throughput services",
+        "tracks": [
+          "swe"
+        ],
+        "tech_tags": [
+          "go",
+          "rust",
+          "kafka",
+          "postgresql",
+          "grpc"
+        ],
+        "seniority_pref": [
+          "senior"
+        ],
+        "location": "Seattle, WA"
+      },
+      "jobs": [
+        {
+          "title": "Senior Software Engineer, Backend",
+          "company_name": "Stripe",
+          "department": "Engineering",
+          "location": "Seattle, WA",
+          "tech_tags": [
+            "go",
+            "grpc"
+          ],
+          "description": "Design and scale the payment ledger services handling millions of transactions per second."
+        },
+        {
+          "title": "Staff Engineer, Distributed Systems",
+          "company_name": "Confluent",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "kafka",
+            "java"
+          ],
+          "description": "Own the core streaming platform's replication and consensus internals."
+        },
+        {
+          "title": "Senior Backend Engineer",
+          "company_name": "Databricks",
+          "department": "Engineering",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "scala",
+            "spark"
+          ],
+          "description": "Build the control plane services that orchestrate large-scale compute clusters."
+        },
+        {
+          "title": "Principal Engineer, Platform",
+          "company_name": "Cockroach Labs",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "go",
+            "rust"
+          ],
+          "description": "Lead the transactional storage layer of a distributed SQL database."
+        },
+        {
+          "title": "Senior Software Engineer, Infrastructure",
+          "company_name": "Cloudflare",
+          "department": "Engineering",
+          "location": "Austin, TX",
+          "tech_tags": [
+            "rust",
+            "go"
+          ],
+          "description": "Write low-latency edge services deployed across hundreds of data centers."
+        },
+        {
+          "title": "Backend Engineer, Senior",
+          "company_name": "Datadog",
+          "department": "Engineering",
+          "location": "New York, NY",
+          "tech_tags": [
+            "go",
+            "postgresql"
+          ],
+          "description": "Scale the metrics ingestion pipeline processing trillions of points daily."
+        },
+        {
+          "title": "Senior Engineer, Payments Backend",
+          "company_name": "Block",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "java",
+            "kafka"
+          ],
+          "description": "Build resilient money-movement services with strong consistency guarantees."
+        },
+        {
+          "title": "Staff Backend Engineer",
+          "company_name": "MongoDB",
+          "department": "Engineering",
+          "location": "Seattle, WA",
+          "tech_tags": [
+            "cpp",
+            "go"
+          ],
+          "description": "Design the query execution engine of a distributed document database."
+        },
+        {
+          "title": "Senior Software Engineer, Core Services",
+          "company_name": "Twilio",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "go",
+            "grpc"
+          ],
+          "description": "Own the messaging routing backend delivering billions of messages."
+        },
+        {
+          "title": "Senior Backend Engineer, Data Platform",
+          "company_name": "Snowflake",
+          "department": "Engineering",
+          "location": "Bellevue, WA",
+          "tech_tags": [
+            "java",
+            "postgresql"
+          ],
+          "description": "Build metadata services for a cloud data warehouse at exabyte scale."
+        },
+        {
+          "title": "Distributed Systems Engineer",
+          "company_name": "Temporal",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "go",
+            "grpc"
+          ],
+          "description": "Develop the durable execution engine powering workflow orchestration."
+        },
+        {
+          "title": "Senior Engineer, Storage",
+          "company_name": "Rubrik",
+          "department": "Engineering",
+          "location": "Palo Alto, CA",
+          "tech_tags": [
+            "cpp",
+            "go"
+          ],
+          "description": "Implement the deduplication and replication layer of a backup platform."
+        }
+      ]
+    },
+    {
+      "name": "ios_engineer",
+      "profile": {
+        "headline": "iOS engineer building polished native mobile experiences",
+        "tracks": [
+          "swe",
+          "mobile"
+        ],
+        "tech_tags": [
+          "swift",
+          "swiftui",
+          "objective-c",
+          "xcode"
+        ],
+        "seniority_pref": [
+          "mid"
+        ],
+        "location": "Cupertino, CA"
+      },
+      "jobs": [
+        {
+          "title": "iOS Engineer",
+          "company_name": "Airbnb",
+          "department": "Mobile",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "swift",
+            "swiftui"
+          ],
+          "description": "Craft the guest booking flow in the native iOS app used by millions of travelers."
+        },
+        {
+          "title": "Senior iOS Engineer",
+          "company_name": "Robinhood",
+          "department": "Mobile",
+          "location": "Menlo Park, CA",
+          "tech_tags": [
+            "swift"
+          ],
+          "description": "Build fast, reliable trading screens for the iOS brokerage app."
+        },
+        {
+          "title": "iOS Software Engineer",
+          "company_name": "Duolingo",
+          "department": "Mobile",
+          "location": "Pittsburgh, PA",
+          "tech_tags": [
+            "swift",
+            "swiftui"
+          ],
+          "description": "Develop delightful lesson experiences for the iOS language-learning app."
+        },
+        {
+          "title": "Mobile Engineer, iOS",
+          "company_name": "Discord",
+          "department": "Mobile",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "swift",
+            "objective-c"
+          ],
+          "description": "Own real-time voice and chat features on the native iOS client."
+        },
+        {
+          "title": "iOS Developer",
+          "company_name": "Spotify",
+          "department": "Mobile",
+          "location": "New York, NY",
+          "tech_tags": [
+            "swift"
+          ],
+          "description": "Ship playback and discovery features to the iOS music app."
+        },
+        {
+          "title": "Senior Software Engineer, iOS",
+          "company_name": "Notion",
+          "department": "Mobile",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "swift",
+            "swiftui"
+          ],
+          "description": "Build the offline-first editor experience on iOS."
+        },
+        {
+          "title": "iOS Engineer, Growth",
+          "company_name": "Pinterest",
+          "department": "Mobile",
+          "location": "Remote",
+          "tech_tags": [
+            "swift"
+          ],
+          "description": "Run experiments on onboarding and retention in the iOS app."
+        },
+        {
+          "title": "Staff iOS Engineer",
+          "company_name": "Coinbase",
+          "department": "Mobile",
+          "location": "Remote",
+          "tech_tags": [
+            "swift",
+            "objective-c"
+          ],
+          "description": "Lead architecture of the native iOS crypto wallet."
+        },
+        {
+          "title": "iOS Application Developer",
+          "company_name": "DoorDash",
+          "department": "Mobile",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "swift",
+            "swiftui"
+          ],
+          "description": "Build the courier-facing iOS app for delivery logistics."
+        },
+        {
+          "title": "Mobile Software Engineer (iOS)",
+          "company_name": "Instacart",
+          "department": "Mobile",
+          "location": "Remote",
+          "tech_tags": [
+            "swift"
+          ],
+          "description": "Develop shopping and checkout flows for iOS customers."
+        },
+        {
+          "title": "iOS Engineer, Platform",
+          "company_name": "Snap",
+          "department": "Mobile",
+          "location": "Los Angeles, CA",
+          "tech_tags": [
+            "swift",
+            "objective-c"
+          ],
+          "description": "Maintain shared iOS frameworks and build tooling."
+        },
+        {
+          "title": "Senior iOS Developer",
+          "company_name": "Chime",
+          "department": "Mobile",
+          "location": "Remote",
+          "tech_tags": [
+            "swift",
+            "swiftui"
+          ],
+          "description": "Build banking features for the iOS consumer finance app."
+        }
+      ]
+    },
+    {
+      "name": "android_engineer",
+      "profile": {
+        "headline": "Android engineer building native Kotlin mobile apps",
+        "tracks": [
+          "swe",
+          "mobile"
+        ],
+        "tech_tags": [
+          "kotlin",
+          "jetpack-compose",
+          "java",
+          "android"
+        ],
+        "seniority_pref": [
+          "mid"
+        ],
+        "location": "Mountain View, CA"
+      },
+      "jobs": [
+        {
+          "title": "Android Engineer",
+          "company_name": "Uber",
+          "department": "Mobile",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "kotlin",
+            "jetpack-compose"
+          ],
+          "description": "Build the rider Android app's mapping and dispatch experience."
+        },
+        {
+          "title": "Senior Android Engineer",
+          "company_name": "Reddit",
+          "department": "Mobile",
+          "location": "Remote",
+          "tech_tags": [
+            "kotlin"
+          ],
+          "description": "Own feed rendering and performance on the native Android client."
+        },
+        {
+          "title": "Android Software Engineer",
+          "company_name": "Tinder",
+          "department": "Mobile",
+          "location": "Los Angeles, CA",
+          "tech_tags": [
+            "kotlin",
+            "java"
+          ],
+          "description": "Develop matching and messaging features for Android users."
+        },
+        {
+          "title": "Mobile Engineer, Android",
+          "company_name": "Wealthfront",
+          "department": "Mobile",
+          "location": "Palo Alto, CA",
+          "tech_tags": [
+            "kotlin",
+            "jetpack-compose"
+          ],
+          "description": "Build investing dashboards for the Android app."
+        },
+        {
+          "title": "Android Developer",
+          "company_name": "Shopify",
+          "department": "Mobile",
+          "location": "Remote",
+          "tech_tags": [
+            "kotlin"
+          ],
+          "description": "Ship merchant tools to the Android point-of-sale app."
+        },
+        {
+          "title": "Senior Software Engineer, Android",
+          "company_name": "Twitch",
+          "department": "Mobile",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "kotlin",
+            "java"
+          ],
+          "description": "Own live-streaming playback on Android."
+        },
+        {
+          "title": "Android Engineer, Payments",
+          "company_name": "Cash App",
+          "department": "Mobile",
+          "location": "Remote",
+          "tech_tags": [
+            "kotlin"
+          ],
+          "description": "Build peer-to-peer payment flows on Android."
+        },
+        {
+          "title": "Staff Android Engineer",
+          "company_name": "Nextdoor",
+          "department": "Mobile",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "kotlin",
+            "jetpack-compose"
+          ],
+          "description": "Lead Android architecture for the neighborhood social app."
+        },
+        {
+          "title": "Android Application Developer",
+          "company_name": "Lyft",
+          "department": "Mobile",
+          "location": "Seattle, WA",
+          "tech_tags": [
+            "kotlin",
+            "java"
+          ],
+          "description": "Develop driver-mode features for the Android app."
+        },
+        {
+          "title": "Mobile Software Engineer (Android)",
+          "company_name": "Etsy",
+          "department": "Mobile",
+          "location": "Remote",
+          "tech_tags": [
+            "kotlin"
+          ],
+          "description": "Build search and listing experiences for Android shoppers."
+        },
+        {
+          "title": "Android Engineer, Core",
+          "company_name": "Strava",
+          "department": "Mobile",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "kotlin",
+            "jetpack-compose"
+          ],
+          "description": "Maintain activity recording and GPS features on Android."
+        },
+        {
+          "title": "Senior Android Developer",
+          "company_name": "Calm",
+          "department": "Mobile",
+          "location": "Remote",
+          "tech_tags": [
+            "kotlin",
+            "java"
+          ],
+          "description": "Build meditation and sleep content playback for Android."
+        }
+      ]
+    },
+    {
+      "name": "staff_ml_engineer",
+      "profile": {
+        "headline": "Staff ML engineer building training and serving infrastructure",
+        "tracks": [
+          "ml"
+        ],
+        "tech_tags": [
+          "python",
+          "pytorch",
+          "kubernetes",
+          "ray",
+          "cuda"
+        ],
+        "seniority_pref": [
+          "senior"
+        ],
+        "location": "San Francisco, CA"
+      },
+      "jobs": [
+        {
+          "title": "Staff ML Infrastructure Engineer",
+          "company_name": "OpenAI",
+          "department": "Research",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "python",
+            "cuda"
+          ],
+          "description": "Scale distributed training across thousands of GPUs for frontier models."
+        },
+        {
+          "title": "Senior ML Platform Engineer",
+          "company_name": "Anthropic",
+          "department": "Engineering",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "python",
+            "ray"
+          ],
+          "description": "Build the training orchestration platform for large language models."
+        },
+        {
+          "title": "ML Systems Engineer",
+          "company_name": "Databricks",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "pytorch"
+          ],
+          "description": "Optimize model-serving latency for the inference platform."
+        },
+        {
+          "title": "Staff Engineer, ML Infrastructure",
+          "company_name": "Scale AI",
+          "department": "Engineering",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "python",
+            "kubernetes"
+          ],
+          "description": "Own the pipelines that label and train models at scale."
+        },
+        {
+          "title": "Senior Machine Learning Engineer, Platform",
+          "company_name": "Pinterest",
+          "department": "ML",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "pytorch"
+          ],
+          "description": "Build the feature store and training infra for recommendation models."
+        },
+        {
+          "title": "ML Infrastructure Engineer",
+          "company_name": "Cohere",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "cuda"
+          ],
+          "description": "Develop high-throughput inference servers for LLMs."
+        },
+        {
+          "title": "Principal ML Engineer",
+          "company_name": "Nvidia",
+          "department": "Engineering",
+          "location": "Santa Clara, CA",
+          "tech_tags": [
+            "cuda",
+            "python"
+          ],
+          "description": "Design GPU kernels and training frameworks for deep learning."
+        },
+        {
+          "title": "Staff Software Engineer, ML Serving",
+          "company_name": "Uber",
+          "department": "ML",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "python",
+            "kubernetes"
+          ],
+          "description": "Scale the real-time model-serving platform powering pricing."
+        },
+        {
+          "title": "Senior ML Engineer, Training",
+          "company_name": "Hugging Face",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "pytorch"
+          ],
+          "description": "Improve distributed training libraries used by the open-source community."
+        },
+        {
+          "title": "ML Platform Engineer",
+          "company_name": "Netflix",
+          "department": "ML",
+          "location": "Los Gatos, CA",
+          "tech_tags": [
+            "python",
+            "ray"
+          ],
+          "description": "Build workflow tooling for the recommendation ML lifecycle."
+        },
+        {
+          "title": "Staff ML Engineer, Infrastructure",
+          "company_name": "Cruise",
+          "department": "Autonomy",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "python",
+            "cuda"
+          ],
+          "description": "Own the training data pipeline for autonomous-driving perception."
+        },
+        {
+          "title": "Senior Engineer, ML Systems",
+          "company_name": "Snowflake",
+          "department": "ML",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "kubernetes"
+          ],
+          "description": "Build managed ML feature engineering on the data cloud."
+        }
+      ]
+    },
+    {
+      "name": "data_scientist",
+      "profile": {
+        "headline": "Data scientist focused on experimentation, causal inference, and product analytics",
+        "tracks": [
+          "data",
+          "ml"
+        ],
+        "tech_tags": [
+          "python",
+          "sql",
+          "r",
+          "pandas",
+          "statistics"
+        ],
+        "seniority_pref": [
+          "mid"
+        ],
+        "location": "New York, NY"
+      },
+      "jobs": [
+        {
+          "title": "Data Scientist, Product",
+          "company_name": "Meta",
+          "department": "Data Science",
+          "location": "Menlo Park, CA",
+          "tech_tags": [
+            "python",
+            "sql"
+          ],
+          "description": "Design and analyze A/B experiments to guide product decisions."
+        },
+        {
+          "title": "Data Scientist, Experimentation",
+          "company_name": "Airbnb",
+          "department": "Data Science",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "python",
+            "r"
+          ],
+          "description": "Build causal-inference models to measure feature impact."
+        },
+        {
+          "title": "Senior Data Scientist",
+          "company_name": "DoorDash",
+          "department": "Data Science",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "sql"
+          ],
+          "description": "Model marketplace dynamics and pricing elasticity."
+        },
+        {
+          "title": "Product Data Scientist",
+          "company_name": "Duolingo",
+          "department": "Data Science",
+          "location": "Pittsburgh, PA",
+          "tech_tags": [
+            "python",
+            "statistics"
+          ],
+          "description": "Analyze learner engagement and run growth experiments."
+        },
+        {
+          "title": "Data Scientist, Growth",
+          "company_name": "Notion",
+          "department": "Data Science",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "python",
+            "sql"
+          ],
+          "description": "Quantify activation and retention drivers across the funnel."
+        },
+        {
+          "title": "Data Scientist, Analytics",
+          "company_name": "Spotify",
+          "department": "Data Science",
+          "location": "New York, NY",
+          "tech_tags": [
+            "python",
+            "pandas"
+          ],
+          "description": "Deliver insights on listening behavior and content strategy."
+        },
+        {
+          "title": "Senior Data Scientist, Marketplace",
+          "company_name": "Instacart",
+          "department": "Data Science",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "sql"
+          ],
+          "description": "Optimize supply-demand balancing with statistical models."
+        },
+        {
+          "title": "Data Scientist, Experimentation Platform",
+          "company_name": "Netflix",
+          "department": "Data Science",
+          "location": "Los Gatos, CA",
+          "tech_tags": [
+            "python",
+            "r"
+          ],
+          "description": "Advance the methodology behind large-scale A/B testing."
+        },
+        {
+          "title": "Applied Data Scientist",
+          "company_name": "Wayfair",
+          "department": "Data Science",
+          "location": "Boston, MA",
+          "tech_tags": [
+            "python",
+            "sql"
+          ],
+          "description": "Build demand-forecasting and inventory models."
+        },
+        {
+          "title": "Data Scientist, Risk",
+          "company_name": "Affirm",
+          "department": "Data Science",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "statistics"
+          ],
+          "description": "Develop credit and fraud risk models for lending."
+        },
+        {
+          "title": "Product Data Scientist, Ads",
+          "company_name": "Reddit",
+          "department": "Data Science",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "python",
+            "sql"
+          ],
+          "description": "Measure ad effectiveness and auction dynamics."
+        },
+        {
+          "title": "Senior Data Scientist, Causal",
+          "company_name": "Lyft",
+          "department": "Data Science",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "r"
+          ],
+          "description": "Estimate treatment effects of pricing and incentive programs."
+        }
+      ]
+    },
+    {
+      "name": "analytics_engineer",
+      "profile": {
+        "headline": "Analytics engineer modeling data with dbt and warehouse SQL",
+        "tracks": [
+          "data"
+        ],
+        "tech_tags": [
+          "sql",
+          "dbt",
+          "snowflake",
+          "python",
+          "airflow"
+        ],
+        "seniority_pref": [
+          "mid"
+        ],
+        "location": "Remote"
+      },
+      "jobs": [
+        {
+          "title": "Analytics Engineer",
+          "company_name": "Fivetran",
+          "department": "Data",
+          "location": "Remote",
+          "tech_tags": [
+            "sql",
+            "dbt"
+          ],
+          "description": "Build and maintain trusted data models in the warehouse using dbt."
+        },
+        {
+          "title": "Senior Analytics Engineer",
+          "company_name": "Notion",
+          "department": "Data",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "sql",
+            "dbt"
+          ],
+          "description": "Own the semantic layer powering company-wide metrics."
+        },
+        {
+          "title": "Analytics Engineer, Growth",
+          "company_name": "Vercel",
+          "department": "Data",
+          "location": "Remote",
+          "tech_tags": [
+            "sql",
+            "snowflake"
+          ],
+          "description": "Model funnel and usage data for the growth team."
+        },
+        {
+          "title": "Data Analytics Engineer",
+          "company_name": "Ramp",
+          "department": "Data",
+          "location": "New York, NY",
+          "tech_tags": [
+            "sql",
+            "dbt"
+          ],
+          "description": "Transform raw finance data into reliable analytics tables."
+        },
+        {
+          "title": "Analytics Engineer, Core",
+          "company_name": "Airbnb",
+          "department": "Data",
+          "location": "Remote",
+          "tech_tags": [
+            "sql",
+            "airflow"
+          ],
+          "description": "Build the certified datasets used across product analytics."
+        },
+        {
+          "title": "Senior Analytics Engineer",
+          "company_name": "Webflow",
+          "department": "Data",
+          "location": "Remote",
+          "tech_tags": [
+            "sql",
+            "dbt"
+          ],
+          "description": "Design dimensional models for subscription and usage reporting."
+        },
+        {
+          "title": "Analytics Engineer",
+          "company_name": "HashiCorp",
+          "department": "Data",
+          "location": "Remote",
+          "tech_tags": [
+            "sql",
+            "snowflake"
+          ],
+          "description": "Own transformation pipelines feeding executive dashboards."
+        },
+        {
+          "title": "Data Modeler / Analytics Engineer",
+          "company_name": "Gusto",
+          "department": "Data",
+          "location": "Denver, CO",
+          "tech_tags": [
+            "sql",
+            "dbt"
+          ],
+          "description": "Model payroll and benefits data for analytics consumers."
+        },
+        {
+          "title": "Analytics Engineer, Marketing",
+          "company_name": "Figma",
+          "department": "Data",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "sql",
+            "python"
+          ],
+          "description": "Build attribution and campaign models in the warehouse."
+        },
+        {
+          "title": "Senior Analytics Engineer, Platform",
+          "company_name": "dbt Labs",
+          "department": "Data",
+          "location": "Remote",
+          "tech_tags": [
+            "sql",
+            "dbt"
+          ],
+          "description": "Improve the metrics framework and testing standards."
+        },
+        {
+          "title": "Analytics Engineer",
+          "company_name": "Retool",
+          "department": "Data",
+          "location": "Remote",
+          "tech_tags": [
+            "sql",
+            "snowflake"
+          ],
+          "description": "Deliver clean, documented models for self-serve analytics."
+        },
+        {
+          "title": "Data Warehouse Engineer",
+          "company_name": "Brex",
+          "department": "Data",
+          "location": "Remote",
+          "tech_tags": [
+            "sql",
+            "airflow"
+          ],
+          "description": "Build reliable ELT pipelines and warehouse schemas."
+        }
+      ]
+    },
+    {
+      "name": "qa_automation_engineer",
+      "profile": {
+        "headline": "QA automation engineer building end-to-end test frameworks",
+        "tracks": [
+          "swe",
+          "qa"
+        ],
+        "tech_tags": [
+          "python",
+          "selenium",
+          "playwright",
+          "cypress",
+          "java"
+        ],
+        "seniority_pref": [
+          "mid"
+        ],
+        "location": "Austin, TX"
+      },
+      "jobs": [
+        {
+          "title": "QA Automation Engineer",
+          "company_name": "Atlassian",
+          "department": "Quality",
+          "location": "Austin, TX",
+          "tech_tags": [
+            "playwright",
+            "java"
+          ],
+          "description": "Build end-to-end automated test suites for web products."
+        },
+        {
+          "title": "Senior SDET",
+          "company_name": "Salesforce",
+          "department": "Quality",
+          "location": "Remote",
+          "tech_tags": [
+            "selenium",
+            "java"
+          ],
+          "description": "Develop test automation frameworks for the CRM platform."
+        },
+        {
+          "title": "Software Engineer in Test",
+          "company_name": "Okta",
+          "department": "Quality",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "python",
+            "cypress"
+          ],
+          "description": "Automate integration and regression testing for identity APIs."
+        },
+        {
+          "title": "QA Engineer, Automation",
+          "company_name": "Twilio",
+          "department": "Quality",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "playwright"
+          ],
+          "description": "Own automated coverage of the messaging API surface."
+        },
+        {
+          "title": "Test Automation Engineer",
+          "company_name": "PagerDuty",
+          "department": "Quality",
+          "location": "Remote",
+          "tech_tags": [
+            "cypress",
+            "javascript"
+          ],
+          "description": "Build reliable CI test suites for the incident platform."
+        },
+        {
+          "title": "SDET II",
+          "company_name": "Zendesk",
+          "department": "Quality",
+          "location": "Remote",
+          "tech_tags": [
+            "selenium",
+            "python"
+          ],
+          "description": "Expand automated testing across the support product."
+        },
+        {
+          "title": "Senior QA Automation Engineer",
+          "company_name": "DocuSign",
+          "department": "Quality",
+          "location": "Seattle, WA",
+          "tech_tags": [
+            "java",
+            "selenium"
+          ],
+          "description": "Lead test framework design for e-signature workflows."
+        },
+        {
+          "title": "Quality Engineer, Automation",
+          "company_name": "Coupa",
+          "department": "Quality",
+          "location": "Remote",
+          "tech_tags": [
+            "playwright",
+            "python"
+          ],
+          "description": "Automate end-to-end procurement flows."
+        },
+        {
+          "title": "Software Development Engineer in Test",
+          "company_name": "Splunk",
+          "department": "Quality",
+          "location": "San Jose, CA",
+          "tech_tags": [
+            "python",
+            "java"
+          ],
+          "description": "Build performance and functional test automation."
+        },
+        {
+          "title": "Automation QA Engineer",
+          "company_name": "New Relic",
+          "department": "Quality",
+          "location": "Remote",
+          "tech_tags": [
+            "cypress",
+            "javascript"
+          ],
+          "description": "Develop browser automation for observability dashboards."
+        },
+        {
+          "title": "Senior SDET, Platform",
+          "company_name": "Segment",
+          "department": "Quality",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "playwright"
+          ],
+          "description": "Own automated testing of the customer-data pipeline."
+        },
+        {
+          "title": "Test Engineer, Automation",
+          "company_name": "Asana",
+          "department": "Quality",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "cypress",
+            "java"
+          ],
+          "description": "Build regression automation for collaboration features."
+        }
+      ]
+    },
+    {
+      "name": "engineering_manager",
+      "profile": {
+        "headline": "Engineering manager leading backend and platform teams",
+        "tracks": [
+          "management",
+          "swe"
+        ],
+        "tech_tags": [
+          "leadership",
+          "go",
+          "python",
+          "hiring",
+          "roadmap"
+        ],
+        "seniority_pref": [
+          "manager"
+        ],
+        "location": "Remote"
+      },
+      "jobs": [
+        {
+          "title": "Engineering Manager, Backend",
+          "company_name": "GitLab",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "leadership",
+            "go"
+          ],
+          "description": "Lead a distributed backend team owning core CI services."
+        },
+        {
+          "title": "Senior Engineering Manager",
+          "company_name": "Stripe",
+          "department": "Engineering",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "leadership",
+            "python"
+          ],
+          "description": "Manage managers across the payments platform org."
+        },
+        {
+          "title": "Engineering Manager, Platform",
+          "company_name": "HashiCorp",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "leadership",
+            "go"
+          ],
+          "description": "Grow and lead the infrastructure platform team."
+        },
+        {
+          "title": "Engineering Manager, Data",
+          "company_name": "Airbnb",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "leadership",
+            "python"
+          ],
+          "description": "Lead the data engineering team and its roadmap."
+        },
+        {
+          "title": "Software Engineering Manager",
+          "company_name": "Datadog",
+          "department": "Engineering",
+          "location": "New York, NY",
+          "tech_tags": [
+            "leadership",
+            "go"
+          ],
+          "description": "Manage a team building the metrics ingestion pipeline."
+        },
+        {
+          "title": "Engineering Manager, Growth",
+          "company_name": "Notion",
+          "department": "Engineering",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "leadership",
+            "roadmap"
+          ],
+          "description": "Lead the growth engineering team's experiments and hiring."
+        },
+        {
+          "title": "Director of Engineering",
+          "company_name": "Vercel",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "leadership",
+            "hiring"
+          ],
+          "description": "Own engineering strategy and delivery for the frontend cloud."
+        },
+        {
+          "title": "Engineering Manager, Infrastructure",
+          "company_name": "Cloudflare",
+          "department": "Engineering",
+          "location": "Austin, TX",
+          "tech_tags": [
+            "leadership",
+            "go"
+          ],
+          "description": "Lead an SRE-adjacent team owning edge reliability."
+        },
+        {
+          "title": "Senior Manager, Software Engineering",
+          "company_name": "Twilio",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "leadership",
+            "python"
+          ],
+          "description": "Manage multiple squads across the communications API."
+        },
+        {
+          "title": "Engineering Manager, Backend Services",
+          "company_name": "Plaid",
+          "department": "Engineering",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "leadership",
+            "go"
+          ],
+          "description": "Lead the team building financial data connectivity services."
+        },
+        {
+          "title": "Engineering Team Lead",
+          "company_name": "Linear",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "leadership",
+            "roadmap"
+          ],
+          "description": "Player-coach lead for the sync and API platform team."
+        },
+        {
+          "title": "Engineering Manager, Payments",
+          "company_name": "Block",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "leadership",
+            "hiring"
+          ],
+          "description": "Manage engineers building money-movement infrastructure."
+        }
+      ]
+    },
+    {
+      "name": "cloud_architect",
+      "profile": {
+        "headline": "Cloud architect designing scalable AWS and GCP systems",
+        "tracks": [
+          "infra",
+          "architecture"
+        ],
+        "tech_tags": [
+          "aws",
+          "gcp",
+          "terraform",
+          "kubernetes",
+          "networking"
+        ],
+        "seniority_pref": [
+          "senior"
+        ],
+        "location": "Chicago, IL"
+      },
+      "jobs": [
+        {
+          "title": "Cloud Solutions Architect",
+          "company_name": "Amazon Web Services",
+          "department": "Architecture",
+          "location": "Chicago, IL",
+          "tech_tags": [
+            "aws",
+            "terraform"
+          ],
+          "description": "Design large-scale cloud architectures for enterprise customers."
+        },
+        {
+          "title": "Senior Cloud Architect",
+          "company_name": "Google Cloud",
+          "department": "Architecture",
+          "location": "Remote",
+          "tech_tags": [
+            "gcp",
+            "kubernetes"
+          ],
+          "description": "Architect multi-region GCP deployments for strategic accounts."
+        },
+        {
+          "title": "Principal Solutions Architect",
+          "company_name": "HashiCorp",
+          "department": "Architecture",
+          "location": "Remote",
+          "tech_tags": [
+            "terraform",
+            "aws"
+          ],
+          "description": "Guide customers on infrastructure-as-code architecture."
+        },
+        {
+          "title": "Cloud Infrastructure Architect",
+          "company_name": "Snowflake",
+          "department": "Architecture",
+          "location": "Bellevue, WA",
+          "tech_tags": [
+            "aws",
+            "networking"
+          ],
+          "description": "Design secure, scalable cloud data platform deployments."
+        },
+        {
+          "title": "Solutions Architect, Cloud",
+          "company_name": "Confluent",
+          "department": "Architecture",
+          "location": "Remote",
+          "tech_tags": [
+            "gcp",
+            "kubernetes"
+          ],
+          "description": "Architect streaming data platforms on the cloud."
+        },
+        {
+          "title": "Senior Cloud Solutions Architect",
+          "company_name": "MongoDB",
+          "department": "Architecture",
+          "location": "Remote",
+          "tech_tags": [
+            "aws",
+            "terraform"
+          ],
+          "description": "Design database cloud architectures for large customers."
+        },
+        {
+          "title": "Enterprise Cloud Architect",
+          "company_name": "Databricks",
+          "department": "Architecture",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "aws",
+            "gcp"
+          ],
+          "description": "Lead lakehouse architecture engagements."
+        },
+        {
+          "title": "Cloud Architect, Networking",
+          "company_name": "Cloudflare",
+          "department": "Architecture",
+          "location": "Remote",
+          "tech_tags": [
+            "networking",
+            "terraform"
+          ],
+          "description": "Design global network and security architectures."
+        },
+        {
+          "title": "Principal Cloud Architect",
+          "company_name": "VMware",
+          "department": "Architecture",
+          "location": "Palo Alto, CA",
+          "tech_tags": [
+            "kubernetes",
+            "aws"
+          ],
+          "description": "Architect hybrid-cloud platforms for enterprises."
+        },
+        {
+          "title": "Solutions Architect, Infrastructure",
+          "company_name": "Datadog",
+          "department": "Architecture",
+          "location": "Remote",
+          "tech_tags": [
+            "aws",
+            "kubernetes"
+          ],
+          "description": "Advise customers on observability at cloud scale."
+        },
+        {
+          "title": "Senior Solutions Architect",
+          "company_name": "Elastic",
+          "department": "Architecture",
+          "location": "Remote",
+          "tech_tags": [
+            "gcp",
+            "terraform"
+          ],
+          "description": "Design search and observability cloud deployments."
+        },
+        {
+          "title": "Cloud Platform Architect",
+          "company_name": "Twilio",
+          "department": "Architecture",
+          "location": "Remote",
+          "tech_tags": [
+            "aws",
+            "networking"
+          ],
+          "description": "Architect resilient multi-account cloud foundations."
+        }
+      ]
+    },
+    {
+      "name": "game_developer",
+      "profile": {
+        "headline": "Game developer building gameplay systems in Unity and C++",
+        "tracks": [
+          "swe",
+          "games"
+        ],
+        "tech_tags": [
+          "cpp",
+          "unity",
+          "c-sharp",
+          "unreal",
+          "opengl"
+        ],
+        "seniority_pref": [
+          "mid"
+        ],
+        "location": "Los Angeles, CA"
+      },
+      "jobs": [
+        {
+          "title": "Gameplay Engineer",
+          "company_name": "Riot Games",
+          "department": "Engineering",
+          "location": "Los Angeles, CA",
+          "tech_tags": [
+            "cpp",
+            "c-sharp"
+          ],
+          "description": "Build gameplay systems and mechanics for a live multiplayer title."
+        },
+        {
+          "title": "Game Engineer, Engine",
+          "company_name": "Epic Games",
+          "department": "Engineering",
+          "location": "Cary, NC",
+          "tech_tags": [
+            "cpp",
+            "unreal"
+          ],
+          "description": "Develop core rendering and physics for the Unreal Engine."
+        },
+        {
+          "title": "Unity Developer",
+          "company_name": "Niantic",
+          "department": "Engineering",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "unity",
+            "c-sharp"
+          ],
+          "description": "Build AR gameplay features for location-based games."
+        },
+        {
+          "title": "Senior Gameplay Programmer",
+          "company_name": "Blizzard",
+          "department": "Engineering",
+          "location": "Irvine, CA",
+          "tech_tags": [
+            "cpp",
+            "c-sharp"
+          ],
+          "description": "Own combat and ability systems for a flagship franchise."
+        },
+        {
+          "title": "Game Client Engineer",
+          "company_name": "Roblox",
+          "department": "Engineering",
+          "location": "San Mateo, CA",
+          "tech_tags": [
+            "cpp",
+            "opengl"
+          ],
+          "description": "Develop the game client runtime and rendering pipeline."
+        },
+        {
+          "title": "Graphics Engineer, Games",
+          "company_name": "Unity Technologies",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "cpp",
+            "opengl"
+          ],
+          "description": "Build real-time graphics features for the Unity renderer."
+        },
+        {
+          "title": "Gameplay Systems Engineer",
+          "company_name": "Bungie",
+          "department": "Engineering",
+          "location": "Bellevue, WA",
+          "tech_tags": [
+            "cpp",
+            "c-sharp"
+          ],
+          "description": "Implement sandbox and mission systems."
+        },
+        {
+          "title": "Unreal Engineer",
+          "company_name": "Electronic Arts",
+          "department": "Engineering",
+          "location": "Redwood City, CA",
+          "tech_tags": [
+            "unreal",
+            "cpp"
+          ],
+          "description": "Build gameplay and tooling on Unreal for sports titles."
+        },
+        {
+          "title": "Game Developer, Tools",
+          "company_name": "Zynga",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "unity",
+            "c-sharp"
+          ],
+          "description": "Develop editor tools and pipelines for mobile games."
+        },
+        {
+          "title": "Engine Programmer",
+          "company_name": "Valve",
+          "department": "Engineering",
+          "location": "Bellevue, WA",
+          "tech_tags": [
+            "cpp",
+            "opengl"
+          ],
+          "description": "Work on the Source engine's core systems."
+        },
+        {
+          "title": "Senior Unity Engineer",
+          "company_name": "Supercell",
+          "department": "Engineering",
+          "location": "Remote",
+          "tech_tags": [
+            "unity",
+            "c-sharp"
+          ],
+          "description": "Build gameplay for a live mobile strategy game."
+        },
+        {
+          "title": "Gameplay Programmer",
+          "company_name": "Naughty Dog",
+          "department": "Engineering",
+          "location": "Santa Monica, CA",
+          "tech_tags": [
+            "cpp",
+            "c-sharp"
+          ],
+          "description": "Implement character and traversal mechanics for AAA games."
+        }
+      ]
+    },
+    {
+      "name": "embedded_engineer",
+      "profile": {
+        "headline": "Embedded systems engineer writing firmware for hardware devices",
+        "tracks": [
+          "swe",
+          "embedded"
+        ],
+        "tech_tags": [
+          "c",
+          "cpp",
+          "rtos",
+          "embedded-linux",
+          "arm"
+        ],
+        "seniority_pref": [
+          "mid"
+        ],
+        "location": "San Diego, CA"
+      },
+      "jobs": [
+        {
+          "title": "Embedded Software Engineer",
+          "company_name": "Tesla",
+          "department": "Firmware",
+          "location": "Palo Alto, CA",
+          "tech_tags": [
+            "c",
+            "cpp"
+          ],
+          "description": "Write firmware for vehicle control units and sensors."
+        },
+        {
+          "title": "Firmware Engineer",
+          "company_name": "Apple",
+          "department": "Hardware",
+          "location": "Cupertino, CA",
+          "tech_tags": [
+            "c",
+            "arm"
+          ],
+          "description": "Develop low-level firmware for silicon and device peripherals."
+        },
+        {
+          "title": "Senior Embedded Engineer",
+          "company_name": "SpaceX",
+          "department": "Avionics",
+          "location": "Hawthorne, CA",
+          "tech_tags": [
+            "cpp",
+            "rtos"
+          ],
+          "description": "Build flight software for avionics on an RTOS."
+        },
+        {
+          "title": "Embedded Systems Engineer",
+          "company_name": "Anduril",
+          "department": "Hardware",
+          "location": "Costa Mesa, CA",
+          "tech_tags": [
+            "c",
+            "embedded-linux"
+          ],
+          "description": "Write firmware for autonomous defense hardware."
+        },
+        {
+          "title": "Firmware Engineer, Sensors",
+          "company_name": "Verily",
+          "department": "Hardware",
+          "location": "South San Francisco, CA",
+          "tech_tags": [
+            "c",
+            "arm"
+          ],
+          "description": "Develop firmware for medical sensing devices."
+        },
+        {
+          "title": "Embedded Software Engineer, Robotics",
+          "company_name": "Boston Dynamics",
+          "department": "Robotics",
+          "location": "Waltham, MA",
+          "tech_tags": [
+            "cpp",
+            "rtos"
+          ],
+          "description": "Build real-time control firmware for legged robots."
+        },
+        {
+          "title": "Senior Firmware Engineer",
+          "company_name": "Nvidia",
+          "department": "Hardware",
+          "location": "Santa Clara, CA",
+          "tech_tags": [
+            "c",
+            "cpp"
+          ],
+          "description": "Write firmware for GPU and system-on-chip platforms."
+        },
+        {
+          "title": "Embedded Linux Engineer",
+          "company_name": "Rivian",
+          "department": "Firmware",
+          "location": "Palo Alto, CA",
+          "tech_tags": [
+            "embedded-linux",
+            "c"
+          ],
+          "description": "Develop the embedded Linux stack for vehicle computers."
+        },
+        {
+          "title": "Firmware Developer",
+          "company_name": "Peloton",
+          "department": "Hardware",
+          "location": "Remote",
+          "tech_tags": [
+            "c",
+            "arm"
+          ],
+          "description": "Build device firmware for connected fitness hardware."
+        },
+        {
+          "title": "Embedded Engineer, IoT",
+          "company_name": "Samsara",
+          "department": "Hardware",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "c",
+            "embedded-linux"
+          ],
+          "description": "Write firmware for industrial IoT gateways."
+        },
+        {
+          "title": "Senior Embedded Systems Engineer",
+          "company_name": "Zoox",
+          "department": "Autonomy",
+          "location": "Foster City, CA",
+          "tech_tags": [
+            "cpp",
+            "rtos"
+          ],
+          "description": "Develop safety-critical embedded software for robotaxis."
+        },
+        {
+          "title": "Firmware Engineer, Power",
+          "company_name": "Lucid Motors",
+          "department": "Firmware",
+          "location": "Newark, CA",
+          "tech_tags": [
+            "c",
+            "arm"
+          ],
+          "description": "Build firmware for battery-management systems."
+        }
+      ]
+    },
+    {
+      "name": "technical_program_manager",
+      "profile": {
+        "headline": "Technical program manager driving cross-team infrastructure delivery",
+        "tracks": [
+          "program",
+          "management"
+        ],
+        "tech_tags": [
+          "program-management",
+          "roadmap",
+          "stakeholders",
+          "agile",
+          "risk"
+        ],
+        "seniority_pref": [
+          "senior"
+        ],
+        "location": "Seattle, WA"
+      },
+      "jobs": [
+        {
+          "title": "Technical Program Manager",
+          "company_name": "Amazon",
+          "department": "Program Management",
+          "location": "Seattle, WA",
+          "tech_tags": [
+            "program-management",
+            "agile"
+          ],
+          "description": "Drive delivery of large cross-org infrastructure programs."
+        },
+        {
+          "title": "Senior TPM, Infrastructure",
+          "company_name": "Google",
+          "department": "Program Management",
+          "location": "Mountain View, CA",
+          "tech_tags": [
+            "roadmap",
+            "stakeholders"
+          ],
+          "description": "Coordinate multi-team platform initiatives end to end."
+        },
+        {
+          "title": "Technical Program Manager, Platform",
+          "company_name": "Microsoft",
+          "department": "Program Management",
+          "location": "Redmond, WA",
+          "tech_tags": [
+            "program-management",
+            "risk"
+          ],
+          "description": "Manage roadmap and dependencies for cloud platform teams."
+        },
+        {
+          "title": "Senior Technical Program Manager",
+          "company_name": "Meta",
+          "department": "Program Management",
+          "location": "Menlo Park, CA",
+          "tech_tags": [
+            "agile",
+            "stakeholders"
+          ],
+          "description": "Lead programs spanning infra and product engineering."
+        },
+        {
+          "title": "TPM, Data Platform",
+          "company_name": "Databricks",
+          "department": "Program Management",
+          "location": "Remote",
+          "tech_tags": [
+            "roadmap",
+            "program-management"
+          ],
+          "description": "Drive delivery across data platform engineering teams."
+        },
+        {
+          "title": "Principal TPM",
+          "company_name": "Stripe",
+          "department": "Program Management",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "stakeholders",
+            "risk"
+          ],
+          "description": "Own complex, high-stakes payments programs."
+        },
+        {
+          "title": "Technical Program Manager, Security",
+          "company_name": "Cloudflare",
+          "department": "Program Management",
+          "location": "Remote",
+          "tech_tags": [
+            "program-management",
+            "risk"
+          ],
+          "description": "Coordinate security and compliance initiatives."
+        },
+        {
+          "title": "Senior TPM, ML",
+          "company_name": "Nvidia",
+          "department": "Program Management",
+          "location": "Santa Clara, CA",
+          "tech_tags": [
+            "roadmap",
+            "agile"
+          ],
+          "description": "Manage cross-functional ML platform programs."
+        },
+        {
+          "title": "Technical Program Manager II",
+          "company_name": "Snowflake",
+          "department": "Program Management",
+          "location": "Remote",
+          "tech_tags": [
+            "program-management",
+            "stakeholders"
+          ],
+          "description": "Drive execution of data cloud engineering roadmaps."
+        },
+        {
+          "title": "Program Manager, Engineering",
+          "company_name": "Airbnb",
+          "department": "Program Management",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "agile",
+            "roadmap"
+          ],
+          "description": "Coordinate delivery across platform engineering squads."
+        },
+        {
+          "title": "Senior Technical Program Manager, Cloud",
+          "company_name": "Datadog",
+          "department": "Program Management",
+          "location": "New York, NY",
+          "tech_tags": [
+            "program-management",
+            "risk"
+          ],
+          "description": "Own multi-team observability platform programs."
+        },
+        {
+          "title": "TPM, Developer Platform",
+          "company_name": "GitHub",
+          "department": "Program Management",
+          "location": "Remote",
+          "tech_tags": [
+            "stakeholders",
+            "roadmap"
+          ],
+          "description": "Drive cross-team delivery of developer platform features."
+        }
+      ]
+    },
+    {
+      "name": "ux_researcher",
+      "profile": {
+        "headline": "UX researcher running qualitative and quantitative product studies",
+        "tracks": [
+          "design",
+          "research"
+        ],
+        "tech_tags": [
+          "user-research",
+          "usability",
+          "surveys",
+          "interviews",
+          "figma"
+        ],
+        "seniority_pref": [
+          "mid"
+        ],
+        "location": "San Francisco, CA"
+      },
+      "jobs": [
+        {
+          "title": "UX Researcher",
+          "company_name": "Google",
+          "department": "Design",
+          "location": "Mountain View, CA",
+          "tech_tags": [
+            "user-research",
+            "usability"
+          ],
+          "description": "Run generative and evaluative studies to shape product direction."
+        },
+        {
+          "title": "Senior User Experience Researcher",
+          "company_name": "Meta",
+          "department": "Design",
+          "location": "Menlo Park, CA",
+          "tech_tags": [
+            "interviews",
+            "surveys"
+          ],
+          "description": "Lead mixed-methods research across product surfaces."
+        },
+        {
+          "title": "Product Researcher",
+          "company_name": "Figma",
+          "department": "Design",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "user-research",
+            "figma"
+          ],
+          "description": "Uncover creator needs through interviews and usability testing."
+        },
+        {
+          "title": "UX Research Lead",
+          "company_name": "Airbnb",
+          "department": "Design",
+          "location": "Remote",
+          "tech_tags": [
+            "user-research",
+            "surveys"
+          ],
+          "description": "Drive research strategy for the guest experience."
+        },
+        {
+          "title": "Design Researcher",
+          "company_name": "Duolingo",
+          "department": "Design",
+          "location": "Pittsburgh, PA",
+          "tech_tags": [
+            "usability",
+            "interviews"
+          ],
+          "description": "Study learner behavior to inform lesson design."
+        },
+        {
+          "title": "Senior UX Researcher, Growth",
+          "company_name": "Dropbox",
+          "department": "Design",
+          "location": "Remote",
+          "tech_tags": [
+            "surveys",
+            "user-research"
+          ],
+          "description": "Run quantitative studies on onboarding and retention."
+        },
+        {
+          "title": "User Researcher",
+          "company_name": "Notion",
+          "department": "Design",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "interviews",
+            "usability"
+          ],
+          "description": "Conduct discovery research for new product areas."
+        },
+        {
+          "title": "UX Researcher, Enterprise",
+          "company_name": "Atlassian",
+          "department": "Design",
+          "location": "Remote",
+          "tech_tags": [
+            "user-research",
+            "surveys"
+          ],
+          "description": "Research workflows of enterprise software teams."
+        },
+        {
+          "title": "Principal UX Researcher",
+          "company_name": "Adobe",
+          "department": "Design",
+          "location": "San Jose, CA",
+          "tech_tags": [
+            "user-research",
+            "usability"
+          ],
+          "description": "Lead strategic research across creative products."
+        },
+        {
+          "title": "Mixed-Methods Researcher",
+          "company_name": "Spotify",
+          "department": "Design",
+          "location": "New York, NY",
+          "tech_tags": [
+            "surveys",
+            "interviews"
+          ],
+          "description": "Combine behavioral data and interviews to guide design."
+        },
+        {
+          "title": "UX Researcher, Payments",
+          "company_name": "Stripe",
+          "department": "Design",
+          "location": "Remote",
+          "tech_tags": [
+            "user-research",
+            "usability"
+          ],
+          "description": "Study developer and merchant experiences with payments."
+        },
+        {
+          "title": "Senior Design Researcher",
+          "company_name": "Pinterest",
+          "department": "Design",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "interviews",
+            "user-research"
+          ],
+          "description": "Research creator and advertiser needs."
+        }
+      ]
+    },
+    {
+      "name": "developer_advocate",
+      "profile": {
+        "headline": "Developer advocate building demos, docs, and community for APIs",
+        "tracks": [
+          "devrel",
+          "swe"
+        ],
+        "tech_tags": [
+          "javascript",
+          "python",
+          "technical-writing",
+          "public-speaking",
+          "apis"
+        ],
+        "seniority_pref": [
+          "mid"
+        ],
+        "location": "Remote"
+      },
+      "jobs": [
+        {
+          "title": "Developer Advocate",
+          "company_name": "Vercel",
+          "department": "Developer Relations",
+          "location": "Remote",
+          "tech_tags": [
+            "javascript",
+            "apis"
+          ],
+          "description": "Build demos and content that help developers adopt the platform."
+        },
+        {
+          "title": "Senior Developer Advocate",
+          "company_name": "Twilio",
+          "department": "Developer Relations",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "technical-writing"
+          ],
+          "description": "Create tutorials and speak at events about the communications API."
+        },
+        {
+          "title": "Developer Relations Engineer",
+          "company_name": "Stripe",
+          "department": "Developer Relations",
+          "location": "San Francisco, CA",
+          "tech_tags": [
+            "javascript",
+            "apis"
+          ],
+          "description": "Improve the developer experience through sample apps and docs."
+        },
+        {
+          "title": "Developer Advocate, Frontend",
+          "company_name": "Netlify",
+          "department": "Developer Relations",
+          "location": "Remote",
+          "tech_tags": [
+            "javascript",
+            "technical-writing"
+          ],
+          "description": "Champion best practices for modern web deployment."
+        },
+        {
+          "title": "Senior DevRel Engineer",
+          "company_name": "MongoDB",
+          "department": "Developer Relations",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "apis"
+          ],
+          "description": "Build reference apps and lead community workshops."
+        },
+        {
+          "title": "Developer Advocate",
+          "company_name": "Auth0",
+          "department": "Developer Relations",
+          "location": "Remote",
+          "tech_tags": [
+            "javascript",
+            "public-speaking"
+          ],
+          "description": "Educate developers on identity and authentication."
+        },
+        {
+          "title": "Developer Relations, APIs",
+          "company_name": "GitHub",
+          "department": "Developer Relations",
+          "location": "Remote",
+          "tech_tags": [
+            "apis",
+            "technical-writing"
+          ],
+          "description": "Grow adoption of developer platform APIs through content."
+        },
+        {
+          "title": "Community Engineer",
+          "company_name": "Supabase",
+          "department": "Developer Relations",
+          "location": "Remote",
+          "tech_tags": [
+            "javascript",
+            "python"
+          ],
+          "description": "Support and grow the open-source developer community."
+        },
+        {
+          "title": "Senior Developer Advocate",
+          "company_name": "Datadog",
+          "department": "Developer Relations",
+          "location": "New York, NY",
+          "tech_tags": [
+            "python",
+            "public-speaking"
+          ],
+          "description": "Produce technical content on observability."
+        },
+        {
+          "title": "Developer Advocate, Cloud",
+          "company_name": "HashiCorp",
+          "department": "Developer Relations",
+          "location": "Remote",
+          "tech_tags": [
+            "technical-writing",
+            "apis"
+          ],
+          "description": "Create guides and talks about infrastructure automation."
+        },
+        {
+          "title": "DevRel Engineer",
+          "company_name": "Postman",
+          "department": "Developer Relations",
+          "location": "Remote",
+          "tech_tags": [
+            "apis",
+            "javascript"
+          ],
+          "description": "Build demos and docs improving the API workflow experience."
+        },
+        {
+          "title": "Developer Advocate, ML",
+          "company_name": "Hugging Face",
+          "department": "Developer Relations",
+          "location": "Remote",
+          "tech_tags": [
+            "python",
+            "technical-writing"
+          ],
+          "description": "Help developers use open-source ML models and libraries."
+        }
+      ]
     }
   ]
 }
