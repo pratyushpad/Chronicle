@@ -1,3 +1,4 @@
+import logging
 from datetime import date, datetime, timedelta, timezone
 from math import ceil
 from typing import Optional
@@ -26,6 +27,8 @@ from app.schemas import (
 _SENIOR_REGEX = r"\m(senior|sr|staff|principal|lead|distinguished|architect)\M"
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 
 def _db():
@@ -121,17 +124,37 @@ def list_jobs(
     )
 
     if mode in ("semantic", "hybrid") and q:
-        return _fused_search(
-            session=session,
-            base=base,
-            mode=mode,
-            q=q,
-            order_col=order_col,
-            last_start=last_start,
-            page=page,
-            page_size=page_size,
-        )
+        try:
+            return _fused_search(
+                session=session,
+                base=base,
+                mode=mode,
+                q=q,
+                order_col=order_col,
+                last_start=last_start,
+                page=page,
+                page_size=page_size,
+            )
+        except Exception:
+            # Never let a missing/broken embedding model 500 the feed: degrade
+            # semantic/hybrid to keyword ranking so the live app keeps working.
+            logger.warning(
+                "semantic search failed for mode=%s; falling back to keyword", mode,
+                exc_info=True,
+            )
 
+    return _keyword_search(session, base, order_col, last_start, page, page_size)
+
+
+def _keyword_search(
+    session: Session,
+    base,
+    order_col,
+    last_start: datetime | None,
+    page: int,
+    page_size: int,
+) -> JobListResponse:
+    """Recency-ordered keyword feed: one representative posting per dedup_key."""
     # Total = distinct roles, collapsing cross-posted city duplicates.
     keys_sub = base(Job.dedup_key).subquery()
     total = session.execute(

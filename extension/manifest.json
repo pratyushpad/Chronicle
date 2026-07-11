@@ -13,7 +13,7 @@
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "http://localhost/*",
-    "https://*.onrender.com/*",
+    "https://folio-dev-lo9x.onrender.com/*",
     "https://job-boards.greenhouse.io/*",
     "https://boards.greenhouse.io/*",
     "https://jobs.lever.co/*",

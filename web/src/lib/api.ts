@@ -113,6 +113,47 @@ export interface JobParams {
   sort?: string;
 }
 
+/**
+ * Fetch JSON with a per-attempt timeout and retry-on-timeout/5xx. Absorbs Render
+ * free-tier cold starts (first request after spin-down can take ~30-60s) and transient
+ * 5xx without letting a slow wake-up hang the request forever. 4xx (except an optional
+ * notFound) fail fast — they won't get better on retry.
+ */
+async function fetchJSON<T>(
+  path: string,
+  opts: {
+    revalidate?: number;
+    retries?: number;
+    timeoutMs?: number;
+    errMsg: string;
+    notFoundMsg?: string;
+  },
+): Promise<T> {
+  const { revalidate = 300, retries = 1, timeoutMs = 20000, errMsg, notFoundMsg } = opts;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(`${API}${path}`, {
+        next: { revalidate },
+        signal: controller.signal,
+      });
+      if (res.ok) return (await res.json()) as T;
+      if (notFoundMsg && res.status === 404) throw new Error(notFoundMsg);
+      if (res.status < 500) throw new Error(`${errMsg} (${res.status})`);
+      lastErr = new Error(`${errMsg} (${res.status})`);
+    } catch (e) {
+      if (e instanceof Error && notFoundMsg && e.message === notFoundMsg) throw e;
+      lastErr = e;
+    } finally {
+      clearTimeout(timer);
+    }
+    if (attempt < retries) await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(errMsg);
+}
+
 function buildQuery(params: Record<string, unknown>): string {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
@@ -125,54 +166,44 @@ function buildQuery(params: Record<string, unknown>): string {
 }
 
 export async function getJobs(params: JobParams = {}): Promise<JobListResponse> {
-  const res = await fetch(`${API}/jobs${buildQuery(params as Record<string, unknown>)}`, {
-    next: { revalidate: 300 },
-  });
-  if (!res.ok) throw new Error("Failed to fetch jobs");
-  return res.json();
+  return fetchJSON<JobListResponse>(
+    `/jobs${buildQuery(params as Record<string, unknown>)}`,
+    { revalidate: 300, errMsg: "Failed to fetch jobs" },
+  );
 }
 
 export async function getJob(id: number): Promise<JobDetail> {
-  // Retry-with-backoff to absorb Render cold-starts / transient 503s under prefetch fan-out.
-  let lastErr: unknown;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const res = await fetch(`${API}/jobs/${id}`, { next: { revalidate: 300 } });
-      if (res.ok) return res.json();
-      if (res.status === 404) throw new Error("Job not found");
-      if (res.status < 500) throw new Error(`Job fetch failed (${res.status})`);
-      lastErr = new Error(`Job fetch failed (${res.status})`);
-    } catch (e) {
-      lastErr = e;
-      if (e instanceof Error && e.message === "Job not found") throw e;
-    }
-    if (attempt < 2) await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
-  }
-  throw lastErr instanceof Error ? lastErr : new Error("Job not found");
+  // Extra retry to absorb Render cold-starts / transient 503s under prefetch fan-out.
+  return fetchJSON<JobDetail>(`/jobs/${id}`, {
+    revalidate: 300,
+    retries: 2,
+    errMsg: "Job fetch failed",
+    notFoundMsg: "Job not found",
+  });
 }
 
 export async function getCompanies(params: { industry?: string } = {}): Promise<CompanyItem[]> {
-  const res = await fetch(`${API}/companies${buildQuery(params)}`, { next: { revalidate: 3600 } });
-  if (!res.ok) throw new Error("Failed to fetch companies");
-  return res.json();
+  return fetchJSON<CompanyItem[]>(`/companies${buildQuery(params)}`, {
+    revalidate: 3600,
+    errMsg: "Failed to fetch companies",
+  });
 }
 
 export async function getCompany(id: number): Promise<CompanyDetail> {
-  const res = await fetch(`${API}/companies/${id}`, { next: { revalidate: 3600 } });
-  if (!res.ok) throw new Error("Company not found");
-  return res.json();
+  return fetchJSON<CompanyDetail>(`/companies/${id}`, {
+    revalidate: 3600,
+    errMsg: "Failed to fetch company",
+    notFoundMsg: "Company not found",
+  });
 }
 
 export async function getCompanyVelocity(id: number, weeks = 8): Promise<CompanyVelocity> {
-  const res = await fetch(`${API}/companies/${id}/velocity?weeks=${weeks}`, {
-    next: { revalidate: 3600 },
+  return fetchJSON<CompanyVelocity>(`/companies/${id}/velocity?weeks=${weeks}`, {
+    revalidate: 3600,
+    errMsg: "Failed to fetch company velocity",
   });
-  if (!res.ok) throw new Error("Failed to fetch company velocity");
-  return res.json();
 }
 
 export async function getMeta(): Promise<Meta> {
-  const res = await fetch(`${API}/meta`, { next: { revalidate: 300 } });
-  if (!res.ok) throw new Error("Failed to fetch meta");
-  return res.json();
+  return fetchJSON<Meta>(`/meta`, { revalidate: 300, errMsg: "Failed to fetch meta" });
 }

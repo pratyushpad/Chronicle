@@ -42,8 +42,8 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 
 ## Features
 
-- **Live registry** of 500+ companies, ingested on a recurring schedule with per-company
-  fault isolation (one broken board never blocks the run).
+- **Live registry** of 220+ companies (~15k open roles), ingested on a recurring schedule
+  with per-company fault isolation (one broken board never blocks the run).
 - **Cross-source deduplication** — the same req posted to multiple ATS boards, or the
   same role posted to multiple cities, collapses into one card without merging genuinely
   distinct openings.
@@ -51,16 +51,19 @@ departments. Filtering happens at read time in the API/UI, so the company regist
   statuses), saved searches, and email alerts for new matching roles.
 - **Semantic + hybrid search** — every job is embedded (all-MiniLM-L6-v2, int8 ONNX — no
   torch, free-tier friendly) into pgvector; search offers keyword, pure semantic, and a
-  hybrid mode that fuses both rankings with Reciprocal Rank Fusion. p95 < 35 ms on a
-  50k-job corpus.
+  hybrid mode that fuses both rankings with Reciprocal Rank Fusion. An HNSW cosine index
+  keeps vector retrieval fast; semantic/hybrid degrade gracefully to keyword if the
+  embedding model is unavailable.
 - **Recommendations ("For You" v2)** — two-stage matching: pgvector retrieves candidates
   by cosine against a profile vector (profile text + a weighted centroid of saved/applied
   jobs), then a blend of semantic similarity and the explainable rule score reranks them.
   Every card keeps a human-readable "why" string.
 - **Measured, not vibes** — an offline eval harness (`api/scripts/eval_matching.py`)
-  scores rule-based vs semantic vs hybrid ranking on held-out engagements and synthetic
-  personas: hybrid lifts NDCG@10 from 0.853 to 0.943 and MRR from 0.900 to 1.000 over the
-  rule baseline. See [docs/eval_results.md](docs/eval_results.md).
+  scores rule-based vs semantic vs hybrid ranking on held-out engagements, with bootstrap
+  95% confidence intervals. Across 10 synthetic personas, hybrid lifts NDCG@10 from 0.76 to
+  0.83 and MRR from 0.88 to 1.00 over the rule baseline (recall@50 0.91 → 1.00). The same
+  harness runs in `db` mode against real logged engagements. See
+  [docs/eval_results.md](docs/eval_results.md).
 - **Interaction logging** — impressions/clicks/saves are captured per surface
   (feed/search) as training data for a future learned ranker.
 - **Hiring velocity** — per-company opened/closed-role trends.

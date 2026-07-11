@@ -12,7 +12,7 @@ Falls back to the pure rule scan when no embedding exists.
 import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -215,11 +215,15 @@ def rule_score(job, ctx: RuleContext) -> tuple[float, str] | None:
     return total, why
 
 
+def _normalized_rule(rule_total: float, max_rule: float) -> float:
+    """Rule score clamped at 0 and normalized against the best rule score in the pool."""
+    return max(rule_total, 0.0) / max_rule if max_rule > 0 else 0.0
+
+
 def blend_score(cosine: float, rule_total: float, max_rule: float) -> float:
     """Stage-2 rerank score: cosine blended with the rule score normalized
     against the best rule score in the candidate pool."""
-    rule_norm = max(rule_total, 0.0) / max_rule if max_rule > 0 else 0.0
-    return ALPHA_COSINE * cosine + BETA_RULE * rule_norm
+    return ALPHA_COSINE * cosine + BETA_RULE * _normalized_rule(rule_total, max_rule)
 
 
 def _rule_scored(
@@ -285,8 +289,8 @@ def _two_stage_scored(
 
     scored: list[tuple] = []
     for cosine, rule_total, why, row in candidates:
-        total = blend_score(cosine, rule_total, max_rule)
-        rule_norm = max(rule_total, 0.0) / max_rule if max_rule > 0 else 0.0
+        rule_norm = _normalized_rule(rule_total, max_rule)
+        total = ALPHA_COSINE * cosine + BETA_RULE * rule_norm
         if has_engagements and ALPHA_COSINE * cosine > BETA_RULE * rule_norm:
             why = f"{why} · {SEMANTIC_WHY}"
         scored.append((total, why, row.Job, row.company_name, row.company_careers_url))
@@ -304,7 +308,7 @@ def _db():
 
 @router.get("", response_model=list[RecommendedJob])
 def get_recommendations(
-    limit: int = 30,
+    limit: int = Query(30, ge=1, le=100),
     user: User = Depends(get_current_user),
     session: Session = Depends(_db),
 ):

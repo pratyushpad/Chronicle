@@ -94,7 +94,7 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
       ) : (
         <div className="mt-6 flex flex-col gap-4">
           {data.items.map((job, i) => (
-            <Reveal key={job.id} index={i}>
+            <Reveal key={job.id} index={i} y={16} step={0.045} trigger="mount">
               <JobCard job={job} surface="search" />
             </Reveal>
           ))}

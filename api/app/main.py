@@ -39,6 +39,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    """Baseline hardening headers. This is a JSON API served on its own origin, so
+    DENY-ing framing and forcing HTTPS can't break the Next.js frontend."""
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault(
+        "Strict-Transport-Security", "max-age=63072000; includeSubDomains"
+    )
+    return response
+
 app.include_router(jobs_router)
 app.include_router(users_router)
 app.include_router(saved_router)

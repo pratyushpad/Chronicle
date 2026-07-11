@@ -6,7 +6,7 @@ import { m, useReducedMotion } from "motion/react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { SectionLabel } from "./SectionLabel";
 import { cn, formatLocation, formatDepartment } from "@/lib/utils";
-import { duration, ease } from "@/lib/motion";
+import { duration, ease, staggerContainer, staggerItem, springPress } from "@/lib/motion";
 
 interface FilterBarProps {
   departments: string[];
@@ -225,6 +225,7 @@ export function FilterBar(props: FilterBarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
+  const reduce = useReducedMotion();
 
   const handleChange = useCallback(
     (key: string, value: string) => {
@@ -260,15 +261,23 @@ export function FilterBar(props: FilterBarProps) {
 
   return (
     <div className="sticky top-16 z-40 -mx-6 border-b-2 border-foreground bg-background px-6 py-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12">
-      {/* Quick filter pills */}
-      <div className="flex flex-wrap gap-2">
+      {/* Quick filter pills — stagger in on mount so the bar feels alive. */}
+      <m.div
+        className="flex flex-wrap gap-2"
+        variants={staggerContainer}
+        initial={reduce ? false : "hidden"}
+        animate="visible"
+      >
         {QUICK_PILLS.map((pill) => {
           const isActive = Object.entries(pill.params).every(
             ([k, v]) => searchParams.get(k) === v
           );
           return (
-            <button
+            <m.button
               key={pill.label}
+              variants={staggerItem}
+              whileTap={reduce ? undefined : { scale: 0.95 }}
+              transition={springPress}
               onClick={() => applyPill(pill.params as Record<string, string>)}
               className={cn(
                 "min-h-[32px] border px-3 py-1.5 font-mono text-xs uppercase tracking-[0.08em] transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
@@ -278,18 +287,21 @@ export function FilterBar(props: FilterBarProps) {
               )}
             >
               {pill.label}
-            </button>
+            </m.button>
           );
         })}
         {searchParams.toString() && (
-          <button
+          <m.button
+            variants={staggerItem}
+            whileTap={reduce ? undefined : { scale: 0.95 }}
+            transition={springPress}
             onClick={() => startTransition(() => router.push(pathname))}
             className="min-h-[32px] border border-foreground px-3 py-1.5 font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
           >
             ✕ Clear
-          </button>
+          </m.button>
         )}
-      </div>
+      </m.div>
 
       {/* Desktop filters */}
       <div className="mt-4 hidden md:block">

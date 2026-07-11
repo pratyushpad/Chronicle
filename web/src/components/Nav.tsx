@@ -139,7 +139,7 @@ export function Nav({ companyCount }: { companyCount?: number | null }) {
     "px-2 py-1 font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground transition-colors duration-100 hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2";
 
   return (
-    <nav className="sticky top-0 z-50 border-b-2 border-foreground bg-background/95 backdrop-blur-sm">
+    <nav className="sticky top-0 z-50 border-b-2 border-foreground bg-background">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 md:px-8 lg:px-12">
         <Link
           href="/"

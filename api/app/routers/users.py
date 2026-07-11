@@ -146,7 +146,12 @@ async def upload_resume(
 
     Only the extracted text is kept — the file itself is discarded.
     """
-    from app.resume import extract_resume_text
+    from app.resume import MAX_FILE_BYTES, extract_resume_text
+
+    # Reject oversized uploads before buffering the whole file into memory.
+    # (extract_resume_text re-checks len(data) as a backstop when size is unknown.)
+    if file.size is not None and file.size > MAX_FILE_BYTES:
+        raise HTTPException(status_code=422, detail="File too large (max 2 MB)")
 
     data = await file.read()
     try:
