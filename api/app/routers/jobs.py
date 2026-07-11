@@ -444,8 +444,26 @@ def company_velocity(company_id: int, weeks: int = 8, session: Session = Depends
     )
 
 
+# /meta is ~15 aggregate queries (full-table DISTINCTs + regex COUNTs) whose inputs only
+# change after an ingest run, so it's cached in-process with a short TTL. This keeps it off
+# the critical path of every page load (it gates the jobs feed's server-side Promise.all).
+_META_CACHE: dict[str, tuple[float, MetaResponse]] = {}
+_META_TTL_SECONDS = 300
+
+
 @router.get("/meta", response_model=MetaResponse)
 def get_meta(session: Session = Depends(_db)):
+    import time
+
+    cached = _META_CACHE.get("meta")
+    if cached is not None and (time.monotonic() - cached[0]) < _META_TTL_SECONDS:
+        return cached[1]
+    result = _compute_meta(session)
+    _META_CACHE["meta"] = (time.monotonic(), result)
+    return result
+
+
+def _compute_meta(session: Session) -> MetaResponse:
     def distinct_col(col):
         return [
             r[0]
