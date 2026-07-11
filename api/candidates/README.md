@@ -22,6 +22,22 @@ being written here (pre-filtered to actives), so a `--commit` produces ~zero qua
   [job-board-aggregator](https://github.com/Feashliaa/job-board-aggregator) token lists), then
   live-probing. Ordered most-substantial-first (by open-role count).
 
+## Scale-up pool (`pool_scale.json`)
+
+`pool_scale.json` is a **raw, unverified** curated pool of ~300 recognizable tech companies
+(net-new vs `companies.seed.json` + all `batch*.json`), each with `ats:"auto"` so the probe
+resolves its board. It is NOT a batch — run it through the harness first, review, then commit:
+
+```
+python candidates/_probe.py candidates/pool_scale.json candidates/batch5.json   # live-probe → confirmed batch
+python -m app.ingest.verify_and_add_companies candidates/batch5.json             # dry-run, review counts
+# local DB first, then snapshot Neon, then against prod:
+python -m app.ingest.verify_and_add_companies candidates/batch5.json --commit
+```
+
+Expect attrition: some slugs guess wrong or use Workday/custom ATS and get dropped — that's
+the point of the probe. Add more pools and repeat to reach the target active count.
+
 ## Quality note
 
 The aggregator token lists (~15.9k slugs across the three ATSes) are an **all-industry** index, so
