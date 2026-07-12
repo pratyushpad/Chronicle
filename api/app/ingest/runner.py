@@ -35,7 +35,9 @@ _ADAPTERS = {
     ATSSource.lever: LeverAdapter(),
     ATSSource.ashby: AshbyAdapter(),
 }
-_CONCURRENCY = 10
+# Low concurrency so at most this many boards' responses are in memory at once —
+# keeps the ingest within Render's 512MB free tier (10-wide OOM'd the instance).
+_CONCURRENCY = 3
 
 
 async def _ingest_company(

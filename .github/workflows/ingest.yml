@@ -27,9 +27,9 @@ jobs:
             exit 1
           fi
           BASE="${API_URL:-https://folio-dev-lo9x.onrender.com}"
-          # Bound wall-clock time so a large run fits a Render free-tier window; the rest
-          # continues stalest-first on the next invocation.
-          URL="$BASE/admin/ingest?budget_seconds=600"
+          # Small chunk per run so it fits Render's 512MB RAM (a big run OOM-restarted the
+          # box). The stalest-first ordering rotates through all boards over a few daily runs.
+          URL="$BASE/admin/ingest?budget_seconds=240"
           echo "Triggering $URL"
           code=$(curl -sS --max-time 120 -o /tmp/resp.json -w "%{http_code}" \
             -X POST -H "X-Ingest-Secret: $INGEST_SECRET" "$URL" || echo "000")

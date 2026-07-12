@@ -13,7 +13,9 @@ log = logging.getLogger(__name__)
 
 EMBEDDING_DIM = 384
 MAX_TOKENS = 256
-DEFAULT_BATCH_SIZE = 64
+# Small batch keeps peak memory low so ingest embedding fits Render's 512MB free tier
+# (larger batches OOM'd the box mid-ingest). Slower, but memory-safe.
+DEFAULT_BATCH_SIZE = 16
 
 _lock = threading.Lock()
 _instance: "Embedder | None" = None
