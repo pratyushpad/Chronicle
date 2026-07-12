@@ -1581,5 +1581,3061 @@
     "careers_url": null,
     "industry": "AI",
     "active": true
+  },
+  {
+    "name": "Gopuff",
+    "ats": "lever",
+    "slug": "gopuff",
+    "careers_url": null,
+    "industry": "Delivery",
+    "active": true
+  },
+  {
+    "name": "Coupang",
+    "ats": "greenhouse",
+    "slug": "coupang",
+    "careers_url": null,
+    "industry": "E-commerce",
+    "active": true
+  },
+  {
+    "name": "Airwallex",
+    "ats": "ashby",
+    "slug": "airwallex",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Fever",
+    "ats": "greenhouse",
+    "slug": "feverup",
+    "careers_url": null,
+    "industry": "Consumer",
+    "active": true
+  },
+  {
+    "name": "Axon",
+    "ats": "greenhouse",
+    "slug": "axon",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Lyra Health",
+    "ats": "lever",
+    "slug": "lyrahealth",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Esri",
+    "ats": "greenhouse",
+    "slug": "esri",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Snowflake",
+    "ats": "ashby",
+    "slug": "snowflake",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "SumUp",
+    "ats": "greenhouse",
+    "slug": "sumup",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Shield AI",
+    "ats": "lever",
+    "slug": "shieldai",
+    "careers_url": null,
+    "industry": "Defense",
+    "active": true
+  },
+  {
+    "name": "HelloFresh",
+    "ats": "greenhouse",
+    "slug": "hellofresh",
+    "careers_url": null,
+    "industry": "E-commerce",
+    "active": true
+  },
+  {
+    "name": "Soho House",
+    "ats": "greenhouse",
+    "slug": "sohohouseco",
+    "careers_url": null,
+    "industry": "Consumer",
+    "active": true
+  },
+  {
+    "name": "AvePoint",
+    "ats": "greenhouse",
+    "slug": "avepoint",
+    "careers_url": null,
+    "industry": "Software",
+    "active": true
+  },
+  {
+    "name": "Rocket Lab",
+    "ats": "greenhouse",
+    "slug": "rocketlab",
+    "careers_url": null,
+    "industry": "Space",
+    "active": true
+  },
+  {
+    "name": "Crusoe",
+    "ats": "ashby",
+    "slug": "crusoe",
+    "careers_url": null,
+    "industry": "Infrastructure",
+    "active": true
+  },
+  {
+    "name": "NICE",
+    "ats": "greenhouse",
+    "slug": "nice",
+    "careers_url": null,
+    "industry": "Software",
+    "active": true
+  },
+  {
+    "name": "One Medical",
+    "ats": "greenhouse",
+    "slug": "onemedical",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Nebius",
+    "ats": "greenhouse",
+    "slug": "nebius",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "On",
+    "ats": "greenhouse",
+    "slug": "onrunning",
+    "careers_url": null,
+    "industry": "Retail",
+    "active": true
+  },
+  {
+    "name": "Sila",
+    "ats": "lever",
+    "slug": "sila",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "Charlie Health",
+    "ats": "greenhouse",
+    "slug": "charliehealth",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Canonical",
+    "ats": "greenhouse",
+    "slug": "canonical",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Wolt",
+    "ats": "greenhouse",
+    "slug": "wolt",
+    "careers_url": null,
+    "industry": "Delivery",
+    "active": true
+  },
+  {
+    "name": "Remote",
+    "ats": "greenhouse",
+    "slug": "remotecom",
+    "careers_url": null,
+    "industry": "HR Tech",
+    "active": true
+  },
+  {
+    "name": "OKX",
+    "ats": "greenhouse",
+    "slug": "okx",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Zipline",
+    "ats": "greenhouse",
+    "slug": "flyzipline",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Veeam",
+    "ats": "greenhouse",
+    "slug": "veeamsoftware",
+    "careers_url": null,
+    "industry": "Software",
+    "active": true
+  },
+  {
+    "name": "CoreWeave",
+    "ats": "greenhouse",
+    "slug": "coreweave",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Saronic",
+    "ats": "ashby",
+    "slug": "saronic",
+    "careers_url": null,
+    "industry": "Defense",
+    "active": true
+  },
+  {
+    "name": "Oscar Health",
+    "ats": "greenhouse",
+    "slug": "oscar",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Applied Intuition",
+    "ats": "ashby",
+    "slug": "applied",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Lucid Motors",
+    "ats": "greenhouse",
+    "slug": "lucidmotors",
+    "careers_url": null,
+    "industry": "Automotive",
+    "active": true
+  },
+  {
+    "name": "True Anomaly",
+    "ats": "greenhouse",
+    "slug": "trueanomalyinc",
+    "careers_url": null,
+    "industry": "Space",
+    "active": true
+  },
+  {
+    "name": "Mistral AI",
+    "ats": "lever",
+    "slug": "mistral",
+    "careers_url": null,
+    "industry": "AI",
+    "active": false
+  },
+  {
+    "name": "ClickHouse",
+    "ats": "ashby",
+    "slug": "clickhouse",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Via",
+    "ats": "greenhouse",
+    "slug": "via",
+    "careers_url": null,
+    "industry": "Mobility",
+    "active": true
+  },
+  {
+    "name": "Ripple",
+    "ats": "greenhouse",
+    "slug": "ripple",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Whoop",
+    "ats": "lever",
+    "slug": "whoop",
+    "careers_url": null,
+    "industry": "Wearables",
+    "active": true
+  },
+  {
+    "name": "Whoop",
+    "ats": "ashby",
+    "slug": "whoop",
+    "careers_url": null,
+    "industry": "Wearables",
+    "active": true
+  },
+  {
+    "name": "CHAOS Industries",
+    "ats": "greenhouse",
+    "slug": "chaosindustries",
+    "careers_url": null,
+    "industry": "Defense",
+    "active": true
+  },
+  {
+    "name": "Base Power",
+    "ats": "ashby",
+    "slug": "base-power",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "SonderMind",
+    "ats": "ashby",
+    "slug": "sondermind",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Addepar",
+    "ats": "greenhouse",
+    "slug": "addepar1",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Lila Sciences",
+    "ats": "greenhouse",
+    "slug": "lilasciences",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Zip",
+    "ats": "ashby",
+    "slug": "zip",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Handshake",
+    "ats": "ashby",
+    "slug": "handshake",
+    "careers_url": null,
+    "industry": "EdTech",
+    "active": true
+  },
+  {
+    "name": "Skydio",
+    "ats": "ashby",
+    "slug": "skydio",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Plata",
+    "ats": "greenhouse",
+    "slug": "platacard",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Cato Networks",
+    "ats": "greenhouse",
+    "slug": "catonetworks",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Kaseya",
+    "ats": "greenhouse",
+    "slug": "kaseya",
+    "careers_url": null,
+    "industry": "Software",
+    "active": true
+  },
+  {
+    "name": "Motional",
+    "ats": "greenhouse",
+    "slug": "motional",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Wayve",
+    "ats": "greenhouse",
+    "slug": "wayve",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Hermeus",
+    "ats": "lever",
+    "slug": "hermeus",
+    "careers_url": null,
+    "industry": "Aerospace",
+    "active": true
+  },
+  {
+    "name": "IonQ",
+    "ats": "greenhouse",
+    "slug": "ionq",
+    "careers_url": null,
+    "industry": "Quantum",
+    "active": true
+  },
+  {
+    "name": "Nubank",
+    "ats": "ashby",
+    "slug": "nubank",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Cresta",
+    "ats": "greenhouse",
+    "slug": "cresta",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Smartsheet",
+    "ats": "greenhouse",
+    "slug": "smartsheet",
+    "careers_url": null,
+    "industry": "Productivity",
+    "active": true
+  },
+  {
+    "name": "Sonar",
+    "ats": "lever",
+    "slug": "sonarsource",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Netskope",
+    "ats": "greenhouse",
+    "slug": "netskope",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "BillionToOne",
+    "ats": "greenhouse",
+    "slug": "billiontoone",
+    "careers_url": null,
+    "industry": "Biotech",
+    "active": true
+  },
+  {
+    "name": "Modern Animal",
+    "ats": "greenhouse",
+    "slug": "modernanimal",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "WorldQuant",
+    "ats": "greenhouse",
+    "slug": "worldquant",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "LG Electronics",
+    "ats": "greenhouse",
+    "slug": "lgelectronics",
+    "careers_url": null,
+    "industry": "Hardware",
+    "active": true
+  },
+  {
+    "name": "Etched",
+    "ats": "ashby",
+    "slug": "etched",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "EliseAI",
+    "ats": "ashby",
+    "slug": "eliseai",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Field AI",
+    "ats": "lever",
+    "slug": "field-ai",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Grafana Labs",
+    "ats": "greenhouse",
+    "slug": "grafanalabs",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Form Energy",
+    "ats": "ashby",
+    "slug": "formenergy",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "Apptronik",
+    "ats": "greenhouse",
+    "slug": "apptronik",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "PsiQuantum",
+    "ats": "greenhouse",
+    "slug": "psiquantum",
+    "careers_url": null,
+    "industry": "Quantum",
+    "active": true
+  },
+  {
+    "name": "Commvault",
+    "ats": "greenhouse",
+    "slug": "commvault",
+    "careers_url": null,
+    "industry": "Software",
+    "active": true
+  },
+  {
+    "name": "JetBrains",
+    "ats": "greenhouse",
+    "slug": "jetbrains",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "OneTrust",
+    "ats": "greenhouse",
+    "slug": "onetrust",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Redwood Materials",
+    "ats": "greenhouse",
+    "slug": "redwoodmaterials",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "Oura",
+    "ats": "greenhouse",
+    "slug": "oura",
+    "careers_url": null,
+    "industry": "Wearables",
+    "active": true
+  },
+  {
+    "name": "Varda Space",
+    "ats": "greenhouse",
+    "slug": "vardaspace",
+    "careers_url": null,
+    "industry": "Space",
+    "active": true
+  },
+  {
+    "name": "ZoomInfo",
+    "ats": "greenhouse",
+    "slug": "zoominfo",
+    "careers_url": null,
+    "industry": "Sales Tech",
+    "active": true
+  },
+  {
+    "name": "ISAR Aerospace",
+    "ats": "greenhouse",
+    "slug": "isaraerospace",
+    "careers_url": null,
+    "industry": "Space",
+    "active": true
+  },
+  {
+    "name": "Astranis",
+    "ats": "greenhouse",
+    "slug": "astranis",
+    "careers_url": null,
+    "industry": "Space",
+    "active": true
+  },
+  {
+    "name": "Sprinter Health",
+    "ats": "ashby",
+    "slug": "sprinter-health",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Real Chemistry",
+    "ats": "greenhouse",
+    "slug": "realchemistry",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Hinge Health",
+    "ats": "ashby",
+    "slug": "hinge-health",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Crunchyroll",
+    "ats": "greenhouse",
+    "slug": "crunchyroll",
+    "careers_url": null,
+    "industry": "Media",
+    "active": true
+  },
+  {
+    "name": "SecurityScorecard",
+    "ats": "greenhouse",
+    "slug": "securityscorecard",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Synthesia",
+    "ats": "ashby",
+    "slug": "synthesia",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Lovable",
+    "ats": "ashby",
+    "slug": "lovable",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "N26",
+    "ats": "greenhouse",
+    "slug": "n26",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Sigma Computing",
+    "ats": "greenhouse",
+    "slug": "sigmacomputing",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Orion Innovation",
+    "ats": "greenhouse",
+    "slug": "orioninnovation",
+    "careers_url": null,
+    "industry": "Software",
+    "active": true
+  },
+  {
+    "name": "Commure",
+    "ats": "ashby",
+    "slug": "commure",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Monzo",
+    "ats": "greenhouse",
+    "slug": "monzo",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Harbinger",
+    "ats": "greenhouse",
+    "slug": "harbingermotors",
+    "careers_url": null,
+    "industry": "Automotive",
+    "active": true
+  },
+  {
+    "name": "Motive",
+    "ats": "greenhouse",
+    "slug": "gomotive",
+    "careers_url": null,
+    "industry": "Logistics",
+    "active": true
+  },
+  {
+    "name": "Nourish",
+    "ats": "greenhouse",
+    "slug": "usenourish",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "PubMatic",
+    "ats": "greenhouse",
+    "slug": "pubmatic",
+    "careers_url": null,
+    "industry": "Marketing",
+    "active": true
+  },
+  {
+    "name": "Human Interest",
+    "ats": "greenhouse",
+    "slug": "humaninterest",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Aledade",
+    "ats": "lever",
+    "slug": "aledade",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Samba TV",
+    "ats": "lever",
+    "slug": "sambatv",
+    "careers_url": null,
+    "industry": "Media",
+    "active": true
+  },
+  {
+    "name": "Abnormal Security",
+    "ats": "greenhouse",
+    "slug": "abnormalsecurity",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "dunnhumby",
+    "ats": "greenhouse",
+    "slug": "dunnhumby",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Roofstock",
+    "ats": "greenhouse",
+    "slug": "roofstock",
+    "careers_url": null,
+    "industry": "PropTech",
+    "active": true
+  },
+  {
+    "name": "Sweetgreen",
+    "ats": "greenhouse",
+    "slug": "sweetgreen",
+    "careers_url": null,
+    "industry": "Consumer",
+    "active": true
+  },
+  {
+    "name": "JFrog",
+    "ats": "greenhouse",
+    "slug": "jfrog",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Trustpilot",
+    "ats": "greenhouse",
+    "slug": "trustpilot",
+    "careers_url": null,
+    "industry": "Software",
+    "active": true
+  },
+  {
+    "name": "Fireblocks",
+    "ats": "greenhouse",
+    "slug": "fireblocks",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Ashby",
+    "ats": "ashby",
+    "slug": "ashby",
+    "careers_url": null,
+    "industry": "HR Tech",
+    "active": true
+  },
+  {
+    "name": "Waabi",
+    "ats": "lever",
+    "slug": "waabi",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "1Password",
+    "ats": "ashby",
+    "slug": "1password",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Protolabs",
+    "ats": "lever",
+    "slug": "protolabs",
+    "careers_url": null,
+    "industry": "Manufacturing",
+    "active": true
+  },
+  {
+    "name": "Cribl",
+    "ats": "greenhouse",
+    "slug": "cribl",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Jump Trading",
+    "ats": "greenhouse",
+    "slug": "jumptrading",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Farfetch",
+    "ats": "lever",
+    "slug": "farfetch",
+    "careers_url": null,
+    "industry": "E-commerce",
+    "active": true
+  },
+  {
+    "name": "Orchard",
+    "ats": "greenhouse",
+    "slug": "orchard",
+    "careers_url": null,
+    "industry": "PropTech",
+    "active": true
+  },
+  {
+    "name": "Agility Robotics",
+    "ats": "greenhouse",
+    "slug": "agilityrobotics",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Ethos",
+    "ats": "greenhouse",
+    "slug": "ethoslife",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Together AI",
+    "ats": "greenhouse",
+    "slug": "togetherai",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Divergent",
+    "ats": "greenhouse",
+    "slug": "divergent",
+    "careers_url": null,
+    "industry": "Manufacturing",
+    "active": true
+  },
+  {
+    "name": "Temporal",
+    "ats": "greenhouse",
+    "slug": "temporaltechnologies",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Alpaca",
+    "ats": "greenhouse",
+    "slug": "alpaca",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Tanium",
+    "ats": "greenhouse",
+    "slug": "tanium",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Cabify",
+    "ats": "greenhouse",
+    "slug": "cabify",
+    "careers_url": null,
+    "industry": "Mobility",
+    "active": true
+  },
+  {
+    "name": "Mercury",
+    "ats": "greenhouse",
+    "slug": "mercury",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Bitpanda",
+    "ats": "greenhouse",
+    "slug": "bitpanda",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Xona Space",
+    "ats": "ashby",
+    "slug": "xona-space",
+    "careers_url": null,
+    "industry": "Space",
+    "active": true
+  },
+  {
+    "name": "Writer",
+    "ats": "ashby",
+    "slug": "writer",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Confluent",
+    "ats": "ashby",
+    "slug": "confluent",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Amplitude",
+    "ats": "ashby",
+    "slug": "amplitude",
+    "careers_url": null,
+    "industry": "Analytics",
+    "active": true
+  },
+  {
+    "name": "Life360",
+    "ats": "greenhouse",
+    "slug": "life360",
+    "careers_url": null,
+    "industry": "Consumer",
+    "active": true
+  },
+  {
+    "name": "SingleStore",
+    "ats": "greenhouse",
+    "slug": "singlestore",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Snorkel AI",
+    "ats": "greenhouse",
+    "slug": "snorkelai",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Muon Space",
+    "ats": "greenhouse",
+    "slug": "muonspace",
+    "careers_url": null,
+    "industry": "Space",
+    "active": true
+  },
+  {
+    "name": "Anchorage",
+    "ats": "lever",
+    "slug": "anchorage",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Disco",
+    "ats": "greenhouse",
+    "slug": "disco",
+    "careers_url": null,
+    "industry": "Legal Tech",
+    "active": true
+  },
+  {
+    "name": "Eight Sleep",
+    "ats": "ashby",
+    "slug": "eightsleep",
+    "careers_url": null,
+    "industry": "Consumer",
+    "active": true
+  },
+  {
+    "name": "Docker",
+    "ats": "ashby",
+    "slug": "docker",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Angi",
+    "ats": "ashby",
+    "slug": "angi",
+    "careers_url": null,
+    "industry": "Marketplace",
+    "active": true
+  },
+  {
+    "name": "d-Matrix",
+    "ats": "ashby",
+    "slug": "d-matrix",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Nium",
+    "ats": "lever",
+    "slug": "nium",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "6sense",
+    "ats": "greenhouse",
+    "slug": "6sense",
+    "careers_url": null,
+    "industry": "Sales Tech",
+    "active": true
+  },
+  {
+    "name": "Gamma",
+    "ats": "ashby",
+    "slug": "gamma",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Apollo",
+    "ats": "greenhouse",
+    "slug": "apolloio",
+    "careers_url": null,
+    "industry": "Sales Tech",
+    "active": true
+  },
+  {
+    "name": "Speak",
+    "ats": "ashby",
+    "slug": "speak",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Tailscale",
+    "ats": "greenhouse",
+    "slug": "tailscale",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Thumbtack",
+    "ats": "ashby",
+    "slug": "thumbtack",
+    "careers_url": null,
+    "industry": "Marketplace",
+    "active": true
+  },
+  {
+    "name": "Epirus",
+    "ats": "greenhouse",
+    "slug": "epirus",
+    "careers_url": null,
+    "industry": "Defense",
+    "active": true
+  },
+  {
+    "name": "Sword Health",
+    "ats": "lever",
+    "slug": "swordhealth",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Path Robotics",
+    "ats": "greenhouse",
+    "slug": "pathrobotics",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Everlaw",
+    "ats": "greenhouse",
+    "slug": "everlaw",
+    "careers_url": null,
+    "industry": "Legal Tech",
+    "active": true
+  },
+  {
+    "name": "Rain AI",
+    "ats": "ashby",
+    "slug": "rain",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "StockX",
+    "ats": "greenhouse",
+    "slug": "stockx",
+    "careers_url": null,
+    "industry": "E-commerce",
+    "active": true
+  },
+  {
+    "name": "Sardine",
+    "ats": "ashby",
+    "slug": "sardine",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Maven",
+    "ats": "greenhouse",
+    "slug": "mavenclinic",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Lambda",
+    "ats": "ashby",
+    "slug": "lambda",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "GoCardless",
+    "ats": "greenhouse",
+    "slug": "gocardless",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Tamara",
+    "ats": "greenhouse",
+    "slug": "tamara",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Fireworks AI",
+    "ats": "greenhouse",
+    "slug": "fireworksai",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "ChargePoint",
+    "ats": "greenhouse",
+    "slug": "chargepoint",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "EDB",
+    "ats": "greenhouse",
+    "slug": "edb",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Contentsquare",
+    "ats": "lever",
+    "slug": "contentsquare",
+    "careers_url": null,
+    "industry": "Analytics",
+    "active": true
+  },
+  {
+    "name": "Span",
+    "ats": "ashby",
+    "slug": "span",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "Rho",
+    "ats": "ashby",
+    "slug": "rho",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Multiverse",
+    "ats": "ashby",
+    "slug": "multiverse",
+    "careers_url": null,
+    "industry": "EdTech",
+    "active": true
+  },
+  {
+    "name": "Vannevar Labs",
+    "ats": "greenhouse",
+    "slug": "vannevarlabs",
+    "careers_url": null,
+    "industry": "Defense",
+    "active": true
+  },
+  {
+    "name": "KoBold Metals",
+    "ats": "greenhouse",
+    "slug": "koboldmetals",
+    "careers_url": null,
+    "industry": "Mining",
+    "active": true
+  },
+  {
+    "name": "project44",
+    "ats": "greenhouse",
+    "slug": "project44",
+    "careers_url": null,
+    "industry": "Logistics",
+    "active": true
+  },
+  {
+    "name": "Huntress",
+    "ats": "greenhouse",
+    "slug": "huntress",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Relay",
+    "ats": "ashby",
+    "slug": "relayfi",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Poshmark",
+    "ats": "ashby",
+    "slug": "poshmark",
+    "careers_url": null,
+    "industry": "E-commerce",
+    "active": true
+  },
+  {
+    "name": "Dragos",
+    "ats": "greenhouse",
+    "slug": "dragos",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Grow Therapy",
+    "ats": "ashby",
+    "slug": "grow-therapy",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Rula",
+    "ats": "ashby",
+    "slug": "rula",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "GoodLeap",
+    "ats": "lever",
+    "slug": "goodleap",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Bill.com",
+    "ats": "greenhouse",
+    "slug": "billcom",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Blockchain.com",
+    "ats": "greenhouse",
+    "slug": "blockchain",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Omada Health",
+    "ats": "greenhouse",
+    "slug": "omadahealth",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Strava",
+    "ats": "ashby",
+    "slug": "strava",
+    "careers_url": null,
+    "industry": "Fitness",
+    "active": true
+  },
+  {
+    "name": "Twelve Labs",
+    "ats": "ashby",
+    "slug": "twelve-labs",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "WorkOS",
+    "ats": "ashby",
+    "slug": "workos",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Semgrep",
+    "ats": "ashby",
+    "slug": "semgrep",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Torq",
+    "ats": "greenhouse",
+    "slug": "torq",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Corelight",
+    "ats": "greenhouse",
+    "slug": "corelight",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Sesame",
+    "ats": "ashby",
+    "slug": "sesame",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Cube",
+    "ats": "ashby",
+    "slug": "cube",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Physical Intelligence",
+    "ats": "ashby",
+    "slug": "physicalintelligence",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Omni",
+    "ats": "ashby",
+    "slug": "omni",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Dexterity",
+    "ats": "lever",
+    "slug": "dexterity",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Recursion",
+    "ats": "greenhouse",
+    "slug": "recursionpharmaceuticals",
+    "careers_url": null,
+    "industry": "Biotech",
+    "active": true
+  },
+  {
+    "name": "Formation Bio",
+    "ats": "greenhouse",
+    "slug": "formationbio",
+    "careers_url": null,
+    "industry": "Biotech",
+    "active": true
+  },
+  {
+    "name": "Rover",
+    "ats": "lever",
+    "slug": "rover",
+    "careers_url": null,
+    "industry": "Marketplace",
+    "active": true
+  },
+  {
+    "name": "Figure",
+    "ats": "greenhouse",
+    "slug": "figure",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Sanity",
+    "ats": "ashby",
+    "slug": "sanity",
+    "careers_url": null,
+    "industry": "Software",
+    "active": true
+  },
+  {
+    "name": "Distyl",
+    "ats": "ashby",
+    "slug": "distyl",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Yugabyte",
+    "ats": "greenhouse",
+    "slug": "yugabyte",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "SambaNova",
+    "ats": "greenhouse",
+    "slug": "sambanovasystems",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "HackerOne",
+    "ats": "ashby",
+    "slug": "hackerone",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Bright Machines",
+    "ats": "lever",
+    "slug": "brightmachines",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Secureframe",
+    "ats": "lever",
+    "slug": "secureframe",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Greenhouse",
+    "ats": "greenhouse",
+    "slug": "greenhouse",
+    "careers_url": null,
+    "industry": "HR Tech",
+    "active": true
+  },
+  {
+    "name": "Tebra",
+    "ats": "greenhouse",
+    "slug": "tebra",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Middesk",
+    "ats": "ashby",
+    "slug": "middesk",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Gecko Robotics",
+    "ats": "ashby",
+    "slug": "gecko-robotics",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Alloy",
+    "ats": "greenhouse",
+    "slug": "alloy",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "AngelList",
+    "ats": "lever",
+    "slug": "angellist",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Zeta",
+    "ats": "lever",
+    "slug": "zeta",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Solaris",
+    "ats": "greenhouse",
+    "slug": "solarisbank",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Xaira",
+    "ats": "greenhouse",
+    "slug": "xairatherapeutics",
+    "careers_url": null,
+    "industry": "Biotech",
+    "active": true
+  },
+  {
+    "name": "Glossier",
+    "ats": "greenhouse",
+    "slug": "glossier",
+    "careers_url": null,
+    "industry": "Retail",
+    "active": true
+  },
+  {
+    "name": "Away",
+    "ats": "ashby",
+    "slug": "away",
+    "careers_url": null,
+    "industry": "Retail",
+    "active": true
+  },
+  {
+    "name": "Radiant",
+    "ats": "ashby",
+    "slug": "radiant",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "Endor Labs",
+    "ats": "greenhouse",
+    "slug": "endorlabs",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Alchemy",
+    "ats": "ashby",
+    "slug": "alchemy",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Calendly",
+    "ats": "greenhouse",
+    "slug": "calendly",
+    "careers_url": null,
+    "industry": "Productivity",
+    "active": true
+  },
+  {
+    "name": "Dust",
+    "ats": "ashby",
+    "slug": "dust",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Granola",
+    "ats": "ashby",
+    "slug": "granola",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Phantom",
+    "ats": "ashby",
+    "slug": "phantom",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Aerospike",
+    "ats": "greenhouse",
+    "slug": "aerospike",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Freenome",
+    "ats": "greenhouse",
+    "slug": "freenome",
+    "careers_url": null,
+    "industry": "Biotech",
+    "active": true
+  },
+  {
+    "name": "Character AI",
+    "ats": "ashby",
+    "slug": "character",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Novo",
+    "ats": "ashby",
+    "slug": "novo",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Bugcrowd",
+    "ats": "greenhouse",
+    "slug": "bugcrowd",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Photoroom",
+    "ats": "ashby",
+    "slug": "photoroom",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Melio",
+    "ats": "greenhouse",
+    "slug": "melio",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Wealthfront",
+    "ats": "lever",
+    "slug": "wealthfront",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Column",
+    "ats": "ashby",
+    "slug": "column",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Ritual",
+    "ats": "greenhouse",
+    "slug": "ritual",
+    "careers_url": null,
+    "industry": "Consumer",
+    "active": true
+  },
+  {
+    "name": "Ginkgo Bioworks",
+    "ats": "greenhouse",
+    "slug": "ginkgobioworks",
+    "careers_url": null,
+    "industry": "Biotech",
+    "active": true
+  },
+  {
+    "name": "Oyster",
+    "ats": "ashby",
+    "slug": "oyster",
+    "careers_url": null,
+    "industry": "HR Tech",
+    "active": true
+  },
+  {
+    "name": "Poolside",
+    "ats": "ashby",
+    "slug": "poolside",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "CircleCI",
+    "ats": "greenhouse",
+    "slug": "circleci",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Notable",
+    "ats": "ashby",
+    "slug": "notable",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Legion",
+    "ats": "greenhouse",
+    "slug": "legion",
+    "careers_url": null,
+    "industry": "HR Tech",
+    "active": true
+  },
+  {
+    "name": "Arcadia",
+    "ats": "lever",
+    "slug": "arcadia",
+    "careers_url": null,
+    "industry": "Climate",
+    "active": true
+  },
+  {
+    "name": "Labelbox",
+    "ats": "greenhouse",
+    "slug": "labelbox",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Rondo Energy",
+    "ats": "greenhouse",
+    "slug": "rondoenergy",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "Observe.AI",
+    "ats": "greenhouse",
+    "slug": "observeai",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Read AI",
+    "ats": "ashby",
+    "slug": "read-ai",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "insitro",
+    "ats": "ashby",
+    "slug": "insitro",
+    "careers_url": null,
+    "industry": "Biotech",
+    "active": true
+  },
+  {
+    "name": "Lithic",
+    "ats": "greenhouse",
+    "slug": "lithic",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Coder",
+    "ats": "ashby",
+    "slug": "coder",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Guild",
+    "ats": "greenhouse",
+    "slug": "guild",
+    "careers_url": null,
+    "industry": "EdTech",
+    "active": true
+  },
+  {
+    "name": "Ledger",
+    "ats": "ashby",
+    "slug": "ledger",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Galileo",
+    "ats": "greenhouse",
+    "slug": "galileo",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Neon",
+    "ats": "lever",
+    "slug": "neon",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Vantage",
+    "ats": "ashby",
+    "slug": "vantage",
+    "careers_url": null,
+    "industry": "Infrastructure",
+    "active": true
+  },
+  {
+    "name": "Unit",
+    "ats": "ashby",
+    "slug": "unit",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Descope",
+    "ats": "greenhouse",
+    "slug": "descope",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Patch",
+    "ats": "greenhouse",
+    "slug": "patch",
+    "careers_url": null,
+    "industry": "Climate",
+    "active": true
+  },
+  {
+    "name": "Tavus",
+    "ats": "ashby",
+    "slug": "tavus",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Namespace",
+    "ats": "ashby",
+    "slug": "namespace",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Sonatype",
+    "ats": "lever",
+    "slug": "sonatype",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Imply",
+    "ats": "greenhouse",
+    "slug": "imply",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Latch Bio",
+    "ats": "ashby",
+    "slug": "latchbio",
+    "careers_url": null,
+    "industry": "Biotech",
+    "active": true
+  },
+  {
+    "name": "Monte Carlo",
+    "ats": "ashby",
+    "slug": "montecarlodata",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Modern Treasury",
+    "ats": "ashby",
+    "slug": "moderntreasury",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Highnote",
+    "ats": "greenhouse",
+    "slug": "highnote",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Watershed",
+    "ats": "greenhouse",
+    "slug": "watershed",
+    "careers_url": null,
+    "industry": "Climate",
+    "active": true
+  },
+  {
+    "name": "Unstructured",
+    "ats": "ashby",
+    "slug": "unstructured",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Aven",
+    "ats": "ashby",
+    "slug": "aven",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Bitso",
+    "ats": "greenhouse",
+    "slug": "bitso",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Consensys",
+    "ats": "greenhouse",
+    "slug": "consensys",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Cobot",
+    "ats": "ashby",
+    "slug": "cobot",
+    "careers_url": null,
+    "industry": "Robotics",
+    "active": true
+  },
+  {
+    "name": "Reka AI",
+    "ats": "ashby",
+    "slug": "reka",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Cybereason",
+    "ats": "greenhouse",
+    "slug": "cybereason",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Sprig",
+    "ats": "ashby",
+    "slug": "sprig",
+    "careers_url": null,
+    "industry": "Analytics",
+    "active": true
+  },
+  {
+    "name": "Aurora Solar",
+    "ats": "ashby",
+    "slug": "aurorasolar",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "Graphite",
+    "ats": "ashby",
+    "slug": "graphite",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Gauntlet",
+    "ats": "lever",
+    "slug": "gauntlet",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Expel",
+    "ats": "greenhouse",
+    "slug": "expel",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Fay",
+    "ats": "greenhouse",
+    "slug": "fay",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Sourcegraph",
+    "ats": "greenhouse",
+    "slug": "sourcegraph91",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Aptos Labs",
+    "ats": "greenhouse",
+    "slug": "aptoslabs",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Sysdig",
+    "ats": "lever",
+    "slug": "sysdig",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Material Security",
+    "ats": "ashby",
+    "slug": "materialsecurity",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "LanceDB",
+    "ats": "ashby",
+    "slug": "lancedb",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Motherduck",
+    "ats": "ashby",
+    "slug": "motherduck",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Orca Security",
+    "ats": "greenhouse",
+    "slug": "orcasecurity",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "Outschool",
+    "ats": "greenhouse",
+    "slug": "outschool",
+    "careers_url": null,
+    "industry": "EdTech",
+    "active": true
+  },
+  {
+    "name": "Ava Labs",
+    "ats": "ashby",
+    "slug": "ava-labs",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Twelve",
+    "ats": "ashby",
+    "slug": "twelve",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "Alloy",
+    "ats": "lever",
+    "slug": "alloy",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Doppler",
+    "ats": "ashby",
+    "slug": "doppler",
+    "careers_url": null,
+    "industry": "Security",
+    "active": true
+  },
+  {
+    "name": "MasterClass",
+    "ats": "greenhouse",
+    "slug": "masterclass",
+    "careers_url": null,
+    "industry": "EdTech",
+    "active": true
+  },
+  {
+    "name": "Hume AI",
+    "ats": "greenhouse",
+    "slug": "humeai",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Knock",
+    "ats": "ashby",
+    "slug": "knock",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Aviator",
+    "ats": "ashby",
+    "slug": "aviator",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Magic Eden",
+    "ats": "ashby",
+    "slug": "magiceden",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Atlan",
+    "ats": "ashby",
+    "slug": "atlan",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Sifflet",
+    "ats": "ashby",
+    "slug": "sifflet",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Alma",
+    "ats": "greenhouse",
+    "slug": "alma",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": false
+  },
+  {
+    "name": "Asimov",
+    "ats": "ashby",
+    "slug": "asimov",
+    "careers_url": null,
+    "industry": "Biotech",
+    "active": true
+  },
+  {
+    "name": "Imbue",
+    "ats": "greenhouse",
+    "slug": "imbue",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Warp",
+    "ats": "greenhouse",
+    "slug": "warp",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Cedar",
+    "ats": "ashby",
+    "slug": "cedar",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Cerebral",
+    "ats": "greenhouse",
+    "slug": "cerebral",
+    "careers_url": null,
+    "industry": "HealthTech",
+    "active": true
+  },
+  {
+    "name": "Mem0",
+    "ats": "ashby",
+    "slug": "mem0",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Trigger.dev",
+    "ats": "ashby",
+    "slug": "triggerdev",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Tinybird",
+    "ats": "lever",
+    "slug": "tinybird",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Griffin",
+    "ats": "ashby",
+    "slug": "griffin",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Materialize",
+    "ats": "ashby",
+    "slug": "materialize",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Public",
+    "ats": "greenhouse",
+    "slug": "public",
+    "careers_url": null,
+    "industry": "FinTech",
+    "active": true
+  },
+  {
+    "name": "Cameo",
+    "ats": "greenhouse",
+    "slug": "cameo",
+    "careers_url": null,
+    "industry": "Consumer",
+    "active": true
+  },
+  {
+    "name": "Rasa",
+    "ats": "ashby",
+    "slug": "rasa",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Matter Labs",
+    "ats": "ashby",
+    "slug": "matter-labs",
+    "careers_url": null,
+    "industry": "Crypto",
+    "active": true
+  },
+  {
+    "name": "Anyscale",
+    "ats": "lever",
+    "slug": "anyscale",
+    "careers_url": null,
+    "industry": "AI",
+    "active": true
+  },
+  {
+    "name": "Hightouch",
+    "ats": "ashby",
+    "slug": "hightouch",
+    "careers_url": null,
+    "industry": "Data",
+    "active": true
+  },
+  {
+    "name": "Medium",
+    "ats": "greenhouse",
+    "slug": "medium",
+    "careers_url": null,
+    "industry": "Media",
+    "active": true
+  },
+  {
+    "name": "Sylvera",
+    "ats": "ashby",
+    "slug": "sylvera",
+    "careers_url": null,
+    "industry": "Climate",
+    "active": true
+  },
+  {
+    "name": "Palmetto",
+    "ats": "greenhouse",
+    "slug": "palmetto",
+    "careers_url": null,
+    "industry": "Energy",
+    "active": true
+  },
+  {
+    "name": "Inngest",
+    "ats": "ashby",
+    "slug": "inngest",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Depot",
+    "ats": "ashby",
+    "slug": "depot",
+    "careers_url": null,
+    "industry": "DevTools",
+    "active": true
+  },
+  {
+    "name": "Zoox",
+    "ats": "lever",
+    "slug": "zoox",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Hopper",
+    "ats": "ashby",
+    "slug": "hopper",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Pigment",
+    "ats": "lever",
+    "slug": "pigment",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Aleph",
+    "ats": "lever",
+    "slug": "aleph",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Socure",
+    "ats": "ashby",
+    "slug": "socure",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Kodiak",
+    "ats": "greenhouse",
+    "slug": "kodiak",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Rogo",
+    "ats": "ashby",
+    "slug": "rogo",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Parloa",
+    "ats": "greenhouse",
+    "slug": "parloa",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Encord",
+    "ats": "ashby",
+    "slug": "encord",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Zocdoc",
+    "ats": "greenhouse",
+    "slug": "zocdoc",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Truveta",
+    "ats": "greenhouse",
+    "slug": "truveta",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Elliptic",
+    "ats": "ashby",
+    "slug": "elliptic",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Komodo Health",
+    "ats": "greenhouse",
+    "slug": "komodohealth",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "BitGo",
+    "ats": "greenhouse",
+    "slug": "bitgo",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Formic",
+    "ats": "greenhouse",
+    "slug": "formic",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Drivetrain",
+    "ats": "lever",
+    "slug": "drivetrain",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Roboflow",
+    "ats": "ashby",
+    "slug": "roboflow",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Flatiron Health",
+    "ats": "greenhouse",
+    "slug": "flatironhealth",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Wing",
+    "ats": "greenhouse",
+    "slug": "wing",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Level AI",
+    "ats": "lever",
+    "slug": "levelai",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Culture Amp",
+    "ats": "greenhouse",
+    "slug": "cultureamp",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "RunPod",
+    "ats": "ashby",
+    "slug": "runpod",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Abacum",
+    "ats": "ashby",
+    "slug": "abacum",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Leapsome",
+    "ats": "ashby",
+    "slug": "leapsome",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Isomorphic Labs",
+    "ats": "greenhouse",
+    "slug": "isomorphiclabs",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Porter",
+    "ats": "lever",
+    "slug": "porter",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Typeface",
+    "ats": "greenhouse",
+    "slug": "typeface",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Krea",
+    "ats": "ashby",
+    "slug": "krea",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Blacksmith",
+    "ats": "ashby",
+    "slug": "blacksmith",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Storyblok",
+    "ats": "greenhouse",
+    "slug": "storyblok",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Turnkey",
+    "ats": "ashby",
+    "slug": "turnkey",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Zilliz",
+    "ats": "lever",
+    "slug": "zilliz",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Nooks",
+    "ats": "greenhouse",
+    "slug": "nooks",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Prove",
+    "ats": "greenhouse",
+    "slug": "prove",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Safe",
+    "ats": "lever",
+    "slug": "safe",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "StackBlitz",
+    "ats": "greenhouse",
+    "slug": "stackblitz",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Sift",
+    "ats": "ashby",
+    "slug": "sift",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Buildkite",
+    "ats": "greenhouse",
+    "slug": "buildkite",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Thoropass",
+    "ats": "greenhouse",
+    "slug": "thoropass",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Hyperproof",
+    "ats": "greenhouse",
+    "slug": "hyperproof",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Infisical",
+    "ats": "ashby",
+    "slug": "infisical",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "PolyAI",
+    "ats": "greenhouse",
+    "slug": "polyai",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Beam",
+    "ats": "greenhouse",
+    "slug": "beam",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "SuperAnnotate",
+    "ats": "lever",
+    "slug": "superannotate",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Ideogram",
+    "ats": "ashby",
+    "slug": "ideogram",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Propel",
+    "ats": "ashby",
+    "slug": "propel",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Forward",
+    "ats": "greenhouse",
+    "slug": "forward",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Mosaic",
+    "ats": "ashby",
+    "slug": "mosaic",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Blockdaemon",
+    "ats": "ashby",
+    "slug": "blockdaemon",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Deepnote",
+    "ats": "ashby",
+    "slug": "deepnote",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Lightdash",
+    "ats": "ashby",
+    "slug": "lightdash",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "GoodData",
+    "ats": "ashby",
+    "slug": "gooddata",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Ghost",
+    "ats": "greenhouse",
+    "slug": "ghost",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Restate",
+    "ats": "ashby",
+    "slug": "restate",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Speakeasy",
+    "ats": "ashby",
+    "slug": "speakeasy",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Lorikeet",
+    "ats": "ashby",
+    "slug": "lorikeet",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Meow",
+    "ats": "ashby",
+    "slug": "meow",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "QuickNode",
+    "ats": "ashby",
+    "slug": "quicknode",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Ultimate",
+    "ats": "greenhouse",
+    "slug": "ultimate",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Twingate",
+    "ats": "lever",
+    "slug": "twingate",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Windmill",
+    "ats": "ashby",
+    "slug": "windmill",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Zed",
+    "ats": "ashby",
+    "slug": "zed",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "15Five",
+    "ats": "lever",
+    "slug": "15five",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Lottie",
+    "ats": "ashby",
+    "slug": "lottie",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Freshpaint",
+    "ats": "ashby",
+    "slug": "freshpaint",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Encore",
+    "ats": "greenhouse",
+    "slug": "encore",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Tenderly",
+    "ats": "ashby",
+    "slug": "tenderly",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Socket",
+    "ats": "greenhouse",
+    "slug": "socket",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Charthop",
+    "ats": "ashby",
+    "slug": "charthop",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Kapwing",
+    "ats": "lever",
+    "slug": "kapwing",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Regie",
+    "ats": "greenhouse",
+    "slug": "regie",
+    "careers_url": null,
+    "industry": null,
+    "active": true
+  },
+  {
+    "name": "Coactive",
+    "ats": "greenhouse",
+    "slug": "coactive",
+    "careers_url": null,
+    "industry": null,
+    "active": true
   }
 ]

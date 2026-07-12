@@ -42,8 +42,9 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 
 ## Features
 
-- **Live registry** of 220+ verified companies (~15k open roles), auto-refreshed every
-  24–48h with per-company fault isolation (one broken board never blocks the run). The
+- **Live registry** of 600+ verified company boards (470+ actively hiring, ~34k open
+  roles), auto-refreshed every 24–48h with per-company fault isolation (one broken board
+  never blocks the run). The
   refresh is incremental and idempotent: it upserts changed roles, soft-closes roles that
   vanished from a board (only for boards it actually reached that run), re-embeds only
   content-changed roles, and prunes long-closed roles to stay within Neon's free storage.
@@ -201,10 +202,12 @@ daily cron-job.org trigger to the same endpoint is a safe backup — the run-loc
 upsert make a double-fire harmless. A `budget_seconds` query param bounds wall-clock time so a
 large run fits a Render window and continues (stalest-first) on the next invocation.
 
-**Storage caveat.** Neon's free tier is ~0.5 GB. At 1000+ companies the full posting history
-would exceed it, so ingest **prunes** roles that have been closed and unseen for >30 days
-(hard-delete; embeddings drop with the row). Only active + recently-closed roles stay hot.
-Retaining longer history requires a paid Neon tier.
+**Storage caveat.** Neon's free tier has a hard 512 MB project-size limit. The live corpus
+(600+ boards, ~34k roles + 384-dim embeddings) sits around ~390 MB, so there's headroom but
+not unlimited: ingest **prunes** roles closed and unseen for >30 days (hard-delete;
+embeddings drop with the row), and full-text search uses a functional GIN index rather than a
+stored `tsvector` column (a stored column's table rewrite alone exceeds the limit). Scaling
+toward 1000+ companies-with-jobs, or retaining longer history, needs a paid Neon tier.
 
 **Migrations.** Schema changes are Alembic migrations; against prod Neon they are applied
 manually (`alembic upgrade head`) after a snapshot. The FTS `search_tsv` column, its GIN
