@@ -1,0 +1,434 @@
+[
+  {
+    "name": "Zoox",
+    "ats": "lever",
+    "slug": "zoox",
+    "industry": null
+  },
+  {
+    "name": "Hopper",
+    "ats": "ashby",
+    "slug": "hopper",
+    "industry": null
+  },
+  {
+    "name": "Pigment",
+    "ats": "lever",
+    "slug": "pigment",
+    "industry": null
+  },
+  {
+    "name": "Aleph",
+    "ats": "lever",
+    "slug": "aleph",
+    "industry": null
+  },
+  {
+    "name": "Socure",
+    "ats": "ashby",
+    "slug": "socure",
+    "industry": null
+  },
+  {
+    "name": "Kodiak",
+    "ats": "greenhouse",
+    "slug": "kodiak",
+    "industry": null
+  },
+  {
+    "name": "Rogo",
+    "ats": "ashby",
+    "slug": "rogo",
+    "industry": null
+  },
+  {
+    "name": "Parloa",
+    "ats": "greenhouse",
+    "slug": "parloa",
+    "industry": null
+  },
+  {
+    "name": "Encord",
+    "ats": "ashby",
+    "slug": "encord",
+    "industry": null
+  },
+  {
+    "name": "Zocdoc",
+    "ats": "greenhouse",
+    "slug": "zocdoc",
+    "industry": null
+  },
+  {
+    "name": "Truveta",
+    "ats": "greenhouse",
+    "slug": "truveta",
+    "industry": null
+  },
+  {
+    "name": "Elliptic",
+    "ats": "ashby",
+    "slug": "elliptic",
+    "industry": null
+  },
+  {
+    "name": "Komodo Health",
+    "ats": "greenhouse",
+    "slug": "komodohealth",
+    "industry": null
+  },
+  {
+    "name": "BitGo",
+    "ats": "greenhouse",
+    "slug": "bitgo",
+    "industry": null
+  },
+  {
+    "name": "Formic",
+    "ats": "greenhouse",
+    "slug": "formic",
+    "industry": null
+  },
+  {
+    "name": "Drivetrain",
+    "ats": "lever",
+    "slug": "drivetrain",
+    "industry": null
+  },
+  {
+    "name": "Roboflow",
+    "ats": "ashby",
+    "slug": "roboflow",
+    "industry": null
+  },
+  {
+    "name": "Flatiron Health",
+    "ats": "greenhouse",
+    "slug": "flatironhealth",
+    "industry": null
+  },
+  {
+    "name": "Wing",
+    "ats": "greenhouse",
+    "slug": "wing",
+    "industry": null
+  },
+  {
+    "name": "Level AI",
+    "ats": "lever",
+    "slug": "levelai",
+    "industry": null
+  },
+  {
+    "name": "Culture Amp",
+    "ats": "greenhouse",
+    "slug": "cultureamp",
+    "industry": null
+  },
+  {
+    "name": "RunPod",
+    "ats": "ashby",
+    "slug": "runpod",
+    "industry": null
+  },
+  {
+    "name": "Abacum",
+    "ats": "ashby",
+    "slug": "abacum",
+    "industry": null
+  },
+  {
+    "name": "Leapsome",
+    "ats": "ashby",
+    "slug": "leapsome",
+    "industry": null
+  },
+  {
+    "name": "Isomorphic Labs",
+    "ats": "greenhouse",
+    "slug": "isomorphiclabs",
+    "industry": null
+  },
+  {
+    "name": "Porter",
+    "ats": "lever",
+    "slug": "porter",
+    "industry": null
+  },
+  {
+    "name": "Typeface",
+    "ats": "greenhouse",
+    "slug": "typeface",
+    "industry": null
+  },
+  {
+    "name": "Krea",
+    "ats": "ashby",
+    "slug": "krea",
+    "industry": null
+  },
+  {
+    "name": "Blacksmith",
+    "ats": "ashby",
+    "slug": "blacksmith",
+    "industry": null
+  },
+  {
+    "name": "Storyblok",
+    "ats": "greenhouse",
+    "slug": "storyblok",
+    "industry": null
+  },
+  {
+    "name": "Turnkey",
+    "ats": "ashby",
+    "slug": "turnkey",
+    "industry": null
+  },
+  {
+    "name": "Zilliz",
+    "ats": "lever",
+    "slug": "zilliz",
+    "industry": null
+  },
+  {
+    "name": "Nooks",
+    "ats": "greenhouse",
+    "slug": "nooks",
+    "industry": null
+  },
+  {
+    "name": "Prove",
+    "ats": "greenhouse",
+    "slug": "prove",
+    "industry": null
+  },
+  {
+    "name": "Safe",
+    "ats": "lever",
+    "slug": "safe",
+    "industry": null
+  },
+  {
+    "name": "StackBlitz",
+    "ats": "greenhouse",
+    "slug": "stackblitz",
+    "industry": null
+  },
+  {
+    "name": "Sift",
+    "ats": "ashby",
+    "slug": "sift",
+    "industry": null
+  },
+  {
+    "name": "Buildkite",
+    "ats": "greenhouse",
+    "slug": "buildkite",
+    "industry": null
+  },
+  {
+    "name": "Thoropass",
+    "ats": "greenhouse",
+    "slug": "thoropass",
+    "industry": null
+  },
+  {
+    "name": "Hyperproof",
+    "ats": "greenhouse",
+    "slug": "hyperproof",
+    "industry": null
+  },
+  {
+    "name": "Infisical",
+    "ats": "ashby",
+    "slug": "infisical",
+    "industry": null
+  },
+  {
+    "name": "PolyAI",
+    "ats": "greenhouse",
+    "slug": "polyai",
+    "industry": null
+  },
+  {
+    "name": "Beam",
+    "ats": "greenhouse",
+    "slug": "beam",
+    "industry": null
+  },
+  {
+    "name": "SuperAnnotate",
+    "ats": "lever",
+    "slug": "superannotate",
+    "industry": null
+  },
+  {
+    "name": "Ideogram",
+    "ats": "ashby",
+    "slug": "ideogram",
+    "industry": null
+  },
+  {
+    "name": "Propel",
+    "ats": "ashby",
+    "slug": "propel",
+    "industry": null
+  },
+  {
+    "name": "Forward",
+    "ats": "greenhouse",
+    "slug": "forward",
+    "industry": null
+  },
+  {
+    "name": "Mosaic",
+    "ats": "ashby",
+    "slug": "mosaic",
+    "industry": null
+  },
+  {
+    "name": "Blockdaemon",
+    "ats": "ashby",
+    "slug": "blockdaemon",
+    "industry": null
+  },
+  {
+    "name": "Deepnote",
+    "ats": "ashby",
+    "slug": "deepnote",
+    "industry": null
+  },
+  {
+    "name": "Lightdash",
+    "ats": "ashby",
+    "slug": "lightdash",
+    "industry": null
+  },
+  {
+    "name": "GoodData",
+    "ats": "ashby",
+    "slug": "gooddata",
+    "industry": null
+  },
+  {
+    "name": "Ghost",
+    "ats": "greenhouse",
+    "slug": "ghost",
+    "industry": null
+  },
+  {
+    "name": "Restate",
+    "ats": "ashby",
+    "slug": "restate",
+    "industry": null
+  },
+  {
+    "name": "Speakeasy",
+    "ats": "ashby",
+    "slug": "speakeasy",
+    "industry": null
+  },
+  {
+    "name": "Lorikeet",
+    "ats": "ashby",
+    "slug": "lorikeet",
+    "industry": null
+  },
+  {
+    "name": "Meow",
+    "ats": "ashby",
+    "slug": "meow",
+    "industry": null
+  },
+  {
+    "name": "QuickNode",
+    "ats": "ashby",
+    "slug": "quicknode",
+    "industry": null
+  },
+  {
+    "name": "Ultimate",
+    "ats": "greenhouse",
+    "slug": "ultimate",
+    "industry": null
+  },
+  {
+    "name": "Twingate",
+    "ats": "lever",
+    "slug": "twingate",
+    "industry": null
+  },
+  {
+    "name": "Windmill",
+    "ats": "ashby",
+    "slug": "windmill",
+    "industry": null
+  },
+  {
+    "name": "Zed",
+    "ats": "ashby",
+    "slug": "zed",
+    "industry": null
+  },
+  {
+    "name": "15Five",
+    "ats": "lever",
+    "slug": "15five",
+    "industry": null
+  },
+  {
+    "name": "Lottie",
+    "ats": "ashby",
+    "slug": "lottie",
+    "industry": null
+  },
+  {
+    "name": "Freshpaint",
+    "ats": "ashby",
+    "slug": "freshpaint",
+    "industry": null
+  },
+  {
+    "name": "Encore",
+    "ats": "greenhouse",
+    "slug": "encore",
+    "industry": null
+  },
+  {
+    "name": "Tenderly",
+    "ats": "ashby",
+    "slug": "tenderly",
+    "industry": null
+  },
+  {
+    "name": "Socket",
+    "ats": "greenhouse",
+    "slug": "socket",
+    "industry": null
+  },
+  {
+    "name": "Charthop",
+    "ats": "ashby",
+    "slug": "charthop",
+    "industry": null
+  },
+  {
+    "name": "Kapwing",
+    "ats": "lever",
+    "slug": "kapwing",
+    "industry": null
+  },
+  {
+    "name": "Regie",
+    "ats": "greenhouse",
+    "slug": "regie",
+    "industry": null
+  },
+  {
+    "name": "Coactive",
+    "ats": "greenhouse",
+    "slug": "coactive",
+    "industry": null
+  }
+]
