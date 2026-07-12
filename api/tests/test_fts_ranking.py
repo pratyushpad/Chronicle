@@ -1,17 +1,16 @@
-"""Full-text ranking weight test.
+"""Full-text ranking test for the functional GIN index (JOB_SEARCH_FTS_EXPR).
 
-Proves the Job.search_tsv weighting makes a title match outrank a body-only match, so
-`_keyword_search` / the hybrid lexical arm return relevance, not substring hits. Postgres
-only (tsvector is Postgres-specific), so it skips cleanly where DATABASE_URL points at no
-reachable Postgres — the CI/local job with a real DB exercises it. Hermetic: a temp table
-using the exact app.models.JOB_SEARCH_TSV_SQL expression, rolled back automatically.
+Proves the weighting makes a title match outrank a skills(tech_tags) match, and that the
+description body is intentionally NOT indexed (so a body-only term doesn't match) — the
+storage tradeoff that keeps FTS within Neon's 512 MB free tier. Postgres only; skips where
+no reachable Postgres. Hermetic: a temp table + the same functional index, rolled back.
 """
 import os
 
 import pytest
 from sqlalchemy import create_engine, text
 
-from app.models import JOB_SEARCH_TSV_SQL
+from app.models import JOB_SEARCH_FTS_EXPR
 
 
 def _pg_engine():
@@ -28,34 +27,36 @@ def _pg_engine():
 
 
 @pytest.mark.skipif(_pg_engine() is None, reason="no reachable Postgres for FTS test")
-def test_title_match_outranks_description_match():
+def test_title_outranks_department_and_body_is_not_indexed():
     eng = _pg_engine()
     with eng.begin() as conn:
         conn.execute(
             text(
                 "CREATE TEMP TABLE _fts_probe ("
-                "  title text, department text, location_normalized text, description_text text,"
-                f"  search_tsv tsvector GENERATED ALWAYS AS ({JOB_SEARCH_TSV_SQL}) STORED"
+                "  title text, department text, location_normalized text, description_text text"
                 ") ON COMMIT DROP"
             )
         )
-        # A: "kubernetes" only in the title (weight A). B: only in the body (weight D).
+        # Same functional index the migration creates — proves the expression is IMMUTABLE.
+        conn.execute(text(f"CREATE INDEX ON _fts_probe USING GIN (({JOB_SEARCH_FTS_EXPR}))"))
         conn.execute(
             text(
-                "INSERT INTO _fts_probe (title, department, location_normalized, description_text)"
-                " VALUES"
-                " ('Kubernetes Platform Engineer', 'Engineering', 'Remote', 'Work on internal tooling.'),"
-                " ('Backend Engineer', 'Engineering', 'Remote', 'Operate services on kubernetes clusters daily.')"
+                "INSERT INTO _fts_probe (title, department, location_normalized, description_text) VALUES"
+                " ('Security Engineer', 'Engineering', 'Remote', 'general work'),"
+                " ('Backend Engineer', 'Security', 'Remote', 'general work'),"
+                " ('Data Analyst', 'Data', 'NYC', 'we care deeply about security')"
             )
         )
         rows = conn.execute(
             text(
-                "SELECT title, ts_rank_cd(search_tsv, websearch_to_tsquery('english', 'kubernetes')) AS r"
-                " FROM _fts_probe ORDER BY r DESC"
+                f"SELECT title, ts_rank_cd(({JOB_SEARCH_FTS_EXPR}),"
+                " websearch_to_tsquery('english', 'security')) AS r"
+                f" FROM _fts_probe WHERE ({JOB_SEARCH_FTS_EXPR})"
+                " @@ websearch_to_tsquery('english', 'security') ORDER BY r DESC"
             )
         ).all()
 
-    assert len(rows) == 2
-    # Title match ranks first; both match (proves it's ranking, not just filtering).
-    assert rows[0].title == "Kubernetes Platform Engineer"
+    titles = [r.title for r in rows]
+    # Title (weight A) and department (weight C) rows match; the body-only row does not.
+    assert titles == ["Security Engineer", "Backend Engineer"]
     assert rows[0].r > rows[1].r > 0

@@ -1,10 +1,10 @@
 import enum
 from datetime import date, datetime, timezone
 from sqlalchemy import (
-    Boolean, Column, Computed, Date, DateTime, Enum, ForeignKey,
+    Boolean, Column, Date, DateTime, Enum, ForeignKey,
     Index, Integer, String, Text, UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TSVECTOR
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import DeclarativeBase, relationship
 from pgvector.sqlalchemy import Vector
 
@@ -13,16 +13,20 @@ def _now():
     return datetime.now(timezone.utc)
 
 
-# Weighted full-text vector expression for Job. Weight A = title (most important),
-# C = department + normalized location, D = description body. company_name lives on the
-# Company table and a generated column cannot reference another table, so it is covered by
-# the separate `company` ILIKE filter instead. This exact SQL is mirrored in the Alembic
-# migration that creates the GENERATED column.
-JOB_SEARCH_TSV_SQL = (
+# Weighted full-text expression for Job keyword ranking. Weight A = title (dominant
+# relevance), C = department + normalized location. Materialized as a FUNCTIONAL GIN INDEX
+# (no column, no table rewrite) rather than a STORED tsvector: a stored column of the
+# description body bloats storage and its ADD rewrites the table past Neon's 512 MB free
+# tier. Every function here is IMMUTABLE (required for an index expression) — note tech_tags
+# is intentionally omitted because array_to_string is only STABLE; the description body is
+# omitted for size. Semantic search covers body/skill meaning; company_name lives on Company
+# (separate ILIKE filter). Column refs are unqualified so the identical expression works both
+# in the CREATE INDEX (mirrored in the Alembic migration) and in the jobs.py queries against
+# the jobs⋈companies join.
+JOB_SEARCH_FTS_EXPR = (
     "setweight(to_tsvector('english', coalesce(title,'')), 'A') || "
     "setweight(to_tsvector('english', "
-    "coalesce(department,'') || ' ' || coalesce(location_normalized,'')), 'C') || "
-    "setweight(to_tsvector('english', coalesce(description_text,'')), 'D')"
+    "coalesce(department,'') || ' ' || coalesce(location_normalized,'')), 'C')"
 )
 
 
@@ -129,9 +133,8 @@ class Job(Base):
     # sha256 of the embed text; lets incremental ingest re-embed only changed content
     # (not just rows where embedding IS NULL). NULL for legacy rows until first re-ingest.
     content_hash = Column(String(64), nullable=True)
-    # DB-generated weighted full-text vector for lexical (FTS) keyword ranking. Computed +
-    # persisted (STORED) so it is read-only to the ORM and never included in INSERT/UPDATE.
-    search_tsv = Column(TSVECTOR, Computed(JOB_SEARCH_TSV_SQL, persisted=True), nullable=True)
+    # Full-text keyword ranking is served by a functional GIN index on JOB_SEARCH_FTS_EXPR
+    # (created in the Alembic migration), not a stored column — see the constant's note.
 
     company = relationship("Company", back_populates="jobs")
 

@@ -1,17 +1,20 @@
-"""jobs.search_tsv weighted full-text vector + GIN index
+"""jobs full-text keyword ranking via a functional GIN index
 
 Revision ID: d2b3c4e5f6a7
 Revises: c1a2b3d4e5f6
-Create Date: 2026-07-11
+Create Date: 2026-07-12
 
-Replaces ILIKE substring keyword search with real Postgres full-text ranking. A GENERATED
-STORED tsvector (title=A, dept+location=C, description=D) with a GIN index lets
-`_keyword_search` rank by ts_rank_cd(websearch_to_tsquery(...)) and feeds honest lexical
-ranks into the hybrid RRF fusion. The exact SQL mirrors app.models.JOB_SEARCH_TSV_SQL.
+Replaces ILIKE substring keyword search with real Postgres full-text ranking. Materialized
+as a FUNCTIONAL GIN index on JOB_SEARCH_FTS_EXPR (title=A, tech_tags=B, dept+location=C) —
+NOT a STORED tsvector column: a stored column of full descriptions bloats storage and its
+ADD triggers a table rewrite that exceeds Neon's 512 MB free tier. A functional index adds
+no column and needs no rewrite. Queries (`_keyword_search`, hybrid arm) use the identical
+expression so the planner uses this index. Body text is intentionally not indexed (semantic
+search covers meaning; tech_tags covers skills).
 """
 from alembic import op
 
-from app.models import JOB_SEARCH_TSV_SQL
+from app.models import JOB_SEARCH_FTS_EXPR
 
 revision = "d2b3c4e5f6a7"
 down_revision = "c1a2b3d4e5f6"
@@ -21,14 +24,9 @@ depends_on = None
 
 def upgrade() -> None:
     op.execute(
-        f"ALTER TABLE jobs ADD COLUMN search_tsv tsvector "
-        f"GENERATED ALWAYS AS ({JOB_SEARCH_TSV_SQL}) STORED"
+        f"CREATE INDEX ix_jobs_search_fts ON jobs USING GIN (({JOB_SEARCH_FTS_EXPR}))"
     )
-    # GIN index for fast @@ matching; CONCURRENTLY would need autocommit — plain build is
-    # fine for the one-time manual run against Neon (table locked briefly).
-    op.execute("CREATE INDEX ix_jobs_search_tsv ON jobs USING GIN (search_tsv)")
 
 
 def downgrade() -> None:
-    op.execute("DROP INDEX IF EXISTS ix_jobs_search_tsv")
-    op.execute("ALTER TABLE jobs DROP COLUMN IF EXISTS search_tsv")
+    op.execute("DROP INDEX IF EXISTS ix_jobs_search_fts")

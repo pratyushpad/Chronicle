@@ -55,14 +55,17 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 - **Accounts & tracking** — Google OAuth, saved jobs, an application tracker (kanban-style
   statuses), saved searches, and email alerts for new matching roles.
 - **Full-text + semantic hybrid search** — keyword search is real Postgres full-text
-  ranking: a weighted, GENERATED `tsvector` (title > company/department > body) with a GIN
-  index, ranked by `ts_rank_cd(websearch_to_tsquery(...))` — lexical relevance, not substring
-  matching. Every job is also embedded (all-MiniLM-L6-v2, int8 ONNX — no torch, free-tier
-  friendly) into pgvector. Search offers keyword (FTS), pure semantic, and a hybrid mode that
-  fuses the **full-text** and vector rankings with Reciprocal Rank Fusion. An HNSW cosine index
-  keeps vector retrieval fast; FTS falls back to ILIKE and semantic/hybrid degrade to keyword if
-  the relevant index or embedding model is unavailable. (Lexical ranking is Postgres
-  `ts_rank_cd` — full-text, not literal BM25.)
+  ranking: a weighted expression (title = A, department + location = C) materialized as a
+  **functional GIN index**, ranked by `ts_rank_cd(websearch_to_tsquery(...))` — lexical
+  relevance, not substring matching. (A functional index rather than a stored `tsvector`
+  column: a stored column of the description body would bloat storage and its `ADD` rewrites
+  the table past Neon's 512 MB free tier. The body is left to semantic search instead.) Every
+  job is also embedded (all-MiniLM-L6-v2, int8 ONNX — no torch, free-tier friendly) into
+  pgvector. Search offers keyword (FTS), pure semantic, and a hybrid mode that fuses the
+  **full-text** and vector rankings with Reciprocal Rank Fusion. An HNSW cosine index keeps
+  vector retrieval fast; FTS falls back to ILIKE and semantic/hybrid degrade to keyword if the
+  relevant index or embedding model is unavailable. (Lexical ranking is Postgres `ts_rank_cd`
+  — full-text, not literal BM25.)
 - **Recommendations ("For You" v2)** — two-stage matching: pgvector retrieves candidates
   by cosine against a profile vector (profile text + a weighted centroid of saved/applied
   jobs), then a blend of semantic similarity and the explainable rule score reranks them.

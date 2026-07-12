@@ -4,11 +4,11 @@ from math import ceil
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.orm import Session
 
 from app.db import get_session
-from app.models import Company, IngestRun, Job
+from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
 from app.util import root_domain
 from app.schemas import (
     CompanyDetail,
@@ -29,6 +29,22 @@ _SENIOR_REGEX = r"\m(senior|sr|staff|principal|lead|distinguished|architect)\M"
 router = APIRouter()
 
 logger = logging.getLogger(__name__)
+
+
+# Full-text match/rank built from the SAME expression as the functional GIN index
+# (JOB_SEARCH_FTS_EXPR), so the planner uses ix_jobs_search_fts. Column refs are
+# unqualified — unambiguous against the jobs⋈companies join (these columns are jobs-only).
+# Distinct bindparam names let match (WHERE) and rank (ORDER BY) coexist in one statement.
+def _fts_match(q: str):
+    return text(
+        f"({JOB_SEARCH_FTS_EXPR}) @@ websearch_to_tsquery('english', :fts_match_q)"
+    ).bindparams(fts_match_q=q)
+
+
+def _fts_rank_desc(q: str):
+    return text(
+        f"ts_rank_cd(({JOB_SEARCH_FTS_EXPR}), websearch_to_tsquery('english', :fts_rank_q)) DESC"
+    ).bindparams(fts_rank_q=q)
 
 
 def _db():
@@ -92,7 +108,7 @@ def list_jobs(
     def _apply_filters(s, include_q: bool = True, use_fts: bool = True):
         if q and include_q:
             if use_fts:
-                s = s.where(Job.search_tsv.op("@@")(func.websearch_to_tsquery("english", q)))
+                s = s.where(_fts_match(q))
             else:
                 s = s.where(Job.title.ilike(f"%{q}%"))
         if company:
@@ -215,8 +231,7 @@ def _fts_keyword_search(
     posting (not the most recent). Any execution error (e.g. the migration not yet
     applied) propagates to the caller, which falls back to the ILIKE recency path.
     """
-    tsq = func.websearch_to_tsquery("english", q)
-    rank = func.ts_rank_cd(Job.search_tsv, tsq)
+    rank_desc = _fts_rank_desc(q)
 
     keys_sub = base(Job.dedup_key).subquery()
     total = session.execute(
@@ -227,13 +242,13 @@ def _fts_keyword_search(
     rep_ids = (
         base(Job.id, Job.dedup_key)
         .distinct(Job.dedup_key)
-        .order_by(Job.dedup_key, rank.desc())
+        .order_by(Job.dedup_key, rank_desc)
     ).subquery()
     page_stmt = (
         select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
         .join(Company)
         .where(Job.id.in_(select(rep_ids.c.id)))
-        .order_by(rank.desc(), Job.id.desc())
+        .order_by(_fts_rank_desc(q), Job.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -339,11 +354,9 @@ def _fused_search(
     if mode == "hybrid":
         # Lexical arm: real full-text relevance (ts_rank_cd), so RRF fuses genuine
         # keyword ranks with the vector ranks — not substring-then-recency.
-        tsq = func.websearch_to_tsquery("english", q)
-        keyword_rank = func.ts_rank_cd(Job.search_tsv, tsq)
         keyword_rows = session.execute(
             base(Job.id, Job.dedup_key)
-            .order_by(keyword_rank.desc(), Job.id.desc())
+            .order_by(_fts_rank_desc(q), Job.id.desc())
             .limit(_FUSION_ARM_LIMIT)
         ).all()
         rankings.append([row.id for row in keyword_rows])
