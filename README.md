@@ -42,9 +42,9 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 
 ## Features
 
-- **Live registry** of 600+ verified company boards (470+ actively hiring, ~34k open
-  roles), auto-refreshed every 24–48h with per-company fault isolation (one broken board
-  never blocks the run). The
+- **Live registry** of 600+ verified company boards (470+ actively hiring, ~26k distinct
+  open roles), auto-refreshed every 24–48h with per-company fault isolation (one broken
+  board never blocks the run). The
   refresh is incremental and idempotent: it upserts changed roles, soft-closes roles that
   vanished from a board (only for boards it actually reached that run), re-embeds only
   content-changed roles, and prunes long-closed roles to stay within Neon's free storage.
