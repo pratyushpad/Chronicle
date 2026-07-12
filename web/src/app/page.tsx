@@ -115,11 +115,16 @@ export default async function Home() {
                 { value: formatNumber(meta.fresh_since_last_run), label: "Fresh this sync" },
                 { value: `${remotePct}%`, label: "Remote roles" },
                 {
-                  value: meta.last_run
-                    ? `${meta.last_run.companies_ok}/${
-                        meta.last_run.companies_ok + meta.last_run.companies_failed
-                      }`
-                    : "—",
+                  // Per-sync health ("598/603") when the last run recorded a real tally;
+                  // otherwise fall back to the total verified-company count so this never
+                  // renders a confusing "0/0" (e.g. right after an interrupted run).
+                  value:
+                    meta.last_run &&
+                    meta.last_run.companies_ok + meta.last_run.companies_failed > 0
+                      ? `${meta.last_run.companies_ok}/${
+                          meta.last_run.companies_ok + meta.last_run.companies_failed
+                        }`
+                      : formatNumber(meta.total_companies),
                   label: "Sources verified",
                 },
               ].map(({ value, label }) => (
