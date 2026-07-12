@@ -118,7 +118,15 @@ def list_jobs(
         if department:
             s = s.where(Job.department.ilike(f"%{department}%"))
         if location:
-            s = s.where(Job.location_normalized.ilike(f"%{location}%"))
+            # The filter sends a canonical value ("chicago, il" / "remote"). Match on the
+            # city token so every raw variant of that place is caught ("chicago",
+            # "chicago, il, usa", "chicago; nyc; sf"); "remote" matches the remote flag/word.
+            loc = location.strip().lower()
+            if loc == "remote":
+                s = s.where(or_(Job.remote == True, Job.location_normalized.ilike("%remote%")))  # noqa: E712
+            else:
+                city = loc.split(",")[0].strip()
+                s = s.where(Job.location_normalized.ilike(f"%{city}%"))
         if remote is not None:
             s = s.where(Job.remote == remote)
         if employment_type:
@@ -548,6 +556,50 @@ def get_meta(session: Session = Depends(_db)):
     return result
 
 
+# A metro must have at least this many active roles to appear in the filter.
+_LOCATION_MIN_COUNT = 5
+
+# Curated major job metros: (canonical display, city match-token). The location filter
+# shows only these + Remote — a clean, scannable list of the main places instead of the
+# thousands of raw ATS location variants ("Chicago", "Chicago, IL", "Chicago, IL, USA",
+# "Chicago; NYC; SF", …). Matching is on the city token, so one option catches every variant.
+_MAJOR_METROS: list[tuple[str, str]] = [
+    ("san francisco, ca", "san francisco"), ("new york, ny", "new york"),
+    ("seattle, wa", "seattle"), ("austin, tx", "austin"), ("los angeles, ca", "los angeles"),
+    ("chicago, il", "chicago"), ("boston, ma", "boston"), ("denver, co", "denver"),
+    ("atlanta, ga", "atlanta"), ("washington, dc", "washington"), ("san jose, ca", "san jose"),
+    ("palo alto, ca", "palo alto"), ("mountain view, ca", "mountain view"),
+    ("san diego, ca", "san diego"), ("dallas, tx", "dallas"), ("houston, tx", "houston"),
+    ("portland, or", "portland"), ("philadelphia, pa", "philadelphia"), ("miami, fl", "miami"),
+    ("phoenix, az", "phoenix"), ("minneapolis, mn", "minneapolis"), ("detroit, mi", "detroit"),
+    ("salt lake city, ut", "salt lake city"), ("nashville, tn", "nashville"),
+    ("raleigh, nc", "raleigh"), ("pittsburgh, pa", "pittsburgh"), ("boulder, co", "boulder"),
+    ("toronto", "toronto"), ("vancouver", "vancouver"), ("london", "london"),
+    ("dublin", "dublin"), ("berlin", "berlin"), ("amsterdam", "amsterdam"), ("paris", "paris"),
+    ("munich", "munich"), ("bangalore", "bangalore"), ("hyderabad", "hyderabad"),
+    ("singapore", "singapore"), ("sydney", "sydney"), ("tel aviv", "tel aviv"), ("tokyo", "tokyo"),
+]
+
+
+def _canonical_locations(session: Session) -> list[str]:
+    """Location filter list: Remote + the curated major metros that actually have roles in
+    the corpus, most-jobs-first. Keeps the dropdown to the main places users search for."""
+    rows = session.execute(
+        select(Job.location_normalized, func.count())
+        .where(Job.is_active == True, Job.location_normalized != None)  # noqa: E712
+        .group_by(Job.location_normalized)
+    ).all()
+    remote = sum(cnt for loc, cnt in rows if "remote" in loc)
+    scored: list[tuple[int, str]] = []
+    for display, token in _MAJOR_METROS:
+        ct = sum(cnt for loc, cnt in rows if token in loc)
+        if ct >= _LOCATION_MIN_COUNT:
+            scored.append((ct, display))
+    scored.sort(reverse=True)  # most roles first
+    opts = [display for _, display in scored]
+    return (["remote"] + opts) if remote else opts
+
+
 def _compute_meta(session: Session) -> MetaResponse:
     def distinct_col(col):
         return [
@@ -623,7 +675,7 @@ def _compute_meta(session: Session) -> MetaResponse:
 
     return MetaResponse(
         departments=distinct_col(Job.department),
-        locations=distinct_col(Job.location_normalized),
+        locations=_canonical_locations(session),
         employment_types=distinct_col(Job.employment_type),
         experience_levels=distinct_col(Job.experience_level),
         industries=industries,
