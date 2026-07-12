@@ -50,7 +50,10 @@ export function HeroHeadline() {
   const lineStyle = { overflow: "hidden", paddingBottom: "0.14em", marginBottom: "-0.14em" };
 
   return (
-    <h1 className="mt-12 font-display text-6xl font-medium leading-[0.95] tracking-tight text-foreground sm:text-7xl md:mt-16 md:text-8xl lg:text-9xl">
+    <h1
+      ref={ref}
+      className="mt-12 font-display text-6xl font-medium leading-[0.95] tracking-tight text-foreground sm:text-7xl md:mt-16 md:text-8xl lg:text-9xl"
+    >
       <span data-line className="block" style={lineStyle}>
         Every open
       </span>
