@@ -582,22 +582,22 @@ _MAJOR_METROS: list[tuple[str, str]] = [
 
 
 def _canonical_locations(session: Session) -> list[str]:
-    """Location filter list: Remote + the curated major metros that actually have roles in
-    the corpus, most-jobs-first. Keeps the dropdown to the main places users search for."""
+    """Location filter list: Remote (pinned first) + the curated major metros that actually
+    have roles in the corpus, sorted alphabetically. The main places users search for,
+    without the thousands of raw ATS variants."""
     rows = session.execute(
         select(Job.location_normalized, func.count())
         .where(Job.is_active == True, Job.location_normalized != None)  # noqa: E712
         .group_by(Job.location_normalized)
     ).all()
     remote = sum(cnt for loc, cnt in rows if "remote" in loc)
-    scored: list[tuple[int, str]] = []
-    for display, token in _MAJOR_METROS:
-        ct = sum(cnt for loc, cnt in rows if token in loc)
-        if ct >= _LOCATION_MIN_COUNT:
-            scored.append((ct, display))
-    scored.sort(reverse=True)  # most roles first
-    opts = [display for _, display in scored]
-    return (["remote"] + opts) if remote else opts
+    present = [
+        display
+        for display, token in _MAJOR_METROS
+        if sum(cnt for loc, cnt in rows if token in loc) >= _LOCATION_MIN_COUNT
+    ]
+    present.sort()  # alphabetical
+    return (["remote"] + present) if remote else present
 
 
 def _compute_meta(session: Session) -> MetaResponse:
