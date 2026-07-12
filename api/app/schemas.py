@@ -170,40 +170,6 @@ class ProfileOut(ProfileIn):
     model_config = {"from_attributes": True}
 
 
-# ── Browser extension ─────────────────────────────────────────────────────────
-
-class ExtensionTokenStatusOut(BaseModel):
-    connected: bool
-
-
-class ExtensionTokenOut(BaseModel):
-    token: str  # plaintext — returned ONCE at issue time, never again
-
-
-class ExtensionMeOut(BaseModel):
-    email: str
-    name: str | None
-
-
-class ExtensionProfileOut(BaseModel):
-    full_name: str | None = None
-    email: str
-    phone: str | None = None
-    location: str | None = None
-    work_authorization: str | None = None
-    links: dict[str, str] | None = None
-
-
-class ExtensionSaveIn(BaseModel):
-    ats: str
-    company_slug: str
-    company_name: str
-    source_job_id: str
-    title: str
-    apply_url: str
-    location: str | None = None
-
-
 # ── Saved jobs ────────────────────────────────────────────────────────────────
 
 class SavedJobOut(BaseModel):

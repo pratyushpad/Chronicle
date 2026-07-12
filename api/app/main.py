@@ -15,7 +15,6 @@ from app.routers.saved import router as saved_router  # noqa: E402
 from app.routers.applications import router as apps_router  # noqa: E402
 from app.routers.recommendations import router as recs_router  # noqa: E402
 from app.routers.notifications import router as notif_router  # noqa: E402
-from app.routers.extension import router as extension_router  # noqa: E402
 from app.routers.interactions import router as interactions_router  # noqa: E402
 from app.routers.admin import router as admin_router  # noqa: E402
 
@@ -33,9 +32,6 @@ _cors_origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    # The extension's origin (chrome-extension://<id>) isn't known until it's loaded.
-    # Real auth is per-request (bearer token), so origin isn't the security boundary here.
-    allow_origin_regex=r"chrome-extension://.*",
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
 )
@@ -67,7 +63,6 @@ app.include_router(saved_router)
 app.include_router(apps_router)
 app.include_router(recs_router)
 app.include_router(notif_router)
-app.include_router(extension_router)
 app.include_router(interactions_router)
 app.include_router(admin_router)
 

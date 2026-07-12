@@ -1,13 +1,39 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { SectionLabel } from "@/components/SectionLabel";
 import { ResumeDropzone } from "@/components/ResumeDropzone";
+import { cn } from "@/lib/utils";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_EXTENSION_API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:8000";
+const TRACKS = [
+  { key: "swe", label: "Software Engineering" },
+  { key: "ml", label: "ML / AI" },
+  { key: "data", label: "Data" },
+  { key: "devops", label: "DevOps / Platform" },
+  { key: "security", label: "Security" },
+  { key: "design", label: "Design" },
+  { key: "product", label: "Product" },
+  { key: "research", label: "Research" },
+  { key: "robotics", label: "Robotics / Embedded" },
+];
+const SENIORITY = [
+  { key: "intern", label: "Intern" },
+  { key: "new_grad", label: "New Grad" },
+  { key: "mid", label: "Mid-Level" },
+  { key: "senior", label: "Senior" },
+  { key: "management", label: "Management" },
+];
+const REMOTE_PREFS = [
+  { key: "any", label: "Anywhere" },
+  { key: "remote", label: "Remote only" },
+  { key: "hybrid", label: "Hybrid" },
+  { key: "onsite", label: "On-site" },
+];
+const COMMON_SKILLS = [
+  "Python", "TypeScript", "Java", "Go", "Rust", "React", "Next.js",
+  "PyTorch", "TensorFlow", "AWS", "GCP", "Kubernetes", "PostgreSQL",
+  "Spark", "Kafka", "dbt", "ROS2", "CUDA",
+];
 
 const labelCls = "font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground";
 const inputCls =
@@ -18,95 +44,87 @@ const btnOutline =
   "inline-flex min-h-[36px] items-center justify-center border border-foreground px-5 font-mono text-xs uppercase tracking-[0.12em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background disabled:opacity-50";
 
 interface Profile {
-  full_name?: string | null;
   location?: string | null;
-  phone?: string | null;
-  work_authorization?: string | null;
-  links?: Record<string, string> | null;
+  remote_pref?: string | null;
+  seniority_pref?: string[] | null;
+  tracks?: string[] | null;
+  tech_tags?: string[] | null;
+  salary_floor?: number | null;
+  needs_sponsorship?: boolean | null;
   about?: string | null;
   resume_chars?: number | null;
   resume_updated_at?: string | null;
 }
 
+function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "min-h-[40px] border px-4 py-1.5 font-body text-sm transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
+        active
+          ? "border-foreground bg-foreground text-background"
+          : "border-border-light text-foreground hover:border-foreground",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function SettingsPage() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
 
-  // ── Extension token state ──
-  const [connected, setConnected] = useState<boolean | null>(null);
-  const [token, setToken] = useState<string | null>(null); // shown once after generate
-  const [copied, setCopied] = useState(false);
-  const [tokenBusy, setTokenBusy] = useState(false);
-
-  // ── Autofill profile state ──
   const [profile, setProfile] = useState<Profile>({});
+  const [customSkill, setCustomSkill] = useState("");
   const [savedMsg, setSavedMsg] = useState("");
-  const [profileBusy, setProfileBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetch("/api/user/extension-token")
-      .then((r) => r.json())
-      .then((d) => setConnected(!!d?.connected))
-      .catch(() => setConnected(false));
     fetch("/api/user/profile")
       .then((r) => r.json())
       .then((d) => { if (d) setProfile(d); })
       .catch(() => {});
   }, [status]);
 
-  const generate = async () => {
-    setTokenBusy(true);
-    setCopied(false);
-    const res = await fetch("/api/user/extension-token", { method: "POST" });
-    if (res.ok) {
-      const d = await res.json();
-      setToken(d.token);
-      setConnected(true);
-    }
-    setTokenBusy(false);
+  const set = <K extends keyof Profile>(k: K, v: Profile[K]) => setProfile((p) => ({ ...p, [k]: v }));
+  const toggleIn = (key: "tracks" | "seniority_pref" | "tech_tags", val: string) =>
+    setProfile((p) => {
+      const cur = p[key] ?? [];
+      return { ...p, [key]: cur.includes(val) ? cur.filter((x) => x !== val) : [...cur, val] };
+    });
+  const addSkill = () => {
+    const s = customSkill.trim();
+    if (!s) return;
+    setProfile((p) => ({ ...p, tech_tags: [...(p.tech_tags ?? []), s].filter((v, i, a) => a.indexOf(v) === i) }));
+    setCustomSkill("");
   };
 
-  const revoke = async () => {
-    setTokenBusy(true);
-    const res = await fetch("/api/user/extension-token", { method: "DELETE" });
-    if (res.ok) {
-      setToken(null);
-      setConnected(false);
-    }
-    setTokenBusy(false);
-  };
-
-  const copyToken = async () => {
-    if (!token) return;
-    await navigator.clipboard.writeText(token);
-    setCopied(true);
-  };
-
-  const setLink = (key: string, value: string) =>
-    setProfile((p) => ({ ...p, links: { ...(p.links ?? {}), [key]: value } }));
-
-  const saveProfile = async () => {
-    setProfileBusy(true);
+  const save = async () => {
+    setBusy(true);
     setSavedMsg("");
     const res = await fetch("/api/user/profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        full_name: profile.full_name ?? null,
         location: profile.location ?? null,
-        phone: profile.phone ?? null,
-        work_authorization: profile.work_authorization ?? null,
-        links: profile.links ?? null,
+        remote_pref: profile.remote_pref ?? null,
+        seniority_pref: profile.seniority_pref ?? [],
+        tracks: profile.tracks ?? [],
+        tech_tags: profile.tech_tags ?? [],
+        salary_floor: profile.salary_floor ?? null,
+        needs_sponsorship: profile.needs_sponsorship ?? null,
         about: profile.about ?? null,
       }),
     });
     setSavedMsg(res.ok ? "Saved." : "Save failed.");
-    setProfileBusy(false);
+    setBusy(false);
   };
 
-  if (status === "loading") {
-    return <main className="mx-auto max-w-2xl px-6 py-20" />;
-  }
+  if (status === "loading") return <main className="mx-auto max-w-2xl px-6 py-20" />;
   if (status !== "authenticated") {
     return (
       <main className="mx-auto max-w-2xl px-6 py-20">
@@ -115,65 +133,20 @@ export default function SettingsPage() {
     );
   }
 
+  const skillSet = new Set(profile.tech_tags ?? []);
+  const customSkills = (profile.tech_tags ?? []).filter((s) => !COMMON_SKILLS.includes(s));
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
       <h1 className="mb-2 font-display text-4xl text-foreground">Settings</h1>
       <p className="mb-12 font-body text-muted-foreground">
-        Connect the Chronicle browser extension and manage the profile it uses to autofill applications.
+        Tune what powers your <strong className="text-foreground">For You</strong> feed and matches.
       </p>
-
-      {/* ── Extension token ── */}
-      <section className="mb-16">
-        <SectionLabel className="mb-6">Browser Extension</SectionLabel>
-
-        <div className="mb-4 flex items-center gap-2">
-          <span
-            className={`h-2 w-2 ${connected ? "bg-foreground" : "border border-foreground"}`}
-            aria-hidden
-          />
-          <span className={labelCls}>
-            {connected === null ? "Checking…" : connected ? "Token active" : "Not connected"}
-          </span>
-        </div>
-
-        <p className="mb-4 font-body text-sm text-muted-foreground">
-          Generate a token, then paste it into the extension popup to connect. The token is shown{" "}
-          <strong className="text-foreground">once</strong> — copy it now. Generating a new token
-          revokes the old one. The extension fills forms only and never submits on your behalf.
-        </p>
-
-        {token && (
-          <div className="mb-4 border border-foreground p-4">
-            <p className={`${labelCls} mb-2`}>Your new token — copy it now</p>
-            <code className="block break-all font-mono text-xs text-foreground">{token}</code>
-            <div className="mt-3 flex items-center gap-3">
-              <button onClick={copyToken} className={btnOutline}>
-                {copied ? "Copied ✓" : "Copy"}
-              </button>
-              <span className={`${labelCls} font-body normal-case`}>
-                API endpoint: <code className="font-mono">{API_BASE}</code>
-              </span>
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-3">
-          <button onClick={generate} disabled={tokenBusy} className={btnSolid}>
-            {connected ? "Regenerate token" : "Generate token"}
-          </button>
-          {connected && (
-            <button onClick={revoke} disabled={tokenBusy} className={btnOutline}>
-              Revoke
-            </button>
-          )}
-        </div>
-      </section>
 
       {/* ── Matching profile ── */}
       <section className="mb-16">
         <SectionLabel className="mb-6">Matching Profile</SectionLabel>
         <p className="mb-6 font-body text-sm text-muted-foreground">
-          This is what powers your <strong className="text-foreground">For You</strong> feed.
           The more it knows, the better the matches.
         </p>
 
@@ -182,10 +155,10 @@ export default function SettingsPage() {
           className={`${inputCls} h-28 resize-y py-2`}
           placeholder="e.g. Early-stage startups doing systems or ML infra work. Small teams, high ownership. Not interested in crypto or adtech."
           value={profile.about ?? ""}
-          onChange={(e) => setProfile((p) => ({ ...p, about: e.target.value }))}
+          onChange={(e) => set("about", e.target.value)}
         />
         <p className="mt-1 mb-6 font-body text-xs text-muted-foreground">
-          Free text — it's embedded directly into your matching vector, so write it like you'd tell a friend.
+          Free text — it&rsquo;s embedded directly into your matching vector, so write it like you&rsquo;d tell a friend.
         </p>
 
         <label className={`${labelCls} mb-1 block`}>Resume</label>
@@ -194,88 +167,98 @@ export default function SettingsPage() {
           resume_updated_at={profile.resume_updated_at ?? null}
           onChange={(info) => setProfile((p) => ({ ...p, ...info }))}
         />
+      </section>
 
-        <div className="mt-6 flex items-center gap-4">
-          <button onClick={saveProfile} disabled={profileBusy} className={btnSolid}>
-            {profileBusy ? "Saving…" : "Save profile"}
+      {/* ── Preferences ── */}
+      <section className="mb-16">
+        <SectionLabel className="mb-6">Preferences</SectionLabel>
+
+        <label className={`${labelCls} mb-2 block`}>Role tracks</label>
+        <div className="mb-6 flex flex-wrap gap-2">
+          {TRACKS.map((t) => (
+            <Chip key={t.key} label={t.label} active={(profile.tracks ?? []).includes(t.key)} onClick={() => toggleIn("tracks", t.key)} />
+          ))}
+        </div>
+
+        <label className={`${labelCls} mb-2 block`}>Seniority</label>
+        <div className="mb-6 flex flex-wrap gap-2">
+          {SENIORITY.map((s) => (
+            <Chip key={s.key} label={s.label} active={(profile.seniority_pref ?? []).includes(s.key)} onClick={() => toggleIn("seniority_pref", s.key)} />
+          ))}
+        </div>
+
+        <label className={`${labelCls} mb-2 block`}>Work style</label>
+        <div className="mb-6 flex flex-wrap gap-2">
+          {REMOTE_PREFS.map((r) => (
+            <Chip key={r.key} label={r.label} active={(profile.remote_pref ?? "any") === r.key} onClick={() => set("remote_pref", r.key)} />
+          ))}
+        </div>
+
+        <label className={`${labelCls} mb-2 block`}>Skills</label>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {COMMON_SKILLS.map((s) => (
+            <Chip key={s} label={s} active={skillSet.has(s)} onClick={() => toggleIn("tech_tags", s)} />
+          ))}
+          {customSkills.map((s) => (
+            <Chip key={s} label={s} active onClick={() => toggleIn("tech_tags", s)} />
+          ))}
+        </div>
+        <div className="mb-6 flex gap-2">
+          <input
+            className={inputCls}
+            placeholder="Add another skill…"
+            value={customSkill}
+            onChange={(e) => setCustomSkill(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
+          />
+          <button type="button" onClick={addSkill} className={btnOutline}>Add</button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label className={`${labelCls} mb-1 block`}>Preferred location</label>
+            <input
+              className={inputCls}
+              placeholder="e.g. San Francisco, or Remote"
+              value={profile.location ?? ""}
+              onChange={(e) => set("location", e.target.value)}
+            />
+          </div>
+          <div>
+            <label className={`${labelCls} mb-1 block`}>Minimum salary (USD)</label>
+            <input
+              type="number"
+              className={inputCls}
+              placeholder="e.g. 120000"
+              value={profile.salary_floor ?? ""}
+              onChange={(e) => set("salary_floor", e.target.value ? Number(e.target.value) : null)}
+            />
+          </div>
+        </div>
+
+        <label className={`${labelCls} mb-2 mt-6 block`}>Visa sponsorship</label>
+        <div className="flex flex-wrap gap-2">
+          <Chip label="I need sponsorship" active={profile.needs_sponsorship === true} onClick={() => set("needs_sponsorship", profile.needs_sponsorship === true ? null : true)} />
+          <Chip label="I don't need it" active={profile.needs_sponsorship === false} onClick={() => set("needs_sponsorship", profile.needs_sponsorship === false ? null : false)} />
+        </div>
+
+        <div className="mt-8 flex items-center gap-4">
+          <button onClick={save} disabled={busy} className={btnSolid}>
+            {busy ? "Saving…" : "Save changes"}
           </button>
           {savedMsg && <span className={labelCls}>{savedMsg}</span>}
         </div>
       </section>
 
-      {/* ── Autofill profile ── */}
+      {/* ── Account ── */}
       <section>
-        <SectionLabel className="mb-6">Autofill Profile</SectionLabel>
-        <p className="mb-6 font-body text-sm text-muted-foreground">
-          These fields are what the extension fills into Greenhouse, Lever, and Ashby application forms.
+        <SectionLabel className="mb-6">Account</SectionLabel>
+        <p className="mb-4 font-body text-sm text-muted-foreground">
+          Signed in as <strong className="text-foreground">{session?.user?.email}</strong>
         </p>
-
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div>
-            <label className={`${labelCls} mb-1 block`}>Full name</label>
-            <input
-              className={inputCls}
-              value={profile.full_name ?? ""}
-              onChange={(e) => setProfile((p) => ({ ...p, full_name: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className={`${labelCls} mb-1 block`}>Phone</label>
-            <input
-              className={inputCls}
-              value={profile.phone ?? ""}
-              onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className={`${labelCls} mb-1 block`}>Location</label>
-            <input
-              className={inputCls}
-              value={profile.location ?? ""}
-              onChange={(e) => setProfile((p) => ({ ...p, location: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className={`${labelCls} mb-1 block`}>Work authorization</label>
-            <input
-              className={inputCls}
-              placeholder="e.g. US Citizen, H-1B, Need sponsorship"
-              value={profile.work_authorization ?? ""}
-              onChange={(e) => setProfile((p) => ({ ...p, work_authorization: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className={`${labelCls} mb-1 block`}>LinkedIn URL</label>
-            <input
-              className={inputCls}
-              value={profile.links?.linkedin ?? ""}
-              onChange={(e) => setLink("linkedin", e.target.value)}
-            />
-          </div>
-          <div>
-            <label className={`${labelCls} mb-1 block`}>GitHub URL</label>
-            <input
-              className={inputCls}
-              value={profile.links?.github ?? ""}
-              onChange={(e) => setLink("github", e.target.value)}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className={`${labelCls} mb-1 block`}>Portfolio / website URL</label>
-            <input
-              className={inputCls}
-              value={profile.links?.portfolio ?? ""}
-              onChange={(e) => setLink("portfolio", e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="mt-6 flex items-center gap-4">
-          <button onClick={saveProfile} disabled={profileBusy} className={btnSolid}>
-            {profileBusy ? "Saving…" : "Save profile"}
-          </button>
-          {savedMsg && <span className={labelCls}>{savedMsg}</span>}
-        </div>
+        <button onClick={() => signOut({ callbackUrl: "/" })} className={btnOutline}>
+          Sign out
+        </button>
       </section>
     </main>
   );
