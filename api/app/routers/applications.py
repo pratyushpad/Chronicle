@@ -146,13 +146,19 @@ def update_application(app_id: int, body: ApplicationUpdateIn, user: User = Depe
     now = datetime.now(timezone.utc)
     if body.status is not None:
         current = app.status.value if hasattr(app.status, "value") else app.status
-        if body.status not in ALLOWED_TRANSITIONS.get(current, []):
-            raise HTTPException(status_code=422, detail=f"Cannot transition from {current} to {body.status}")
-        ev = ApplicationEvent(application_id=app.id, from_status=current, to_status=body.status, at=now)
-        session.add(ev)
-        app.status = AppStatus(body.status)
-        if body.status == "applied" and app.applied_at is None:
-            app.applied_at = now
+        # A personal kanban: the user can move a card to any column (mark rejected from
+        # any stage, correct a mistake by moving back, etc.). We only validate the target
+        # is a real status — no rigid state machine that fights the drag/button UX.
+        try:
+            new_status = AppStatus(body.status)
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Unknown status: {body.status}")
+        if body.status != current:
+            ev = ApplicationEvent(application_id=app.id, from_status=current, to_status=body.status, at=now)
+            session.add(ev)
+            app.status = new_status
+            if body.status == "applied" and app.applied_at is None:
+                app.applied_at = now
     if body.notes is not None:
         app.notes = body.notes
     if body.next_action is not None:

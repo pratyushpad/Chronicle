@@ -13,7 +13,6 @@ import {
   useDroppable,
   type UniqueIdentifier,
   type DragStartEvent,
-  type DragOverEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
@@ -21,7 +20,6 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
-  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CountUp } from "@/components/motion/CountUp";
@@ -131,16 +129,6 @@ export default function TrackerPage() {
     dragOrigin.current = containerOf(e.active.id) ?? null;
   };
 
-  const onDragOver = (e: DragOverEvent) => {
-    const { active, over } = e;
-    if (!over) return;
-    const from = containerOf(active.id);
-    const to = containerOf(over.id);
-    if (!from || !to || from === to) return;
-    // Move the card into the hovered column live, so it visually follows the pointer.
-    setApps((prev) => prev.map((a) => (a.id === active.id ? { ...a, status: to } : a)));
-  };
-
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     setActiveId(null);
@@ -148,28 +136,12 @@ export default function TrackerPage() {
     dragOrigin.current = null;
     if (!over) return;
 
-    const final = containerOf(active.id);
-    if (!final) return;
-
-    // Reorder within a column (cosmetic — backend has no explicit order field).
-    const overContainer = containerOf(over.id);
-    if (final === overContainer && active.id !== over.id) {
-      setApps((prev) => {
-        const ids = prev.filter((a) => a.status === final).map((a) => a.id);
-        const oldIndex = ids.indexOf(active.id as number);
-        const newIndex = ids.indexOf(over.id as number);
-        if (oldIndex === -1 || newIndex === -1) return prev;
-        const reordered = arrayMove(ids, oldIndex, newIndex);
-        // Rebuild apps with the column's cards in their new order.
-        const others = prev.filter((a) => a.status !== final);
-        const byId = new Map(prev.map((a) => [a.id, a]));
-        const columnApps = reordered.map((id) => byId.get(id)!).filter(Boolean);
-        return [...others, ...columnApps];
-      });
-    }
-
-    if (origin && final !== origin) {
-      persistStatus(active.id as number, final, origin);
+    // Move the card to whichever column it was dropped on — deterministic. (We do NOT
+    // re-parent live in onDragOver: mutating status mid-drag re-parents the card across
+    // SortableContexts and made drops land in the wrong, usually adjacent, column.)
+    const target = containerOf(over.id);
+    if (target && origin && target !== origin) {
+      updateStatus(active.id as number, target); // optimistic move + persist
       settleCard(active.id as number);
     }
   };
@@ -226,7 +198,6 @@ export default function TrackerPage() {
             sensors={sensors}
             collisionDetection={closestCorners}
             onDragStart={onDragStart}
-            onDragOver={onDragOver}
             onDragEnd={onDragEnd}
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -347,6 +318,7 @@ function SortableCard({ app, notes, setNotes, saveNotes, updateStatus, remove }:
           </button>
         )}
         <a href={app.job.apply_url} target="_blank" rel="noopener noreferrer"
+          onClick={() => { if (app.status === "saved") updateStatus(app.id, "applied"); }}
           className="ml-auto font-mono text-[9px] uppercase tracking-[0.1em] text-foreground underline-offset-4 hover:underline">Apply →</a>
         <button onClick={() => remove(app.id)} aria-label="Remove" className="font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors">✕</button>
       </div>
