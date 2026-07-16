@@ -365,7 +365,7 @@ def get_recommendations(
             has_engagements=bool(engaged_job_ids),
         )
     else:
-        scored = _rule_scored(session, ctx, dismissed_job_ids)
+        scored = _rule_scored(session, ctx, engaged_job_ids | dismissed_job_ids)
 
     # Collapse cross-posted duplicates: keep the highest-scored posting per role
     # so the same job across N countries doesn't flood the feed.

@@ -7,7 +7,7 @@ email digests via Resend.
 import asyncio
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from sqlalchemy import select, and_
@@ -108,21 +108,38 @@ async def _send_email(to: str, subject: str, html: str) -> bool:
 
 
 async def run_alerts(session: Session, run_start: datetime) -> None:
-    searches = session.execute(
-        select(SavedSearch).where(SavedSearch.alert_frequency != "off")
-    ).scalars().all()
+    now = datetime.now(timezone.utc)
 
+    # Honor the chosen cadence (slightly under the nominal period so a run that lands
+    # a few minutes early doesn't silently push every digest a full day/week out).
+    min_gap = {"daily": timedelta(hours=20), "weekly": timedelta(days=6)}
+
+    def _due(s: SavedSearch) -> bool:
+        gap = min_gap.get(s.alert_frequency)
+        return not (gap and s.last_alerted_at and now - s.last_alerted_at < gap)
+
+    searches = [
+        s
+        for s in session.execute(
+            select(SavedSearch).where(SavedSearch.alert_frequency != "off")
+        ).scalars()
+        if _due(s)
+    ]
     if not searches:
         return
 
-    # Load all new jobs from this ingest run
+    # Candidate pool: everything first seen since the oldest due cutoff, so a weekly
+    # digest includes the whole week's matches — not just this run's. run_start caps
+    # the fallback for searches that have never alerted.
+    pool_since = min(
+        (s.last_alerted_at or max(s.created_at, run_start - timedelta(days=7)) for s in searches),
+        default=run_start,
+    )
     new_job_rows = session.execute(
         select(Job, Company.name.label("company_name"))
         .join(Company, Job.company_id == Company.id)
-        .where(Job.is_active == True, Job.first_seen_at >= run_start)
+        .where(Job.is_active == True, Job.first_seen_at >= pool_since)
     ).all()
-
-    now = datetime.now(timezone.utc)
 
     for search in searches:
         cutoff = search.last_alerted_at or search.created_at

@@ -99,7 +99,10 @@
     will-change: transform;
   }
 
-  /* Marquee falls back to a static, wrapped, readable wall when motion is reduced. */
+  /* Marquee falls back to a static, wrapped, readable wall when motion is reduced.
+     The ticker-scale type (text-6xl) is sized for a single scrolling line — wrapped
+     static it reads as broken, so the fallback also steps the wordmarks down to an
+     editorial tag-wall scale and tightens the spacing. */
   @media (prefers-reduced-motion: reduce) {
     .marquee-viewport {
       overflow: visible;
@@ -107,10 +110,20 @@
     .marquee-track {
       flex-wrap: wrap;
       width: 100%;
-      row-gap: 1.25rem;
+      row-gap: 0.875rem;
     }
     .marquee-dup {
       display: none;
+    }
+    .marquee-item {
+      font-size: clamp(1.25rem, 2.6vw, 1.75rem) !important;
+      line-height: 1.2 !important;
+      padding-inline: 0 1.25rem !important;
+      gap: 1.25rem !important;
+    }
+    .marquee-item > span {
+      height: 0.375rem !important;
+      width: 0.375rem !important;
     }
   }
 

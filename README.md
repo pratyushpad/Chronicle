@@ -202,12 +202,14 @@ daily cron-job.org trigger to the same endpoint is a safe backup — the run-loc
 upsert make a double-fire harmless. A `budget_seconds` query param bounds wall-clock time so a
 large run fits a Render window and continues (stalest-first) on the next invocation.
 
-**Storage caveat.** Neon's free tier has a hard 512 MB project-size limit. The live corpus
-(600+ boards, ~34k roles + 384-dim embeddings) sits around ~390 MB, so there's headroom but
-not unlimited: ingest **prunes** roles closed and unseen for >30 days (hard-delete;
-embeddings drop with the row), and full-text search uses a functional GIN index rather than a
-stored `tsvector` column (a stored column's table rewrite alone exceeds the limit). Scaling
-toward 1000+ companies-with-jobs, or retaining longer history, needs a paid Neon tier.
+**Storage caveat.** Neon's free tier has a hard 512 MB project-size limit. Three policies
+keep the live corpus (600+ boards, ~40k roles + 384-dim embeddings) under it: ingest stores
+only the **stripped description text, never the raw ATS HTML** (the HTML was ~126 MB of pure
+dead weight — no endpoint served it); ingest **prunes** roles closed and unseen for >30 days
+(hard-delete; embeddings drop with the row); and full-text search uses a functional GIN index
+rather than a stored `tsvector` column (a stored column's table rewrite alone exceeds the
+limit). Scaling toward 1000+ companies-with-jobs, or retaining longer history, needs a paid
+Neon tier.
 
 **Migrations.** Schema changes are Alembic migrations; against prod Neon they are applied
 manually (`alembic upgrade head`) after a snapshot. The FTS `search_tsv` column, its GIN

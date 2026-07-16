@@ -5,6 +5,12 @@ import Link from "next/link";
 import { JobCard } from "@/components/JobCard";
 import { SectionLabel } from "@/components/SectionLabel";
 
+const CTA_BUTTON =
+  "inline-flex min-h-[44px] items-center border-2 border-foreground bg-foreground px-8 font-mono text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]";
+const INPUT_CLS =
+  "border border-foreground bg-background px-3 py-2 font-body text-sm text-foreground focus:outline-none focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2";
+const LABEL_CLS = "font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground";
+
 export default function SavedPage() {
   const { data: session, status } = useSession();
   const [saved, setSaved] = useState<any[]>([]);
@@ -61,7 +67,7 @@ export default function SavedPage() {
     return (
       <main className="mx-auto max-w-2xl px-6 py-32 text-center">
         <p className="font-display text-3xl text-foreground mb-4">Sign in to view saved jobs</p>
-        <button onClick={() => signIn("google")} className="inline-flex min-h-[44px] items-center rounded-md bg-accent px-8 font-body text-sm font-medium text-white hover:bg-accent-secondary transition-all">
+        <button onClick={() => signIn("google")} className={CTA_BUTTON}>
           Sign in with Google
         </button>
       </main>
@@ -72,11 +78,12 @@ export default function SavedPage() {
     <main className="mx-auto max-w-3xl px-6 py-16">
       <SectionLabel className="mb-8">Saved Jobs</SectionLabel>
 
-      {/* Email alerts box */}
-      <div className="mb-12 rounded-lg border border-border bg-card p-6">
-        <h2 className="font-display text-xl text-foreground mb-1">Email alerts</h2>
+      {/* Alerts box */}
+      <div className="mb-12 border border-foreground p-6">
+        <h2 className="font-display text-xl text-foreground mb-1">Alerts</h2>
         <p className="font-body text-sm text-muted-foreground mb-4">
-          Get notified when new roles match a keyword — sent after each ingest run.
+          When new roles match a keyword after an ingest run, you get an in-app
+          notification — and an email digest.
         </p>
         <div className="flex gap-3 flex-wrap">
           <input
@@ -84,33 +91,42 @@ export default function SavedPage() {
             onChange={(e) => { setAlertSearch(e.target.value); if (alertHint) setAlertHint(false); }}
             onKeyDown={(e) => e.key === "Enter" && createAlert()}
             placeholder="e.g. Machine Learning Engineer"
-            className="flex-1 min-w-[200px] rounded-md border border-border bg-background px-3 py-2 font-body text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            className={`${INPUT_CLS} flex-1 min-w-[200px]`}
           />
           <select
             value={alertFreq}
             onChange={(e) => setAlertFreq(e.target.value as any)}
-            className="rounded-md border border-border bg-background px-3 py-2 font-body text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            className={INPUT_CLS}
           >
             <option value="daily">Daily digest</option>
             <option value="weekly">Weekly digest</option>
           </select>
-          <button onClick={createAlert} disabled={!alertSearch.trim()}
-            className="inline-flex min-h-[44px] items-center rounded-md bg-accent px-5 font-body text-sm font-medium text-white hover:bg-accent-secondary transition-all disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-accent">
+          <button
+            onClick={createAlert}
+            disabled={!alertSearch.trim()}
+            className="inline-flex min-h-[44px] items-center bg-foreground px-5 font-mono text-xs font-medium uppercase tracking-[0.12em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)] disabled:cursor-not-allowed disabled:opacity-40"
+          >
             {alertCreated ? "✓ Alert set" : "Set alert"}
           </button>
         </div>
         {alertHint && (
-          <p className="mt-2 font-body text-xs text-red-600">Enter a keyword to set an alert.</p>
+          <p className={`mt-2 ${LABEL_CLS}`}>Enter a keyword to set an alert.</p>
         )}
 
         {searches.length > 0 && (
           <div className="mt-4 space-y-2">
             {searches.map((s) => (
-              <div key={s.id} className="flex items-center justify-between rounded border border-border px-3 py-2">
+              <div key={s.id} className="flex items-center justify-between border border-border-light px-3 py-2">
                 <span className="font-body text-sm text-foreground">{s.name}</span>
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-accent">{s.alert_frequency}</span>
-                  <button onClick={() => deleteSearch(s.id)} className="font-mono text-xs text-muted-foreground hover:text-foreground">✕</button>
+                  <span className={LABEL_CLS}>{s.alert_frequency}</span>
+                  <button
+                    onClick={() => deleteSearch(s.id)}
+                    aria-label={`Delete alert ${s.name}`}
+                    className="font-mono text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
             ))}
@@ -125,7 +141,7 @@ export default function SavedPage() {
         <div className="text-center py-16">
           <p className="font-display text-2xl text-foreground mb-2">No saved jobs yet</p>
           <p className="font-body text-muted-foreground mb-6">Click the bookmark icon on any role to save it here.</p>
-          <Link href="/jobs" className="font-body text-sm text-accent hover:underline">Browse roles →</Link>
+          <Link href="/jobs" className="font-body text-sm text-foreground underline underline-offset-4 hover:no-underline">Browse roles →</Link>
         </div>
       ) : (
         <div className="flex flex-col gap-4">

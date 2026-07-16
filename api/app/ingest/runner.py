@@ -103,7 +103,6 @@ async def _ingest_company(
             department=dept,
             department_raw=raw.department,
             employment_type=raw.employment_type,
-            description_html=raw.description_html,
             description_text=desc_text,
             apply_url=raw.apply_url,
             posted_at=parse_posted_at(raw.posted_at),
@@ -134,7 +133,6 @@ async def _ingest_company(
                 "department": dept,
                 "department_raw": raw.department,
                 "employment_type": raw.employment_type,
-                "description_html": raw.description_html,
                 "description_text": desc_text,
                 "apply_url": raw.apply_url,
                 "posted_at": parse_posted_at(raw.posted_at),
@@ -267,6 +265,17 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
         prune_stale_jobs(session)
     except Exception:
         log.exception("stale-job prune failed (ingest itself succeeded)")
+
+    # Saved-search alerts (in-app notification + email digest) fire off this run's new
+    # jobs. Best-effort: an alert failure must never fail the ingest run. Without this
+    # call the /admin/ingest path would never alert — schedule.py is not how prod runs.
+    try:
+        from .alerts import run_alerts
+
+        await run_alerts(session, run_start)
+    except Exception:
+        session.rollback()
+        log.exception("saved-search alerts failed (ingest itself succeeded)")
 
     # A fresh run changes /meta's inputs; drop its in-process cache so the "Updated …"
     # label and "NEW SINCE LAST RUN" counts reflect this run immediately (C4).

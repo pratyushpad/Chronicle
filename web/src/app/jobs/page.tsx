@@ -13,7 +13,8 @@ interface PageProps {
 }
 
 async function JobFeed({ searchParams }: { searchParams: Record<string, string> }) {
-  const page = parseInt(searchParams.page ?? "1", 10);
+  const parsedPage = parseInt(searchParams.page ?? "1", 10);
+  const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
   const params = {
     q: searchParams.q,
     mode:

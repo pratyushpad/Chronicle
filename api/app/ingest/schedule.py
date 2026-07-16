@@ -8,7 +8,6 @@ load_dotenv()
 
 from app.db import get_session  # noqa: E402 — after dotenv
 from .runner import run_ingest  # noqa: E402
-from .alerts import run_alerts  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -32,9 +31,8 @@ def _refresh_embeddings() -> None:
 async def _once() -> None:
     session = get_session()
     try:
-        run = await run_ingest(session)
+        run = await run_ingest(session)  # alerts fire inside run_ingest
         log.info("Run id=%d finished_at=%s", run.id, run.finished_at)
-        await run_alerts(session, run.started_at)
     finally:
         session.close()
     _refresh_embeddings()

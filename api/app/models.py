@@ -114,7 +114,9 @@ class Job(Base):
     department = Column(Text, nullable=True)  # normalized controlled-vocab category
     department_raw = Column(Text, nullable=True)  # untouched original ATS value (retune escape hatch)
     employment_type = Column(Text, nullable=True)
-    description_html = Column(Text, nullable=True)
+    # Raw ATS HTML is deliberately NOT stored — only the stripped text. The HTML
+    # doubled toast size (~126 MB at 40k jobs) against Neon's 512 MB cap and no
+    # endpoint ever served it.
     description_text = Column(Text, nullable=True)
     apply_url = Column(Text, nullable=False)
     posted_at = Column(DateTime(timezone=True), nullable=True)
@@ -166,8 +168,6 @@ class User(Base):
     email = Column(String, nullable=False, unique=True)
     name = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
-    # sha256 of the browser-extension bearer token (plaintext shown once at issue). Null = no token.
-    extension_token_hash = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     profile = relationship("Profile", back_populates="user", uselist=False, cascade="all, delete-orphan")

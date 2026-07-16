@@ -4,6 +4,7 @@ Fire-and-forget from the web client (batched). No reads, no ML here; the
 table is append-only training data.
 """
 from fastapi import APIRouter, Depends, Response
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db import get_session
@@ -37,5 +38,10 @@ def log_interactions(
         )
         for e in body.events
     )
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        # Fire-and-forget telemetry must never 500: a stale tab can batch an event
+        # for a job that pruning just hard-deleted (FK violation). Drop the batch.
+        session.rollback()
     return Response(status_code=204)
