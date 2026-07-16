@@ -25,7 +25,10 @@ class AshbyAdapter:
                     location=item.get("location"),
                     department=item.get("department"),
                     employment_type=item.get("employmentType"),
-                    description_html=None,
+                    # posting-api returns the full body inline — nothing extra to fetch.
+                    # Flows through strip_html → description_text/tags/salary, and a
+                    # changed content_hash re-embeds these rows with real signal.
+                    description_html=item.get("descriptionHtml"),
                     apply_url=item.get("jobUrl", ""),
                     posted_at=item.get("publishedAt"),
                     remote=item.get("isRemote"),

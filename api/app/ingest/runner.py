@@ -152,7 +152,12 @@ async def _ingest_company(
     session.commit()
 
     # Embed the rows we just inserted (embedding IS NULL). Best-effort:
-    # a missing/broken model must never fail an ingest run.
+    # a missing/broken model must never fail an ingest run. The deadline applies
+    # here too — a backlog-heavy run can otherwise spend an unbounded tail inside
+    # ONNX inference and OOM the 512 MB instance; rows left NULL are swept when
+    # their company is next fetched, so skipping only defers, never loses.
+    if deadline is not None and datetime.now(tz=timezone.utc) >= deadline:
+        return result
     try:
         from app.ml.embed_jobs import embed_missing_jobs
 
