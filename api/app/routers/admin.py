@@ -53,7 +53,9 @@ async def _run_ingest_bg(budget_seconds: int | None) -> None:
 @router.post("/ingest", status_code=202)
 def trigger_ingest(
     background_tasks: BackgroundTasks,
-    budget_seconds: int | None = Query(None, ge=30, le=3600),
+    # Default budget so a caller that omits the param (e.g. the cron-job.org backup
+    # trigger) can never start an unbounded run — unbudgeted runs OOM the 512 MB box.
+    budget_seconds: int = Query(240, ge=30, le=3600),
     _: None = Depends(require_ingest_secret),
     session: Session = Depends(_db),
 ):

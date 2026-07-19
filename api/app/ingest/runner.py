@@ -51,15 +51,17 @@ async def _ingest_company(
     adapter = _ADAPTERS[company.ats]
     result = {"company_id": company.id, "jobs_seen": 0, "jobs_new": 0, "error": None, "skipped": False}
 
-    # Runtime-budget checkpoint (C3): once the run is over budget, stop fetching new
-    # boards. Skipped companies keep their old last_ingested_at, so the staleness
-    # ordering picks them first on the next scheduled run — the corpus refreshes in
-    # chunks across invocations without ever leaving the DB half-written.
-    if deadline is not None and datetime.now(tz=timezone.utc) >= deadline:
-        result["skipped"] = True
-        return result
-
     async with sem:
+        # Runtime-budget checkpoint (C3): once the run is over budget, stop fetching new
+        # boards. Skipped companies keep their old last_ingested_at, so the staleness
+        # ordering picks them first on the next scheduled run — the corpus refreshes in
+        # chunks across invocations without ever leaving the DB half-written.
+        # This MUST be checked after acquiring the semaphore: gather() starts every task
+        # at t=0, so a pre-semaphore check always passes and the budget never engages.
+        if deadline is not None and datetime.now(tz=timezone.utc) >= deadline:
+            result["skipped"] = True
+            return result
+
         for attempt in range(2):
             try:
                 raw_jobs = await adapter.fetch(company.slug, client)
