@@ -106,22 +106,27 @@ export default function SettingsPage() {
   const save = async () => {
     setBusy(true);
     setSavedMsg("");
-    const res = await fetch("/api/user/profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: profile.location ?? null,
-        remote_pref: profile.remote_pref ?? null,
-        seniority_pref: profile.seniority_pref ?? [],
-        tracks: profile.tracks ?? [],
-        tech_tags: profile.tech_tags ?? [],
-        salary_floor: profile.salary_floor ?? null,
-        needs_sponsorship: profile.needs_sponsorship ?? null,
-        about: profile.about ?? null,
-      }),
-    });
-    setSavedMsg(res.ok ? "Saved." : "Save failed.");
-    setBusy(false);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: profile.location ?? null,
+          remote_pref: profile.remote_pref ?? null,
+          seniority_pref: profile.seniority_pref ?? [],
+          tracks: profile.tracks ?? [],
+          tech_tags: profile.tech_tags ?? [],
+          salary_floor: profile.salary_floor ?? null,
+          needs_sponsorship: profile.needs_sponsorship ?? null,
+          about: profile.about ?? null,
+        }),
+      });
+      setSavedMsg(res.ok ? "Saved." : "Save failed.");
+    } catch {
+      setSavedMsg("Save failed — check your connection.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (status === "loading") return <main className="mx-auto max-w-2xl px-6 py-20" />;
