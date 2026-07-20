@@ -10,7 +10,10 @@ name: ingest
 #     — the DB run-lock + idempotent upsert make a double-fire harmless (see README).
 on:
   schedule:
+    # Twice daily. One 600s run covers ~65 of the 603 boards, so two passes cycle the
+    # whole registry in ~4-5 days instead of the ~3 weeks a single 240s run took.
     - cron: "17 4 * * *"
+    - cron: "17 16 * * *"
   workflow_dispatch: {}
 
 jobs:
@@ -27,9 +30,12 @@ jobs:
             exit 1
           fi
           BASE="${API_URL:-https://folio-dev-lo9x.onrender.com}"
-          # Small chunk per run so it fits Render's 512MB RAM (a big run OOM-restarted the
-          # box). The stalest-first ordering rotates through all boards over a few daily runs.
-          URL="$BASE/admin/ingest?budget_seconds=240"
+          # Bounded chunk per run so it fits Render's 512MB RAM (an unbounded run used to
+          # OOM-restart the box). The stalest-first ordering rotates through all boards
+          # across runs. 600s is safe now that ingest no longer holds a DB connection
+          # across ONNX inference and the upsert/embed paths use Core selects rather than
+          # accumulating ORM objects — raise further only with a memory check.
+          URL="$BASE/admin/ingest?budget_seconds=600"
           echo "Triggering $URL"
           code=$(curl -sS --max-time 120 -o /tmp/resp.json -w "%{http_code}" \
             -X POST -H "X-Ingest-Secret: $INGEST_SECRET" "$URL" || echo "000")
