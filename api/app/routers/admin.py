@@ -37,6 +37,39 @@ def _db():
         session.close()
 
 
+def _close_crashed_run(exc: BaseException) -> None:
+    """Stamp finished_at on a run whose worker died, recording why.
+
+    A run row left with finished_at NULL is indistinguishable from one still in flight,
+    so four consecutive crashed runs looked identical to a healthy backlog and the real
+    cause stayed invisible for days. Uses a fresh session on purpose: the run's own is
+    typically dead by the time we get here (that is usually what killed it).
+    """
+    session = get_session()
+    try:
+        run = session.execute(
+            select(IngestRun)
+            .where(IngestRun.finished_at.is_(None))
+            .order_by(IngestRun.started_at.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+        if run is None:
+            return
+        run.finished_at = datetime.now(tz=timezone.utc)
+        run.failures = list(run.failures or []) + [
+            {"company": None, "ats": None, "slug": None,
+             "error": f"run crashed: {type(exc).__name__}: {exc}"[:500]}
+        ]
+        session.commit()
+    except Exception:
+        log.exception("could not stamp crashed ingest run")
+    finally:
+        try:
+            session.close()
+        except Exception:
+            pass
+
+
 async def _run_ingest_bg(budget_seconds: int | None) -> None:
     """Background worker: its own session (the request session is long gone by now)."""
     from app.ingest.runner import run_ingest
@@ -44,10 +77,16 @@ async def _run_ingest_bg(budget_seconds: int | None) -> None:
     session = get_session()
     try:
         await run_ingest(session, budget_seconds=budget_seconds)
-    except Exception:
+    except Exception as exc:
         log.exception("background ingest run failed")
+        _close_crashed_run(exc)
     finally:
-        session.close()
+        # close() rolls back, which itself raises if the connection is already gone —
+        # that escaped this task and surfaced as an unhandled ASGI error.
+        try:
+            session.close()
+        except Exception:
+            log.warning("ingest session close failed; connection already dropped", exc_info=True)
 
 
 @router.post("/ingest", status_code=202)
