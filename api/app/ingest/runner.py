@@ -3,11 +3,12 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import httpx
-from sqlalchemy import case, select, update
+from sqlalchemy import case, literal_column, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.models import ATSSource, Company, IngestRun, Job
+from .adapters.base import BoardTooLarge
 from .adapters.ashby import AshbyAdapter
 from .adapters.greenhouse import GreenhouseAdapter
 from .adapters.lever import LeverAdapter
@@ -66,6 +67,10 @@ async def _ingest_company(
             try:
                 raw_jobs = await adapter.fetch(company.slug, client)
                 break
+            except BoardTooLarge as exc:
+                # Deterministic — a retry just re-downloads the same oversized payload.
+                result["error"] = str(exc)
+                return result
             except Exception as exc:
                 if attempt == 0:
                     await asyncio.sleep(2)
@@ -147,11 +152,29 @@ async def _ingest_company(
                 "embedding": case((content_changed, None), else_=Job.embedding),
             },
         )
-        inserted = session.execute(stmt)
-        if inserted.rowcount and inserted.inserted_primary_key:
+        # xmax = 0 iff the row was freshly inserted (an upsert-update stamps xmax).
+        # The old inserted_primary_key check was truthy for updates too, so
+        # jobs_new always equaled jobs_seen.
+        was_insert = session.execute(
+            stmt.returning(literal_column("(xmax = 0)"))
+        ).scalar_one()
+        if was_insert:
             result["jobs_new"] += 1
 
+    # Checkpoint in the same transaction as this board's jobs: if the process dies
+    # on a LATER board (the Jul 30–31 OOM loop), this company must not return to
+    # the front of the stalest-first queue — re-fetching the same mega-board first
+    # on every run is what turned one OOM into four consecutive crashed runs.
+    session.execute(
+        update(Company)
+        .where(Company.id == company.id)
+        .values(last_ingested_at=datetime.now(tz=timezone.utc))
+    )
     session.commit()
+
+    # The parsed board (description HTML for every posting — ~47 MB for a
+    # 2,100-job mega-board) is dead weight from here; free it before embedding.
+    raw_jobs = None  # noqa: F841
 
     # Embed the rows we just inserted (embedding IS NULL). Best-effort:
     # a missing/broken model must never fail an ingest run. The deadline applies
@@ -163,7 +186,7 @@ async def _ingest_company(
     try:
         from app.ml.embed_jobs import embed_missing_jobs
 
-        embed_missing_jobs(session, company_id=company.id)
+        embed_missing_jobs(session, company_id=company.id, deadline=deadline)
     except Exception:
         log.exception("embedding failed for company %s (ingest itself succeeded)", company.slug)
 
@@ -232,11 +255,8 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
             ok_ids.append(company.id)
             jobs_seen += result["jobs_seen"]
             jobs_new += result["jobs_new"]
-            session.execute(
-                update(Company)
-                .where(Company.id == company.id)
-                .values(last_ingested_at=datetime.now(tz=timezone.utc))
-            )
+            # last_ingested_at is stamped per company inside _ingest_company —
+            # doing it here (end of run) meant a crashed run advanced nothing.
 
     # Soft-close vanished roles — but ONLY for companies we actually fetched this run.
     # A board that timed out or errored must never deactivate its jobs (they'd flip back

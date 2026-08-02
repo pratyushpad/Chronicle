@@ -1,8 +1,6 @@
-from typing import Any
-
 import httpx
 
-from .base import RawJob
+from .base import RawJob, iter_board_json
 
 _BASE = "https://api.lever.co/v0/postings/{slug}?mode=json"
 
@@ -12,12 +10,10 @@ class LeverAdapter:
 
     async def fetch(self, slug: str, client: httpx.AsyncClient) -> list[RawJob]:
         url = _BASE.format(slug=slug)
-        resp = await client.get(url, timeout=10)
-        resp.raise_for_status()
-        data: list[dict[str, Any]] = resp.json()
 
         jobs = []
-        for item in data:
+        # Lever returns a top-level JSON array, hence the bare "item" prefix.
+        async for item in iter_board_json(client, url, "item", slug):
             cats = item.get("categories") or {}
             created_ms = item.get("createdAt")
             posted_at = str(created_ms) if created_ms is not None else None

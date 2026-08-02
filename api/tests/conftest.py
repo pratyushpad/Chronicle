@@ -29,8 +29,20 @@ def ashby_response():
 
 @pytest.fixture
 def mock_client():
+    """Fake httpx.AsyncClient. Tests set response.json.return_value; both the
+    legacy client.get path and the streaming client.stream path (adapters read
+    aiter_bytes) serve that same payload."""
     client = AsyncMock()
     response = MagicMock()
     response.raise_for_status = MagicMock()
     client.get.return_value = response
+
+    async def _aiter_bytes():
+        yield json.dumps(response.json.return_value).encode()
+
+    response.aiter_bytes = _aiter_bytes
+    stream_cm = MagicMock()
+    stream_cm.__aenter__ = AsyncMock(return_value=response)
+    stream_cm.__aexit__ = AsyncMock(return_value=False)
+    client.stream = MagicMock(return_value=stream_cm)
     return client, response

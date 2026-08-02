@@ -64,3 +64,29 @@ async def test_greenhouse_raises_on_error(mock_client):
     adapter = GreenhouseAdapter()
     with pytest.raises(httpx.HTTPStatusError):
         await adapter.fetch("bad-slug", client)
+
+
+@pytest.mark.asyncio
+async def test_oversized_board_raises_board_too_large(greenhouse_response, mock_client, monkeypatch):
+    from app.ingest.adapters import base
+
+    client, response = mock_client
+    response.json.return_value = greenhouse_response
+    monkeypatch.setattr(base, "MAX_BOARD_BYTES", 10)  # payload is far bigger
+
+    adapter = GreenhouseAdapter()
+    with pytest.raises(base.BoardTooLarge, match="payload cap"):
+        await adapter.fetch("anduril", client)
+
+
+@pytest.mark.asyncio
+async def test_streaming_never_calls_json(greenhouse_response, mock_client):
+    """Adapters must stream (aiter_bytes), not materialize via resp.json()."""
+    client, response = mock_client
+    response.json.return_value = greenhouse_response
+
+    adapter = GreenhouseAdapter()
+    jobs = await adapter.fetch("stripe", client)
+
+    assert len(jobs) == 2
+    client.get.assert_not_called()

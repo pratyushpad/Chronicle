@@ -1,8 +1,6 @@
-from typing import Any
-
 import httpx
 
-from .base import RawJob
+from .base import RawJob, iter_board_json
 
 _BASE = "https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true"
 
@@ -12,12 +10,9 @@ class AshbyAdapter:
 
     async def fetch(self, slug: str, client: httpx.AsyncClient) -> list[RawJob]:
         url = _BASE.format(slug=slug)
-        resp = await client.get(url, timeout=10)
-        resp.raise_for_status()
-        data: dict[str, Any] = resp.json()
 
         jobs = []
-        for item in data.get("jobs", []):
+        async for item in iter_board_json(client, url, "jobs.item", slug):
             jobs.append(
                 RawJob(
                     source_job_id=str(item["id"]),

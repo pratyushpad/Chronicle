@@ -1,9 +1,8 @@
 import html
-from typing import Any
 
 import httpx
 
-from .base import RawJob
+from .base import RawJob, iter_board_json
 
 _BASE = "https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true"
 
@@ -13,12 +12,9 @@ class GreenhouseAdapter:
 
     async def fetch(self, slug: str, client: httpx.AsyncClient) -> list[RawJob]:
         url = _BASE.format(slug=slug)
-        resp = await client.get(url, timeout=10)
-        resp.raise_for_status()
-        data: dict[str, Any] = resp.json()
 
         jobs = []
-        for item in data.get("jobs", []):
+        async for item in iter_board_json(client, url, "jobs.item", slug):
             dept = None
             depts = item.get("departments") or []
             if depts:

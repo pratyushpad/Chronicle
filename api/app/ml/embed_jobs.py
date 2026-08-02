@@ -6,6 +6,7 @@ conflict, so an existing embedding never goes stale. If that upsert ever
 starts updating description_text, it must also NULL the embedding.
 """
 import logging
+from datetime import datetime, timezone
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -24,15 +25,23 @@ def embed_missing_jobs(
     company_id: int | None = None,
     batch_size: int = DEFAULT_BATCH_SIZE,
     limit: int | None = None,
+    deadline: datetime | None = None,
 ) -> int:
     """Embed jobs WHERE embedding IS NULL; returns number embedded.
 
     Commits after each page so the work is resumable and never holds a
-    long transaction against prod.
+    long transaction against prod. Past `deadline` no new page starts — a
+    2,500-row backlog on a 0.1-vCPU box would otherwise run for an unbounded
+    tail; leftover NULL rows are swept on the company's next fetch.
     """
-    embedder = get_embedder()
+    # Lazy: don't pull the ONNX runtime (~100 MB) into a 512 MB process when
+    # there is nothing to embed — the common case for an unchanged board.
+    embedder = None
     total = 0
     while True:
+        if deadline is not None and datetime.now(tz=timezone.utc) >= deadline:
+            log.info("embedding deadline reached after %d rows; rest deferred", total)
+            break
         stmt = (
             select(
                 Job.id,
@@ -71,6 +80,8 @@ def embed_missing_jobs(
         # which then failed the commit below and took the whole ingest run down with it.
         # Releasing here means the write re-checks out a live (pre-pinged) connection.
         session.commit()
+        if embedder is None:
+            embedder = get_embedder()  # after the release commit: model load is slow on 0.1 vCPU too
         vectors = embedder.encode(texts, batch_size=batch_size)
         session.execute(
             update(Job),
