@@ -1,0 +1,28 @@
+name: ci
+
+# API test suite. Runs entirely against fixtures and mocks — conftest.py stubs
+# DATABASE_URL with a dummy DSN and the two tests that want a live Postgres
+# skip themselves when none is reachable, so no services are needed here.
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  workflow_dispatch: {}
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: api/pyproject.toml
+      - name: Install API + dev deps
+        run: pip install -e ".[dev]"
+      - name: Run tests
+        run: python -m pytest tests/ -q
