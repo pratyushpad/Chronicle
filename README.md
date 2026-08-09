@@ -1,5 +1,7 @@
 # Chronicle
 
+[![ci](https://github.com/pratyushpad/Chronicle/actions/workflows/ci.yml/badge.svg)](https://github.com/pratyushpad/Chronicle/actions/workflows/ci.yml)
+
 Chronicle is a job aggregator that pulls every open role directly from tech companies'
 own applicant-tracking systems (Greenhouse, Lever, Ashby) into one searchable, filterable
 feed — no scraping job boards, no stale listings. It ingests hundreds of companies on a
@@ -7,6 +9,13 @@ recurring schedule, normalizes and deduplicates postings across sources, and lay
 accounts, saved jobs/application tracking, recommendations, and alerts on top.
 
 **Live app:** [chronicles-weld.vercel.app](https://chronicles-weld.vercel.app)
+
+| | |
+|:---:|:---:|
+| ![Homepage](docs/screenshots/home.png) | ![Hybrid search results](docs/screenshots/search-results.png) |
+| *Homepage* | *Hybrid search — "machine learning"* |
+| ![Job detail](docs/screenshots/job-detail.png) | ![Company registry](docs/screenshots/companies.png) |
+| *Job detail* | *Company registry, 603 boards* |
 
 ## How it works
 
