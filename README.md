@@ -4,8 +4,7 @@ Chronicle is a job aggregator that pulls every open role directly from tech comp
 own applicant-tracking systems (Greenhouse, Lever, Ashby) into one searchable, filterable
 feed — no scraping job boards, no stale listings. It ingests hundreds of companies on a
 recurring schedule, normalizes and deduplicates postings across sources, and layers
-accounts, saved jobs/application tracking, recommendations, alerts, and a browser
-autofill extension on top.
+accounts, saved jobs/application tracking, recommendations, and alerts on top.
 
 **Live app:** [chronicles-weld.vercel.app](https://chronicles-weld.vercel.app)
 
@@ -81,10 +80,6 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 - **Interaction logging** — impressions/clicks/saves are captured per surface
   (feed/search) as training data for a future learned ranker.
 - **Hiring velocity** — per-company opened/closed-role trends.
-- **Browser autofill extension** — fills Greenhouse/Lever/Ashby application forms from a
-  Chronicle profile and saves the role to the tracker in one click. **Fill-only by
-  design**: it never calls `form.submit()` or clicks a submit button — you review and
-  submit every application yourself.
 - **Verified registry expansion** — new companies are only added after being live-probed
   for at least one open role, and default to inactive until confirmed, so the feed never
   fills with dead boards.
@@ -101,7 +96,6 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 | Scheduler | External cron (GitHub Actions + cron-job.org) → secured `POST /admin/ingest`; APScheduler also runs as a one-shot CLI |
 | Frontend | Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui |
 | Auth | NextAuth v5 (Google OAuth) |
-| Extension | Manifest V3 + TypeScript, esbuild |
 | Infra | Docker Compose (api / worker / db / web); deployed on Vercel (web) + Render (api) + Neon (Postgres) |
 
 ## Project structure
@@ -109,7 +103,6 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 ```
 api/          FastAPI backend — routers, ingestion adapters, normalization, dedup, DB models
 web/          Next.js frontend
-extension/    Browser autofill extension (MV3)
 docker-compose.yml
 ```
 
@@ -168,7 +161,6 @@ accounts:
 - `GET /companies`, `GET /companies/{id}`, `GET /companies/{id}/velocity`
 - `GET/POST /saved`, `GET/POST/PUT/DELETE /applications`, `GET/POST/DELETE /searches`
 - `GET /recommendations`, `GET /notifications`, `POST /interactions/batch`
-- `GET/POST/DELETE /users/me/extension-token`, `POST /extension/saved` — browser extension
 
 Authenticated endpoints require an `X-Internal-Auth` token — an HMAC-SHA256-signed,
 5-minute claim minted by the Next.js server proxy (`web/src/lib/internal-token.ts`) and

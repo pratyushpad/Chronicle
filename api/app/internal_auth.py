@@ -14,8 +14,9 @@ inside the signed bytes so it cannot be swapped without invalidating the
 signature. Tokens are signed per-request, so the TTL is short (5 minutes)
 with +/-60s tolerance for clock skew between Vercel and Render.
 
-Extension Bearer tokens (see security.py) are a separate mechanism and are
-unaffected.
+These are the only bearer credentials the API accepts: the browser-extension
+Bearer tokens that once coexisted with them were removed along with the
+extension (migration f4d5e6a7b8c9 dropped `users.extension_token_hash`).
 """
 
 import base64
