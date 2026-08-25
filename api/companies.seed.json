@@ -690,7 +690,8 @@
     "ats": "greenhouse",
     "slug": "fal",
     "careers_url": "https://fal.ai/careers",
-    "industry": "AI/ML"
+    "industry": "AI/ML",
+    "active": false
   },
   {
     "name": "Mattermost",
@@ -1159,7 +1160,8 @@
     "ats": "ashby",
     "slug": "statsig",
     "careers_url": "https://www.statsig.com/careers",
-    "industry": "Analytics"
+    "industry": "Analytics",
+    "active": false
   },
   {
     "name": "Plane",
@@ -2824,8 +2826,8 @@
   },
   {
     "name": "Fireworks AI",
-    "ats": "greenhouse",
-    "slug": "fireworksai",
+    "ats": "ashby",
+    "slug": "fireworks",
     "careers_url": null,
     "industry": "AI",
     "active": true
@@ -3860,7 +3862,7 @@
     "slug": "aviator",
     "careers_url": null,
     "industry": "DevTools",
-    "active": true
+    "active": false
   },
   {
     "name": "Magic Eden",

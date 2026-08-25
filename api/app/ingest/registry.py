@@ -30,7 +30,10 @@ def seed_companies_if_empty(session: Session) -> None:
                     "name": entry["name"],
                     "careers_url": entry.get("careers_url"),
                     "industry": entry.get("industry"),
-                    "active": entry.get("active", True),
+                    # "active" is deliberately NOT updated on conflict: this seed runs on
+                    # every startup, and overwriting the flag would resurrect boards that
+                    # were deactivated at runtime (dead ATS boards, quarantined slugs).
+                    # The verify gate and manual ops own `active` for existing rows.
                 },
             )
         )
