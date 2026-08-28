@@ -4,7 +4,7 @@
 
 Chronicle is a job aggregator that pulls every open role directly from tech companies'
 own applicant-tracking systems (Greenhouse, Lever, Ashby) into one searchable, filterable
-feed — no scraping job boards, no stale listings. It ingests hundreds of companies on a
+feed. No scraping job boards, no stale listings. It ingests hundreds of companies on a
 recurring schedule, normalizes and deduplicates postings across sources, and layers
 accounts, saved jobs/application tracking, recommendations, and alerts on top.
 
@@ -13,7 +13,7 @@ accounts, saved jobs/application tracking, recommendations, and alerts on top.
 | | |
 |:---:|:---:|
 | ![Homepage](docs/screenshots/home.png) | ![Hybrid search results](docs/screenshots/search-results.png) |
-| *Homepage* | *Hybrid search — "machine learning"* |
+| *Homepage* | *Hybrid search: "machine learning"* |
 | ![Job detail](docs/screenshots/job-detail.png) | ![Company registry](docs/screenshots/companies.png) |
 | *Job detail* | *Company registry, 603 boards* |
 
@@ -44,52 +44,52 @@ companies registry (ATS + slug)
    FastAPI read layer ──► Next.js feed UI (mode toggle, "why" strings)
 ```
 
-Ingestion is **profile-agnostic** — every open role a company posts is stored, across all
+Ingestion is **profile-agnostic**: every open role a company posts is stored, across all
 departments. Filtering happens at read time in the API/UI, so the company registry is a
 *source* list, not a role filter.
 
 ## Features
 
 - **Live registry** of 600+ verified company boards (470+ actively hiring, ~26k distinct
-  open roles), auto-refreshed every 24–48h with per-company fault isolation (one broken
+  open roles), auto-refreshed every 24-48h with per-company fault isolation (one broken
   board never blocks the run). The
   refresh is incremental and idempotent: it upserts changed roles, soft-closes roles that
   vanished from a board (only for boards it actually reached that run), re-embeds only
   content-changed roles, and prunes long-closed roles to stay within Neon's free storage.
   (A curated pipeline to scale the registry toward 1000+ verified boards is in
-  `api/candidates/` — see Registry expansion.)
-- **Cross-source deduplication** — the same req posted to multiple ATS boards, or the
+  `api/candidates/`; see Registry expansion.)
+- **Cross-source deduplication.** The same req posted to multiple ATS boards, or the
   same role posted to multiple cities, collapses into one card without merging genuinely
   distinct openings.
-- **Accounts & tracking** — Google OAuth, saved jobs, an application tracker (kanban-style
+- **Accounts & tracking.** Google OAuth, saved jobs, an application tracker (kanban-style
   statuses), saved searches, and email alerts for new matching roles.
-- **Full-text + semantic hybrid search** — keyword search is real Postgres full-text
+- **Full-text + semantic hybrid search.** Keyword search is real Postgres full-text
   ranking: a weighted expression (title = A, department + location = C) materialized as a
-  **functional GIN index**, ranked by `ts_rank_cd(websearch_to_tsquery(...))` — lexical
-  relevance, not substring matching. (A functional index rather than a stored `tsvector`
-  column: a stored column of the description body would bloat storage and its `ADD` rewrites
-  the table past Neon's 512 MB free tier. The body is left to semantic search instead.) Every
-  job is also embedded (all-MiniLM-L6-v2, int8 ONNX — no torch, free-tier friendly) into
-  pgvector. Search offers keyword (FTS), pure semantic, and a hybrid mode that fuses the
-  **full-text** and vector rankings with Reciprocal Rank Fusion. An HNSW cosine index keeps
-  vector retrieval fast; FTS falls back to ILIKE and semantic/hybrid degrade to keyword if the
-  relevant index or embedding model is unavailable. (Lexical ranking is Postgres `ts_rank_cd`
-  — full-text, not literal BM25.)
-- **Recommendations ("For You" v2)** — two-stage matching: pgvector retrieves candidates
+  **functional GIN index**, ranked by `ts_rank_cd(websearch_to_tsquery(...))`. That's
+  lexical relevance, not substring matching. (A functional index rather than a stored
+  `tsvector` column: a stored column of the description body would bloat storage and its
+  `ADD` rewrites the table past Neon's 512 MB free tier. The body is left to semantic
+  search instead.) Every job is also embedded (all-MiniLM-L6-v2, int8 ONNX, no torch,
+  free-tier friendly) into pgvector. Search offers keyword (FTS), pure semantic, and a
+  hybrid mode that fuses the **full-text** and vector rankings with Reciprocal Rank
+  Fusion. An HNSW cosine index keeps vector retrieval fast; FTS falls back to ILIKE and
+  semantic/hybrid degrade to keyword if the relevant index or embedding model is
+  unavailable. (Lexical ranking is Postgres `ts_rank_cd`: full-text, not literal BM25.)
+- **Recommendations ("For You" v2).** Two-stage matching: pgvector retrieves candidates
   by cosine against a profile vector (profile text + a weighted centroid of saved/applied
   jobs), then a blend of semantic similarity and the explainable rule score reranks them.
   Every card keeps a human-readable "why" string.
-- **Measured, not vibes** — an offline eval harness (`api/scripts/eval_matching.py`)
+- **Measured, not vibes.** An offline eval harness (`api/scripts/eval_matching.py`)
   scores rule-based vs semantic vs hybrid ranking on held-out engagements, with bootstrap
   95% confidence intervals. Across 24 synthetic personas across diverse role families and
   seniorities, hybrid lifts recall@50 from 0.71 to 0.96 and MRR from 0.80 to 0.98 over the
-  rule baseline, with NDCG@10 0.58 → 0.81 (semantic and hybrid are close on the persona set;
-  the gap widens on real engagement data). The same harness runs in `db` mode against real
-  logged engagements. See [docs/eval_results.md](docs/eval_results.md).
-- **Interaction logging** — impressions/clicks/saves are captured per surface
+  rule baseline, with NDCG@10 going 0.58 to 0.81 (semantic and hybrid are close on the
+  persona set; the gap widens on real engagement data). The same harness runs in `db` mode
+  against real logged engagements. See [docs/eval_results.md](docs/eval_results.md).
+- **Interaction logging.** Impressions/clicks/saves are captured per surface
   (feed/search) as training data for a future learned ranker.
-- **Hiring velocity** — per-company opened/closed-role trends.
-- **Verified registry expansion** — new companies are only added after being live-probed
+- **Hiring velocity.** Per-company opened/closed-role trends.
+- **Verified registry expansion.** New companies are only added after being live-probed
   for at least one open role, and default to inactive until confirmed, so the feed never
   fills with dead boards.
 
@@ -99,7 +99,7 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 |---|---|
 | Backend | Python + FastAPI, async `httpx` for concurrent ATS fan-out |
 | Dedup | rapidfuzz |
-| Embeddings | all-MiniLM-L6-v2 (int8 ONNX via onnxruntime + tokenizers — no torch, ~150 MB RSS) |
+| Embeddings | all-MiniLM-L6-v2 (int8 ONNX via onnxruntime + tokenizers, no torch, ~150 MB RSS) |
 | Database | PostgreSQL + pgvector (HNSW) + SQLAlchemy 2.0 + Alembic |
 | Auth (web→API) | HMAC-signed short-lived internal tokens (`api/app/internal_auth.py`) |
 | Scheduler | External cron (GitHub Actions + cron-job.org) → secured `POST /admin/ingest`; APScheduler also runs as a one-shot CLI |
@@ -110,7 +110,7 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 ## Project structure
 
 ```
-api/          FastAPI backend — routers, ingestion adapters, normalization, dedup, DB models
+api/          FastAPI backend: routers, ingestion adapters, normalization, dedup, DB models
 web/          Next.js frontend
 docker-compose.yml
 ```
@@ -119,7 +119,7 @@ docker-compose.yml
 
 Requires Python 3.12+, Node 18+, and PostgreSQL 16 (or use Docker Compose for all of it).
 
-### Option A — Docker Compose
+### Option A: Docker Compose
 
 ```bash
 docker compose up --build
@@ -127,7 +127,7 @@ docker compose up --build
 
 Brings up Postgres, the API (`:8000`), the ingest worker, and the web app (`:3000`).
 
-### Option B — run each piece directly
+### Option B: run each piece directly
 
 ```bash
 # 1. Postgres
@@ -163,15 +163,15 @@ cd web && npx tsc --noEmit
 The FastAPI backend exposes a read API for the feed plus authenticated endpoints for
 accounts:
 
-- `GET /jobs` (`?mode=keyword|semantic|hybrid`), `GET /jobs/{id}`, `GET /meta` — the
+- `GET /jobs` (`?mode=keyword|semantic|hybrid`), `GET /jobs/{id}`, `GET /meta`: the
   public feed, filterable and paginated; semantic/hybrid rank by pgvector cosine + RRF
-- `GET /health` — cheap, DB-free liveness probe (used by the external keep-warm)
-- `POST /admin/ingest` — secured trigger for an incremental refresh (see Refresh & ops)
+- `GET /health`: cheap, DB-free liveness probe (used by the external keep-warm)
+- `POST /admin/ingest`: secured trigger for an incremental refresh (see Refresh & ops)
 - `GET /companies`, `GET /companies/{id}`, `GET /companies/{id}/velocity`
 - `GET/POST /saved`, `GET/POST/PUT/DELETE /applications`, `GET/POST/DELETE /searches`
 - `GET /recommendations`, `GET /notifications`, `POST /interactions/batch`
 
-Authenticated endpoints require an `X-Internal-Auth` token — an HMAC-SHA256-signed,
+Authenticated endpoints require an `X-Internal-Auth` token: an HMAC-SHA256-signed,
 5-minute claim minted by the Next.js server proxy (`web/src/lib/internal-token.ts`) and
 verified by the API (`api/app/internal_auth.py`). Raw identity headers are never trusted.
 
@@ -194,19 +194,19 @@ GitHub scheduled crons drop fires on low-activity repos. To set it up: create a 
 job, method GET, URL `https://<api-host>/health`, every 5 minutes. The frontend also shows
 skeletons and retries once on timeout, so a cold start never renders a blank screen.
 
-**Auto-refresh (every 24–48h).** `POST /admin/ingest` triggers an incremental, idempotent
+**Auto-refresh (every 24-48h).** `POST /admin/ingest` triggers an incremental, idempotent
 refresh in the background (returns `202` immediately; a DB run-lock prevents overlap). It is
 guarded by a dedicated `INGEST_SECRET` (header `X-Ingest-Secret`; 401 without it). The
 `.github/workflows/ingest.yml` scheduled workflow calls it daily with the repo secret
 `INGEST_SECRET` (also set as a Render env var). Because GitHub crons are unreliable, a second
-daily cron-job.org trigger to the same endpoint is a safe backup — the run-lock + idempotent
+daily cron-job.org trigger to the same endpoint is a safe backup; the run-lock + idempotent
 upsert make a double-fire harmless. A `budget_seconds` query param bounds wall-clock time so a
 large run fits a Render window and continues (stalest-first) on the next invocation.
 
 **Storage caveat.** Neon's free tier has a hard 512 MB project-size limit. Three policies
 keep the live corpus (600+ boards, ~40k roles + 384-dim embeddings) under it: ingest stores
 only the **stripped description text, never the raw ATS HTML** (the HTML was ~126 MB of pure
-dead weight — no endpoint served it); ingest **prunes** roles closed and unseen for >30 days
+dead weight that no endpoint served); ingest **prunes** roles closed and unseen for >30 days
 (hard-delete; embeddings drop with the row); and full-text search uses a functional GIN index
 rather than a stored `tsvector` column (a stored column's table rewrite alone exceeds the
 limit). Scaling toward 1000+ companies-with-jobs, or retaining longer history, needs a paid

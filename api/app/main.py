@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from contextlib import asynccontextmanager  # noqa: E402
+
 from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
@@ -18,7 +20,17 @@ from app.routers.notifications import router as notif_router  # noqa: E402
 from app.routers.interactions import router as interactions_router  # noqa: E402
 from app.routers.admin import router as admin_router  # noqa: E402
 
-app = FastAPI(title="Chronicle API", version="2.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    session = get_session()
+    try:
+        seed_companies_if_empty(session)
+    finally:
+        session.close()
+    yield
+
+
+app = FastAPI(title="Chronicle API", version="2.0.0", lifespan=lifespan)
 
 # Comma-separated allowlist; prod sets CORS_ORIGINS=https://chronicles-weld.vercel.app
 _cors_origins = [
@@ -65,12 +77,3 @@ app.include_router(recs_router)
 app.include_router(notif_router)
 app.include_router(interactions_router)
 app.include_router(admin_router)
-
-
-@app.on_event("startup")
-def startup() -> None:
-    session = get_session()
-    try:
-        seed_companies_if_empty(session)
-    finally:
-        session.close()
