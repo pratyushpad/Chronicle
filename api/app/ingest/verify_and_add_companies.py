@@ -81,10 +81,16 @@ async def _verify_one(
         return VerifyResult(cand, "quarantined", reason=f"no adapter for '{cand.ats}'")
     async with sem:
         try:
-            jobs = await adapter.fetch(cand.slug, client)
+            # Count in the loop instead of materializing: this path runs against
+            # UNVETTED slugs at concurrency 8, exactly where an unknown mega-board
+            # can appear (Anduril entered the registry through here) — several
+            # Anduril-class boards held as lists at once is the OOM this module's
+            # streaming adapters exist to prevent.
+            n = 0
+            async for _ in adapter.fetch(cand.slug, client):
+                n += 1
         except Exception as exc:  # never let one bad slug abort the run
             return VerifyResult(cand, "quarantined", reason=f"{type(exc).__name__}: {exc}")
-    n = len(jobs)
     if n >= 1:
         return VerifyResult(cand, "active", job_count=n)
     return VerifyResult(cand, "quarantined", reason="0 jobs returned")

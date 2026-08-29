@@ -67,6 +67,12 @@ class RawJob:
 class ATSAdapter(Protocol):
     source: str
 
-    async def fetch(self, slug: str, client: "httpx.AsyncClient") -> list[RawJob]:
-        """Fetch all open jobs for the given board slug. Raises on hard failure."""
+    def fetch(self, slug: str, client: "httpx.AsyncClient") -> AsyncIterator[RawJob]:
+        """Stream the open jobs for a board slug, one at a time. Raises on hard failure.
+
+        Implementations are async generators, so nothing is raised (and no request is
+        made) until the caller starts consuming. Because iter_board_json finishes the
+        whole network download before its first yield, a consumer that holds a DB
+        transaction open across this iteration never blocks on the network mid-txn.
+        """
         ...

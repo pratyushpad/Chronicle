@@ -11,7 +11,7 @@ async def test_greenhouse_adapter(greenhouse_response, mock_client):
     response.json.return_value = greenhouse_response
 
     adapter = GreenhouseAdapter()
-    jobs = await adapter.fetch("stripe", client)
+    jobs = [j async for j in adapter.fetch("stripe", client)]
 
     assert len(jobs) == 2
     assert jobs[0].source_job_id == "123456"
@@ -28,7 +28,7 @@ async def test_lever_adapter(lever_response, mock_client):
     response.json.return_value = lever_response
 
     adapter = LeverAdapter()
-    jobs = await adapter.fetch("sample", client)
+    jobs = [j async for j in adapter.fetch("sample", client)]
 
     assert len(jobs) == 2
     assert jobs[0].source_job_id == "abc-def-123"
@@ -44,7 +44,7 @@ async def test_ashby_adapter(ashby_response, mock_client):
     response.json.return_value = ashby_response
 
     adapter = AshbyAdapter()
-    jobs = await adapter.fetch("sample", client)
+    jobs = [j async for j in adapter.fetch("sample", client)]
 
     assert len(jobs) == 2
     assert jobs[0].source_job_id == "ashby-001"
@@ -63,7 +63,8 @@ async def test_greenhouse_raises_on_error(mock_client):
 
     adapter = GreenhouseAdapter()
     with pytest.raises(httpx.HTTPStatusError):
-        await adapter.fetch("bad-slug", client)
+        # An async generator raises on consumption, not on the call.
+        [j async for j in adapter.fetch("bad-slug", client)]
 
 
 @pytest.mark.asyncio
@@ -76,7 +77,7 @@ async def test_oversized_board_raises_board_too_large(greenhouse_response, mock_
 
     adapter = GreenhouseAdapter()
     with pytest.raises(base.BoardTooLarge, match="payload cap"):
-        await adapter.fetch("anduril", client)
+        [j async for j in adapter.fetch("anduril", client)]
 
 
 @pytest.mark.asyncio
@@ -86,7 +87,7 @@ async def test_streaming_never_calls_json(greenhouse_response, mock_client):
     response.json.return_value = greenhouse_response
 
     adapter = GreenhouseAdapter()
-    jobs = await adapter.fetch("stripe", client)
+    jobs = [j async for j in adapter.fetch("stripe", client)]
 
     assert len(jobs) == 2
     client.get.assert_not_called()

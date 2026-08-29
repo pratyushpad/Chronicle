@@ -36,9 +36,16 @@ _ADAPTERS = {
     ATSSource.lever: LeverAdapter(),
     ATSSource.ashby: AshbyAdapter(),
 }
-# Low concurrency so at most this many boards' responses are in memory at once —
-# keeps the ingest within Render's 512MB free tier (10-wide OOM'd the instance).
+# Low concurrency so at most this many spooled board downloads are in flight at once.
+# Board *contents* are no longer held in memory at all (adapters stream job-by-job), so
+# this now bounds only the spool overhead — keeps the ingest within Render's 512MB free
+# tier (10-wide OOM'd the instance).
 _CONCURRENCY = 3
+
+# Postings run to novella length (Anduril's board averages ~22 KB of description HTML
+# per job). Past this the tail is boilerplate — legal notices, benefits, EEO text — that
+# adds nothing to search or embedding quality but costs Neon storage on every row.
+_MAX_DESC_CHARS = 20_000
 
 
 async def _ingest_company(
@@ -63,118 +70,147 @@ async def _ingest_company(
             result["skipped"] = True
             return result
 
+        _CUTOFF = datetime(2026, 1, 1, tzinfo=timezone.utc)
+
+        # Consume the board as a stream: adapter.fetch is an async generator, so at no
+        # point does a whole board (2,100 jobs × ~22 KB of description HTML) exist in
+        # memory — peak is one RawJob plus the spooled download.
+        #
+        # Session-safety note (single Session shared by all concurrent tasks): the
+        # rollbacks below can only ever discard THIS company's uncommitted upserts.
+        # iter_board_json finishes the network download before its first yield, and the
+        # per-job body below contains no awaits — so from the first upsert through the
+        # commit this task never yields to the event loop, and no sibling task can be
+        # holding uncommitted work when a rollback fires.
         for attempt in range(2):
             try:
-                raw_jobs = await adapter.fetch(company.slug, client)
+                # Reset before each attempt: a retry after a partial consume must not
+                # double-count the jobs the failed attempt already streamed.
+                result["jobs_seen"] = 0
+                result["jobs_new"] = 0
+                now = datetime.now(tz=timezone.utc)
+
+                async for raw in adapter.fetch(company.slug, client):
+                    posted = parse_posted_at(raw.posted_at)
+                    if posted is not None and posted < _CUTOFF:
+                        continue  # skip stale pre-2026 postings
+
+                    result["jobs_seen"] += 1
+                    t_norm = normalize_title(raw.title)
+                    l_norm = normalize_location(raw.location)
+                    # Key off keying_title (preserves the distinguishing team qualifier), NOT t_norm.
+                    dedup = make_dedup_key(company.id, dedup_title(keying_title(raw.title), l_norm))
+                    desc_text = strip_html(raw.description_html)
+                    # Extract from the FULL text before truncating: salary bands and
+                    # sponsorship language usually sit at the very bottom of a long
+                    # posting, past _MAX_DESC_CHARS. Truncating first would silently
+                    # drop the comp data that makes those rows worth having.
+                    sal_min, sal_max = extract_salary(desc_text)
+                    tags = extract_tech_tags(desc_text)
+                    sponsor = infer_sponsorship(desc_text)
+                    dept = normalize_department(raw.department)
+                    exp_level = infer_experience_level(raw.title)
+                    # Cap what we store AND what we hash, in that order: the hash must
+                    # cover exactly the text we persist. An unchanged long posting then
+                    # hashes identically every run, so it never re-embeds; and an edit
+                    # past the cap — invisible in the stored text — can't churn the
+                    # embedding either.
+                    desc_text = desc_text[:_MAX_DESC_CHARS]
+                    chash = make_content_hash(raw.title, desc_text, l_norm, dept, tags)
+
+                    ins = insert(Job).values(
+                        company_id=company.id,
+                        source=ATSSource(adapter.source),
+                        source_job_id=raw.source_job_id,
+                        title=raw.title,
+                        title_normalized=t_norm,
+                        location_raw=raw.location,
+                        location_normalized=l_norm,
+                        remote=infer_remote(raw),
+                        department=dept,
+                        department_raw=raw.department,
+                        employment_type=raw.employment_type,
+                        description_text=desc_text,
+                        apply_url=raw.apply_url,
+                        posted_at=posted,
+                        dedup_key=dedup,
+                        experience_level=exp_level,
+                        tech_tags=tags,
+                        salary_min=sal_min,
+                        salary_max=sal_max,
+                        sponsorship_flag=sponsor,
+                        content_hash=chash,
+                        first_seen_at=now,
+                        last_seen_at=now,
+                        is_active=True,
+                    )
+                    # On re-ingest, refresh the mutable content fields, and when the content hash
+                    # changed (title/description/location/dept/tags), null the embedding so
+                    # embed_missing_jobs re-embeds only that row — delta-only, never the whole corpus.
+                    content_changed = Job.content_hash.is_distinct_from(ins.excluded.content_hash)
+                    stmt = ins.on_conflict_do_update(
+                        constraint="jobs_source_source_job_id_key",
+                        set_={
+                            "last_seen_at": now,
+                            "is_active": True,
+                            "title": raw.title,
+                            "title_normalized": t_norm,
+                            "location_raw": raw.location,
+                            "location_normalized": l_norm,
+                            "department": dept,
+                            "department_raw": raw.department,
+                            "employment_type": raw.employment_type,
+                            "description_text": desc_text,
+                            "apply_url": raw.apply_url,
+                            "posted_at": posted,
+                            "experience_level": exp_level,
+                            "tech_tags": tags,
+                            "salary_min": sal_min,
+                            "salary_max": sal_max,
+                            "sponsorship_flag": sponsor,
+                            "content_hash": chash,
+                            "embedding": case((content_changed, None), else_=Job.embedding),
+                        },
+                    )
+                    # xmax = 0 iff the row was freshly inserted (an upsert-update stamps xmax).
+                    # The old inserted_primary_key check was truthy for updates too, so
+                    # jobs_new always equaled jobs_seen.
+                    was_insert = session.execute(
+                        stmt.returning(literal_column("(xmax = 0)"))
+                    ).scalar_one()
+                    if was_insert:
+                        result["jobs_new"] += 1
                 break
             except BoardTooLarge as exc:
                 # Deterministic — a retry just re-downloads the same oversized payload.
+                # (The cap trips during the download, before any job is yielded, so this
+                # rollback is belt-and-braces.)
+                session.rollback()
                 result["error"] = str(exc)
                 return result
             except Exception as exc:
+                # Discard this company's partial upserts before retrying, so a second
+                # attempt re-upserts from a clean transaction instead of stacking on
+                # half-written rows.
+                session.rollback()
                 if attempt == 0:
                     await asyncio.sleep(2)
                 else:
                     result["error"] = str(exc)
                     return result
 
-    _CUTOFF = datetime(2026, 1, 1, tzinfo=timezone.utc)
-
-    now = datetime.now(tz=timezone.utc)
-    for raw in raw_jobs:
-        posted = parse_posted_at(raw.posted_at)
-        if posted is not None and posted < _CUTOFF:
-            continue  # skip stale pre-2026 postings
-
-        result["jobs_seen"] += 1
-        t_norm = normalize_title(raw.title)
-        l_norm = normalize_location(raw.location)
-        # Key off keying_title (preserves the distinguishing team qualifier), NOT t_norm.
-        dedup = make_dedup_key(company.id, dedup_title(keying_title(raw.title), l_norm))
-        desc_text = strip_html(raw.description_html)
-        sal_min, sal_max = extract_salary(desc_text)
-        tags = extract_tech_tags(desc_text)
-        sponsor = infer_sponsorship(desc_text)
-        dept = normalize_department(raw.department)
-        chash = make_content_hash(raw.title, desc_text, l_norm, dept, tags)
-
-        ins = insert(Job).values(
-            company_id=company.id,
-            source=ATSSource(adapter.source),
-            source_job_id=raw.source_job_id,
-            title=raw.title,
-            title_normalized=t_norm,
-            location_raw=raw.location,
-            location_normalized=l_norm,
-            remote=infer_remote(raw),
-            department=dept,
-            department_raw=raw.department,
-            employment_type=raw.employment_type,
-            description_text=desc_text,
-            apply_url=raw.apply_url,
-            posted_at=parse_posted_at(raw.posted_at),
-            dedup_key=dedup,
-            experience_level=infer_experience_level(raw.title),
-            tech_tags=tags,
-            salary_min=sal_min,
-            salary_max=sal_max,
-            sponsorship_flag=sponsor,
-            content_hash=chash,
-            first_seen_at=now,
-            last_seen_at=now,
-            is_active=True,
+        # Checkpoint in the same transaction as this board's jobs: if the process dies
+        # on a LATER board (the Jul 30–31 OOM loop), this company must not return to
+        # the front of the stalest-first queue — re-fetching the same mega-board first
+        # on every run is what turned one OOM into four consecutive crashed runs.
+        # Stays inside the semaphore so the "no await between first upsert and commit"
+        # property above is true by construction.
+        session.execute(
+            update(Company)
+            .where(Company.id == company.id)
+            .values(last_ingested_at=datetime.now(tz=timezone.utc))
         )
-        # On re-ingest, refresh the mutable content fields, and when the content hash
-        # changed (title/description/location/dept/tags), null the embedding so
-        # embed_missing_jobs re-embeds only that row — delta-only, never the whole corpus.
-        content_changed = Job.content_hash.is_distinct_from(ins.excluded.content_hash)
-        stmt = ins.on_conflict_do_update(
-            constraint="jobs_source_source_job_id_key",
-            set_={
-                "last_seen_at": now,
-                "is_active": True,
-                "title": raw.title,
-                "title_normalized": t_norm,
-                "location_raw": raw.location,
-                "location_normalized": l_norm,
-                "department": dept,
-                "department_raw": raw.department,
-                "employment_type": raw.employment_type,
-                "description_text": desc_text,
-                "apply_url": raw.apply_url,
-                "posted_at": parse_posted_at(raw.posted_at),
-                "experience_level": infer_experience_level(raw.title),
-                "tech_tags": tags,
-                "salary_min": sal_min,
-                "salary_max": sal_max,
-                "sponsorship_flag": sponsor,
-                "content_hash": chash,
-                "embedding": case((content_changed, None), else_=Job.embedding),
-            },
-        )
-        # xmax = 0 iff the row was freshly inserted (an upsert-update stamps xmax).
-        # The old inserted_primary_key check was truthy for updates too, so
-        # jobs_new always equaled jobs_seen.
-        was_insert = session.execute(
-            stmt.returning(literal_column("(xmax = 0)"))
-        ).scalar_one()
-        if was_insert:
-            result["jobs_new"] += 1
-
-    # Checkpoint in the same transaction as this board's jobs: if the process dies
-    # on a LATER board (the Jul 30–31 OOM loop), this company must not return to
-    # the front of the stalest-first queue — re-fetching the same mega-board first
-    # on every run is what turned one OOM into four consecutive crashed runs.
-    session.execute(
-        update(Company)
-        .where(Company.id == company.id)
-        .values(last_ingested_at=datetime.now(tz=timezone.utc))
-    )
-    session.commit()
-
-    # The parsed board (description HTML for every posting — ~47 MB for a
-    # 2,100-job mega-board) is dead weight from here; free it before embedding.
-    raw_jobs = None  # noqa: F841
+        session.commit()
 
     # Embed the rows we just inserted (embedding IS NULL). Best-effort:
     # a missing/broken model must never fail an ingest run. The deadline applies

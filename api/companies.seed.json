@@ -1041,7 +1041,8 @@
     "ats": "ashby",
     "slug": "continue",
     "careers_url": "https://continue.dev/careers",
-    "industry": "AI/ML"
+    "industry": "AI/ML",
+    "active": false
   },
   {
     "name": "ReadMe",

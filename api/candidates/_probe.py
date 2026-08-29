@@ -48,13 +48,17 @@ async def _fetch(ats: ATSSource, slug: str, client, sem) -> tuple[str, int]:
     """Return (status, job_count) for one ATS/slug."""
     async with sem:
         await asyncio.sleep(0.15)  # polite pacing to avoid ATS 429s
+        n = 0
         try:
-            jobs = await _ADAPTERS[ats].fetch(slug, client)
+            # fetch() streams; count as we go rather than materializing. A probe sweep
+            # hits hundreds of unvetted slugs, any of which can be a mega-board.
+            async for _ in _ADAPTERS[ats].fetch(slug, client):
+                n += 1
         except httpx.HTTPStatusError as e:
             return ("http404" if e.response.status_code == 404 else "err", 0)
         except Exception:
             return ("err", 0)
-    return ("active", len(jobs)) if len(jobs) >= 1 else ("empty", 0)
+    return ("active", n) if n >= 1 else ("empty", 0)
 
 
 async def _probe_one(cand: dict, client, sem) -> dict:
