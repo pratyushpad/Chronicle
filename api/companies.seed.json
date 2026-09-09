@@ -3311,7 +3311,7 @@
     "slug": "aerospike",
     "careers_url": null,
     "industry": "Data",
-    "active": true
+    "active": false
   },
   {
     "name": "Freenome",
@@ -3935,7 +3935,7 @@
     "slug": "cerebral",
     "careers_url": null,
     "industry": "HealthTech",
-    "active": true
+    "active": false
   },
   {
     "name": "Mem0",
@@ -4551,7 +4551,7 @@
     "slug": "windmill",
     "careers_url": null,
     "industry": null,
-    "active": true
+    "active": false
   },
   {
     "name": "Zed",

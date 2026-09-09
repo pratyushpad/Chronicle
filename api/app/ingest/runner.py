@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import traceback
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -46,6 +47,36 @@ _CONCURRENCY = 3
 # per job). Past this the tail is boilerplate — legal notices, benefits, EEO text — that
 # adds nothing to search or embedding quality but costs Neon storage on every row.
 _MAX_DESC_CHARS = 20_000
+
+
+def _describe_error(exc: BaseException) -> str:
+    """"{type}: {message} @ {file}:{line}" — the crash site, not just the symptom.
+
+    Failure records used to store bare str(exc), which for a data-dependent, not-
+    locally-reproducible board says nothing: four Lever boards failed with
+    "'NoneType' object is not subscriptable" and there was no way to tell which field
+    access raised it. We report the LAST frame inside our own code because the true
+    top of the stack is usually a third-party frame (httpx, json) that names a library
+    line rather than the assumption of ours that turned out to be wrong.
+
+    Degrades gracefully: no traceback (or no frames) yields plain "{type}: {message}".
+    The message is capped at 500 chars (matching _close_crashed_run's discipline in
+    admin.py) — failures land in IngestRun.failures JSONB on a storage-constrained
+    Neon, and some libraries put whole response bodies into exception text.
+    """
+    msg = str(exc)
+    if len(msg) > 500:
+        msg = msg[:500] + "…"
+    label = f"{type(exc).__name__}: {msg}"
+    tb = exc.__traceback__
+    if tb is None:
+        return label
+    frames = traceback.extract_tb(tb)
+    if not frames:
+        return label
+    ours = [f for f in frames if "app/" in f.filename]
+    frame = ours[-1] if ours else frames[-1]
+    return f"{label} @ {frame.filename}:{frame.lineno}"
 
 
 async def _ingest_company(
@@ -196,7 +227,7 @@ async def _ingest_company(
                 if attempt == 0:
                     await asyncio.sleep(2)
                 else:
-                    result["error"] = str(exc)
+                    result["error"] = _describe_error(exc)
                     return result
 
         # Checkpoint in the same transaction as this board's jobs: if the process dies
@@ -273,7 +304,9 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
                 "company": company.name,
                 "ats": company.ats.value,
                 "slug": company.slug,
-                "error": str(result),
+                # gather(return_exceptions=True) hands back the live exception object,
+                # so __traceback__ is intact and names the crash site here too.
+                "error": _describe_error(result),
             })
             run.companies_failed += 1
         elif result.get("skipped"):
@@ -294,60 +327,90 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
             # last_ingested_at is stamped per company inside _ingest_company —
             # doing it here (end of run) meant a crashed run advanced nothing.
 
-    # Soft-close vanished roles — but ONLY for companies we actually fetched this run.
-    # A board that timed out or errored must never deactivate its jobs (they'd flip back
-    # active next run, churning the corpus and the "closed" counts). Scoping to ok_ids is
-    # what makes soft-close safe at 1000+ boards where transient failures are routine.
-    jobs_closed = 0
-    if ok_ids:
-        closed_result = session.execute(
-            update(Job)
-            .where(
-                Job.company_id.in_(ok_ids),
-                Job.last_seen_at < run_start,
-                Job.is_active == True,
+    # Everything from here to the end runs under try/finally: the soft-close and the
+    # run-row commit hit the DB and can raise (a dropped Neon connection is the
+    # documented failure mode, 3d02be3) — and an aborted tail is exactly when leaving
+    # the model resident hurts most, since the process survives and keeps serving.
+    try:
+        # Soft-close vanished roles — but ONLY for companies we actually fetched this
+        # run. A board that timed out or errored must never deactivate its jobs (they'd
+        # flip back active next run, churning the corpus and the "closed" counts).
+        # Scoping to ok_ids is what makes soft-close safe at 1000+ boards where
+        # transient failures are routine.
+        jobs_closed = 0
+        if ok_ids:
+            closed_result = session.execute(
+                update(Job)
+                .where(
+                    Job.company_id.in_(ok_ids),
+                    Job.last_seen_at < run_start,
+                    Job.is_active == True,
+                )
+                .values(is_active=False)
             )
-            .values(is_active=False)
-        )
-        jobs_closed = closed_result.rowcount
+            jobs_closed = closed_result.rowcount
 
-    run.companies_ok = ok
-    run.jobs_seen = jobs_seen
-    run.jobs_new = jobs_new
-    run.jobs_closed = jobs_closed
-    run.failures = failures
-    run.finished_at = datetime.now(tz=timezone.utc)
-    session.commit()
+        run.companies_ok = ok
+        run.jobs_seen = jobs_seen
+        run.jobs_new = jobs_new
+        run.jobs_closed = jobs_closed
+        run.failures = failures
+        run.finished_at = datetime.now(tz=timezone.utc)
+        session.commit()
 
-    # Rolling stale-posting prune (B3): keep only active + recently-closed roles hot so
-    # the corpus stays within Neon's free storage budget. Best-effort — a prune failure
-    # must never fail the ingest run.
-    try:
-        from .prune import prune_stale_jobs
+        # Rolling stale-posting prune (B3): keep only active + recently-closed roles
+        # hot so the corpus stays within Neon's free storage budget. Best-effort — a
+        # prune failure must never fail the ingest run.
+        try:
+            from .prune import prune_stale_jobs
 
-        prune_stale_jobs(session)
-    except Exception:
-        log.exception("stale-job prune failed (ingest itself succeeded)")
+            prune_stale_jobs(session)
+        except Exception:
+            log.exception("stale-job prune failed (ingest itself succeeded)")
 
-    # Saved-search alerts (in-app notification + email digest) fire off this run's new
-    # jobs. Best-effort: an alert failure must never fail the ingest run. Without this
-    # call the /admin/ingest path would never alert — schedule.py is not how prod runs.
-    try:
-        from .alerts import run_alerts
+        # Saved-search alerts (in-app notification + email digest) fire off this run's
+        # new jobs. Best-effort: an alert failure must never fail the ingest run.
+        # Without this call the /admin/ingest path would never alert — schedule.py is
+        # not how prod runs.
+        try:
+            from .alerts import run_alerts
 
-        await run_alerts(session, run_start)
-    except Exception:
-        session.rollback()
-        log.exception("saved-search alerts failed (ingest itself succeeded)")
+            await run_alerts(session, run_start)
+        except Exception:
+            session.rollback()
+            log.exception("saved-search alerts failed (ingest itself succeeded)")
 
-    # A fresh run changes /meta's inputs; drop its in-process cache so the "Updated …"
-    # label and "NEW SINCE LAST RUN" counts reflect this run immediately (C4).
-    try:
-        from app.routers.jobs import invalidate_meta_cache
+        # A fresh run changes /meta's inputs; drop its in-process cache so the
+        # "Updated …" label and "NEW SINCE LAST RUN" counts reflect this run
+        # immediately (C4).
+        try:
+            from app.routers.jobs import invalidate_meta_cache
 
-        invalidate_meta_cache()
-    except Exception:
-        log.debug("meta cache invalidation skipped", exc_info=True)
+            invalidate_meta_cache()
+        except Exception:
+            log.debug("meta cache invalidation skipped", exc_info=True)
+    finally:
+        # Hand the model's ~150-250 MB back to the OS. On Render's 512 MB free tier
+        # the ONNX session loaded during this run's embed phase would otherwise stay
+        # resident in the web process forever, leaving near-zero headroom for ordinary
+        # request traffic — the box has OOM'd while completely idle because of it.
+        # In a finally so it runs even when the tail aborts (dropped Neon connection):
+        # that path leaves the process alive and serving, which is exactly when a
+        # leaked resident model hurts most.
+        #
+        # Off the event loop (to_thread): release does a full gc.collect() over a heap
+        # that just held the ORT arena — blocking the loop with it would stall every
+        # in-flight request. Embedding is finished by now (embed_missing_jobs is
+        # synchronous inside _ingest_company), so nothing in this run reloads it.
+        # Cost is that the first semantic search after a run pays a ~2s reload; an
+        # idle process that stays alive beats a fast one that gets OOM-killed.
+        # Best-effort — releasing memory must never fail the run.
+        try:
+            from app.ml.embedder import release_embedder
+
+            await asyncio.to_thread(release_embedder)
+        except Exception:
+            log.exception("embedder release failed (ingest itself succeeded)")
 
     log.info(
         "Ingest complete: %d/%d companies OK, %d skipped (budget), %d new jobs, %d closed, %d failures",

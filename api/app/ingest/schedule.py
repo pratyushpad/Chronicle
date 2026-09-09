@@ -26,6 +26,12 @@ def _refresh_embeddings() -> None:
         log.info("embedding sweep: %d jobs embedded, %d profiles refreshed", jobs, profiles)
     finally:
         session.close()
+        # Same 512 MB-headroom rationale as run_ingest's release: this sweep runs in a
+        # long-lived process (APScheduler nightly, or right after _once's run_ingest —
+        # which would otherwise release only for this sweep to re-load and re-pin it).
+        from app.ml.embedder import release_embedder
+
+        release_embedder()
 
 
 async def _once() -> None:
