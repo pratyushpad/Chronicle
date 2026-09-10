@@ -146,7 +146,12 @@ async def _ingest_company(
                     # hashes identically every run, so it never re-embeds; and an edit
                     # past the cap — invisible in the stored text — can't churn the
                     # embedding either.
-                    desc_text = desc_text[:_MAX_DESC_CHARS]
+                    # strip_html returns None for postings with no description at all
+                    # (common on Lever) — slicing None was the 'NoneType' subscript
+                    # crash that failed four Lever boards; None must flow through
+                    # unchanged, exactly as it did before the cap existed.
+                    if desc_text is not None:
+                        desc_text = desc_text[:_MAX_DESC_CHARS]
                     chash = make_content_hash(raw.title, desc_text, l_norm, dept, tags)
 
                     ins = insert(Job).values(

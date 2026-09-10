@@ -214,6 +214,23 @@ def test_short_description_is_untouched(monkeypatch):
     assert len(params["description_text"]) < runner._MAX_DESC_CHARS
 
 
+def test_posting_with_no_description_ingests_cleanly(monkeypatch):
+    """Lever postings can lack a description entirely; strip_html then yields None,
+    and slicing None was the "'NoneType' object is not subscriptable" crash that
+    failed four Lever boards in prod (runs #119-122, located by the @ file:line
+    failure records). None must flow through to storage unchanged, as it did
+    before the cap existed."""
+    adapter = _FakeAdapter([_raw(1, None)])
+    session = _session()
+
+    result = _run(adapter, session, monkeypatch)
+
+    assert result["error"] is None
+    assert result["jobs_seen"] == 1
+    params = _insert_params(session)
+    assert params["description_text"] is None
+
+
 def test_content_hash_matches_the_stored_truncated_text(monkeypatch):
     """Hash covers exactly what's persisted, so an unchanged long posting hashes the
     same every run and never re-embeds."""
