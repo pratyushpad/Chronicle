@@ -18,9 +18,14 @@ log = logging.getLogger(__name__)
 
 EMBEDDING_DIM = 384
 MAX_TOKENS = 256
-# Small batch keeps peak memory low so ingest embedding fits Render's 512MB free tier
-# (larger batches OOM'd the box mid-ingest). Slower, but memory-safe.
-DEFAULT_BATCH_SIZE = 16
+# Inference working memory scales with batch × 256² attention, and ORT keeps the
+# high-water mark. Measured in the prod image under a 512 MB cgroup, one 500-row page:
+# batch 16 peaked at 448 MB — with ingest spools and request traffic on top, that is the
+# Sep 13 mid-run kill — while batch 4 peaks at 231 MB at the same throughput.
+# Vectors shift slightly with batch composition (dynamic quantization scales over the
+# whole batch; cosine ≥0.99 vs batch 16), the same noise already present between
+# batch-16 documents and batch-1 queries — so no re-embed is needed.
+DEFAULT_BATCH_SIZE = 4
 
 # Guards _instance for BOTH get and release. FastAPI runs sync endpoints in a
 # threadpool, so a semantic-search request can call get_embedder() at the same
