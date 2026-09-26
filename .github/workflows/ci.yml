@@ -118,7 +118,9 @@ jobs:
         run: |
           python -m alembic upgrade head
           ONLY=$(python ../tools/upgrade/build_fixture_replay.py "$RUNNER_TEMP/replay")
-          python ../tools/upgrade/replay_ingest.py "$RUNNER_TEMP/replay" --seed --no-embed --only "$ONLY"
+          python ../tools/upgrade/replay_ingest.py "$RUNNER_TEMP/replay" --seed --no-embed --only "$ONLY" | tee "$RUNNER_TEMP/seed.json"
+          # A seed that loaded nothing would only surface later as confusing "no cards" failures.
+          python -c "import json,sys; r=json.loads(open(sys.argv[1]).read().strip().splitlines()[-1]); sys.exit(0 if r['jobs_seen'] > 0 else 'seed loaded 0 jobs')" "$RUNNER_TEMP/seed.json"
       - name: Start the API
         working-directory: api
         run: |
@@ -141,9 +143,16 @@ jobs:
       - name: Lighthouse budget (feed, mobile)
         working-directory: tools/upgrade/web
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npx playwright install chromium
-          node lh-budget.mjs "http://localhost:3000/jobs?level=intern" 3
+          node lh-budget.mjs "http://localhost:3000/jobs?level=intern" 5
       - name: Server logs on failure
         if: failure()
         run: tail -n 100 "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/web.log" || true
+      - name: Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: web/test-results
+          if-no-files-found: ignore

@@ -1,5 +1,5 @@
 // Lighthouse budget for CI: median of N mobile runs of one URL, then assert.
-// usage: node lh-budget.mjs <url> [runs=3]
+// usage: node lh-budget.mjs <url> [runs=5]
 //   LCP_BUDGET_MS (default 3500) and CLS_BUDGET (default 0.1) fail the job when exceeded.
 //   LCP_TARGET_MS (default 2500, the plan's goal) is reported, not enforced, until the
 //   feed meets it; then set LCP_BUDGET_MS to it. Local runs of the same build vary by
@@ -8,10 +8,16 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const url = process.argv[2];
-const runs = process.argv[3] ?? "3";
-const lcpBudget = Number(process.env.LCP_BUDGET_MS ?? 3500);
-const lcpTarget = Number(process.env.LCP_TARGET_MS ?? 2500);
-const clsBudget = Number(process.env.CLS_BUDGET ?? 0.1);
+const runs = process.argv[3] ?? "5";
+const num = (name, fallback) => {
+  const v = Number(process.env[name] ?? fallback);
+  // A typo'd budget would make every comparison false and pass silently.
+  if (!Number.isFinite(v) || v <= 0) throw new Error(`${name} must be a positive number`);
+  return v;
+};
+const lcpBudget = num("LCP_BUDGET_MS", 3500);
+const lcpTarget = num("LCP_TARGET_MS", 2500);
+const clsBudget = num("CLS_BUDGET", 0.1);
 
 const out = execFileSync(process.execPath, [fileURLToPath(new URL("./lh.mjs", import.meta.url)), url, runs, "budget"], {
   encoding: "utf8",

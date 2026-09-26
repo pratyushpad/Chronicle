@@ -149,6 +149,13 @@ async def _send_email(to: str, subject: str, html: str) -> bool:
 
 async def run_alerts(session: Session, run_start: datetime) -> None:
     now = datetime.now(timezone.utc)
+    if RESEND_API_KEY and not email_configured():
+        # Before PR 6, RESEND_FROM had a default, so a server with only the key set sent
+        # digests (with localhost links). Now all three are required: say so loudly.
+        log.warning(
+            "RESEND_API_KEY is set but RESEND_FROM or APP_URL is not: email digests are paused "
+            "(in-app notifications still go out). Set both on the API server to resume."
+        )
 
     # Honor the chosen cadence (slightly under the nominal period so a run that lands
     # a few minutes early doesn't silently push every digest a full day/week out).

@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ingest import alerts
+from app.ingest.alerts import _ALERT_COLUMNS
 from app.models import AlertFrequency, ATSSource, Company, Job, Notification, SavedSearch, User
 
 
@@ -40,5 +41,7 @@ def test_alert_run_notifies_without_loading_descriptions(pg_engine, monkeypatch)
             notes = s.execute(select(Notification).where(Notification.user_id == user.id)).scalars().all()
             assert len(notes) == 1 and notes[0].payload["sample_titles"] == ["Robotics Intern <b>"]
             assert sent == ["alert-test@example.com"]  # attempted; _send_email itself gates on config
+            loaded = {c.key for c in _ALERT_COLUMNS}
+            assert "description_text" not in loaded and "embedding" not in loaded
         finally:
             outer.rollback()
