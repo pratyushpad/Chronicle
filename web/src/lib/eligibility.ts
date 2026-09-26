@@ -9,7 +9,7 @@
 import type { JobListItem } from "@/lib/api";
 
 // Held-out results (docs/extraction_eval.md, 85 postings): term 0.98, degree levels 0.98,
-// country 0.98 ship. Not yet: MS/PhD-only (precision 1.00 but only 6 predictions),
+// country 1.00 ship. Not yet: MS/PhD-only (precision 1.00 but only 6 predictions),
 // clearance (1.00, 3 predictions), workplace (0.89), U.S. person (0.75), and citizenship
 // (no posting in the set requires it, so it can't be measured). Their filters and toggles
 // are built and switch on here once a larger labeled set clears the bar.
@@ -32,6 +32,16 @@ export const INTERN_DEFAULT_HIDES: { key: Restriction; param: string; include: s
   { key: "citizenship", param: "hide_citizen_required", include: "include_citizen_required", label: "U.S. citizens only" },
   { key: "clearance", param: "hide_clearance_required", include: "include_clearance_required", label: "Security clearance required" },
 ];
+
+/** Drop malformed term/country params (a hand-typed "?country=usa" would otherwise make
+ *  the API reject the whole feed request). */
+export function validTerm(v: string | undefined): string | undefined {
+  return v && /^(summer|fall|spring|winter)(-20\d\d)?$/.test(v) ? v : undefined;
+}
+
+export function validCountry(v: string | undefined): string | undefined {
+  return v && /^[A-Za-z]{2}$/.test(v) ? v.toUpperCase() : undefined;
+}
 
 export function isInternView(sp: Record<string, string | undefined>): boolean {
   return sp.level === "intern" || sp.experience_level === "Internship";
@@ -88,8 +98,11 @@ export function eligibilityFacts(job: JobListItem): { label: string; value: stri
   const levels = job.degree_levels ?? [];
   if (RELEASED.gradOnly && levels.length > 0 && !levels.includes("bachelor")) {
     facts.push({ label: "Degree", value: "Master's or PhD students", restrictive: true });
-  } else if (RELEASED.degree && levels.length > 0) {
-    facts.push({ label: "Open to", value: levels.map((l) => DEGREE[l] ?? l).join(", ") });
+  } else if (RELEASED.degree && levels.includes("bachelor")) {
+    // "Degrees mentioned", not "open to": the posting names these levels, which doesn't
+    // mean others are excluded. A list without bachelor's is the MS/PhD-only claim, which
+    // isn't released, so it isn't shown at all.
+    facts.push({ label: "Degrees mentioned", value: levels.map((l) => DEGREE[l] ?? l).join(", ") });
   }
   if (RELEASED.country && job.country) facts.push({ label: "Country", value: countryName(job.country) });
   if (RELEASED.citizenship && job.us_citizen_required) {

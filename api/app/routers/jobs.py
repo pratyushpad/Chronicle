@@ -4,7 +4,7 @@ from math import ceil
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, func, or_, select, text, true
+from sqlalchemy import and_, any_, func, literal, or_, select, text, true
 from sqlalchemy.orm import Session, defer
 
 from app.db import get_session
@@ -190,7 +190,7 @@ def list_jobs(
             s = s.where(or_(
                 Job.degree_levels.is_(None),
                 func.cardinality(Job.degree_levels) == 0,
-                Job.degree_levels.any("bachelor"),
+                literal("bachelor") == any_(Job.degree_levels),
             ))
         if term:
             season, _, year = term.partition("-")

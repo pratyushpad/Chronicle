@@ -7,7 +7,7 @@ import { Pagination } from "@/components/Pagination";
 import { JobListSkeleton } from "@/components/JobCardSkeleton";
 import { formatNumber } from "@/lib/utils";
 import { boardsRechecked, relativeAge } from "@/lib/format";
-import { RELEASED, effectiveHides } from "@/lib/eligibility";
+import { RELEASED, effectiveHides, validCountry, validTerm } from "@/lib/eligibility";
 
 interface PageProps {
   searchParams: Promise<Record<string, string>>;
@@ -35,9 +35,9 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
     since_last_run: searchParams.since_last_run === "true" ? true : undefined,
     sort: ["newest", "relevance", "pay"].includes(searchParams.sort) ? searchParams.sort : undefined,
     ...effectiveHides(searchParams),
-    term: RELEASED.term ? searchParams.term : undefined,
+    term: RELEASED.term ? validTerm(searchParams.term) : undefined,
     workplace: RELEASED.workplace ? searchParams.workplace : undefined,
-    country: RELEASED.country ? searchParams.country : undefined,
+    country: RELEASED.country ? validCountry(searchParams.country) : undefined,
     page,
     page_size: compact ? 40 : 20,
   };

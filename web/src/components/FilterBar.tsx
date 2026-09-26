@@ -39,7 +39,12 @@ const SEARCH_MODES = [
 ] as const;
 
 // Params the drawer owns (its button shows how many are set).
-const DRAWER_KEYS = ["company", "company_id", "industry", "employment_type", "since_last_run", "mode", "term", "workplace", "country"];
+const DRAWER_KEYS = [
+  "company", "company_id", "industry", "employment_type", "since_last_run", "mode",
+  ...(RELEASED.term ? ["term"] : []),
+  ...(RELEASED.workplace ? ["workplace"] : []),
+  ...(RELEASED.country ? ["country"] : []),
+];
 
 const control =
   "h-11 w-full min-w-0 border border-input bg-background px-3 font-sans text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none";

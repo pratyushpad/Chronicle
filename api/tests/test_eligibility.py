@@ -75,9 +75,40 @@ def test_pay_table_degree_rows_are_not_degree_requirements():
     ("Austin, TX", "US"), ("South San Francisco, California, USA", "US"), ("London", "GB"),
     ("Munich, Germany", "DE"), ("Brisbane, Queensland, Australia", "AU"), ("United States", "US"),
     ("CA", None), ("GB", "GB"), ("Remote", None), (None, None),
+    # ISO codes that spell U.S. states; a province; foreign-named U.S. towns.
+    ("Toronto, CA", "CA"), ("Montreal, QC, CA", "CA"), ("Berlin, DE", "DE"), ("Tel Aviv, IL", "IL"),
+    ("Bengaluru, KA, IN", "IN"), ("Buenos Aires, AR", "AR"), ("Jakarta, ID", "ID"), ("Medellin, CO", "CO"),
+    ("London, ON", "CA"), ("London, KY", "US"), ("Paris, TX", "US"), ("New York, New York, NY", "US"),
+    ("San Francisco, CA • New York, NY", "US"),
 ])
 def test_country_codes(value, code):
     assert country_code(value) == code
+
+
+@pytest.mark.parametrize("title, text", [
+    ("Summer 10-Week Internship", ""),
+    ("Operations Intern", "Join our summer 12 week internship program."),
+])
+def test_durations_are_not_years(title, text):
+    assert extract_eligibility(title, None, text, {}).term_year is None
+
+
+def test_two_digit_year_needs_an_apostrophe():
+    e = extract_eligibility("Intern, Summer '27", None, "", {})
+    assert (e.term_season, e.term_year) == ("summer", 2027)
+
+
+@pytest.mark.parametrize("text", [
+    "Students proficient in MS Excel and MS Office are encouraged to apply.",
+    "You will work alongside PhD researchers and students.",
+])
+def test_software_and_colleagues_are_not_degree_requirements(text):
+    assert extract_eligibility("Operations Intern", None, text, {}).degree_levels is None
+
+
+def test_without_is_not_a_stated_no():
+    e = extract_eligibility("Intern", None, "Must be a U.S. citizen and able to start without delay.", {})
+    assert e.us_citizen_required is True
 
 
 def test_unknown_is_never_a_no():

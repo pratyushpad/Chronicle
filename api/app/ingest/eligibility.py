@@ -97,8 +97,7 @@ _NON_CITIZEN_ALT_RE = re.compile(
     re.I,
 )
 _NOT_REQUIRED_RE = re.compile(
-    r"\b(?:not|no|isn['’]t|is not|doesn['’]t|does not)\b[^.]{0,40}\b(?:required|requirement|necessary|need)\b|"
-    r"\bwithout (?:a |an )?\b",
+    r"\b(?:not|no|isn['’]t|is not|doesn['’]t|does not)\b[^.]{0,40}\b(?:required|requirement|necessary|need)\b",
     re.I,
 )
 _SPONSOR_OK_RE = re.compile(r"\b(?:will|can|do|does|able to|happy to)\s+(?:provide\s+)?sponsor", re.I)
@@ -177,10 +176,13 @@ def _citizenship(sections: list[tuple[str, bool]]) -> tuple[bool | None, bool | 
 # ── term ─────────────────────────────────────────────────────────────────────
 
 _SEASON = r"(summer|fall|autumn|spring|winter)"
-_SEASON_YEAR_RE = re.compile(rf"\b{_SEASON}\s*['’]?\s*(20\d\d|\d\d)\b", re.I)
+# A year is four digits, or two after an apostrophe ("Summer '27"): "Summer 10-Week
+# Internship" is not Summer 2010.
+_YEAR = r"(20\d\d|['’]\d\d)\b(?!\s*-?\s*(?:weeks?|wks?|hours?|hrs?|days?|months?)\b)"
+_SEASON_YEAR_RE = re.compile(rf"\b{_SEASON}\s*{_YEAR}", re.I)
 _YEAR_SEASON_RE = re.compile(rf"\b(20\d\d)\s+{_SEASON}\b", re.I)
 # "Spring/Summer 2027", "Fall or Winter 2026": the first season listed, with the year.
-_SEASON_PAIR_YEAR_RE = re.compile(rf"\b{_SEASON}\s*(?:/|or|and|&|,)\s*{_SEASON}\s*['’]?\s*(20\d\d|\d\d)\b", re.I)
+_SEASON_PAIR_YEAR_RE = re.compile(rf"\b{_SEASON}\s*(?:/|or|and|&|,)\s*{_SEASON}\s*{_YEAR}", re.I)
 _TERM_CONTEXT_RE = re.compile(r"\bintern(?:ship)?s?\b|\bco-?op\b|\bprogram\b|\bstart(?:ing|s)?\b|\bcohort\b", re.I)
 _GRAD_CONTEXT_RE = re.compile(r"graduat|degree completion|class of", re.I)
 _INTERN_TITLE_RE = re.compile(r"\bintern(?:ship)?s?\b|\bco-?op\b|\bapprentice", re.I)
@@ -192,7 +194,7 @@ def _norm_season(s: str) -> str:
 
 
 def _norm_year(y: str) -> int:
-    n = int(y)
+    n = int(y.lstrip("'’"))
     return 2000 + n if n < 100 else n
 
 
@@ -238,8 +240,18 @@ _DEGREE_PATTERNS = {
         r"\bBSc\b|\bBEng\b|\bsophomore|\bjunior(?:s)?\b(?= (?:or|and|year|standing))|\brising (?:junior|senior)",
         re.I,
     ),
-    "master": re.compile(r"\bmaster['’]?s?\b|\bM\.?\s?S\.?(?:c\.?)?(?=[\s,/)]|$)|\bMSc\b|\bMEng\b|\bM\.?Eng\b", re.I),
-    "phd": re.compile(r"\bPh\.?\s?D\.?s?\b|\bdoctoral\b|\bdoctorate\b", re.I),
+    # Not "MS Excel", "MS Office" …: Microsoft, not a master's.
+    "master": re.compile(
+        r"\bmaster['’]?s?\b|\bM\.?\s?S\.?(?:c\.?)?(?=[\s,/)]|$)"
+        r"(?!\s*(?:Office|Excel|Word|Teams|Project|Access|SQL|Azure|Dynamics|PowerPoint|Outlook|Visio|365)\b)|"
+        r"\bMSc\b|\bMEng\b|\bM\.?Eng\b",
+        re.I,
+    ),
+    # Not "PhD researchers/scientists": colleagues, not who may apply.
+    "phd": re.compile(
+        r"\b(?:Ph\.?\s?D\.?s?|doctoral|doctorate)\b(?!\s+(?:researchers?|scientists?|holders?|staff|team|engineers?)\b)",
+        re.I,
+    ),
 }
 _GRAD_STUDENT_RE = re.compile(
     r"(?<!under)\bgraduate (?:students?|degree|program|studies|concentration|level)\b|\bpost-?graduate\b", re.I)
@@ -364,7 +376,17 @@ _COUNTRY_NAMES = {
     "south africa": "ZA", "nigeria": "NG", "kenya": "KE", "egypt": "EG", "turkey": "TR", "greece": "GR",
     "hungary": "HU", "ukraine": "UA", "estonia": "EE", "lithuania": "LT", "latvia": "LV", "serbia": "RS",
 }
+_CA_PROVINCES = {"on", "qc", "bc", "ab", "mb", "sk", "ns", "nb", "nl", "pe", "ontario", "quebec", "british columbia", "alberta"}
 _CITY_COUNTRY = {
+    "buenos aires": "AR", "jakarta": "ID", "medellin": "CO", "medellín": "CO", "bogota": "CO",
+    "bogotá": "CO", "santiago": "CL", "lima": "PE", "cape town": "ZA", "johannesburg": "ZA",
+    "lagos": "NG", "nairobi": "KE", "cairo": "EG", "istanbul": "TR", "athens": "GR", "budapest": "HU",
+    "bucharest": "RO", "kyiv": "UA", "tallinn": "EE", "vilnius": "LT", "riga": "LV", "belgrade": "RS",
+    "manila": "PH", "ho chi minh city": "VN", "kuala lumpur": "MY", "bangkok": "TH", "shanghai": "CN",
+    "beijing": "CN", "shenzhen": "CN", "osaka": "JP", "vienna": "AT", "brussels": "BE", "helsinki": "FI",
+    "haifa": "IL", "jerusalem": "IL", "chennai": "IN", "noida": "IN", "kolkata": "IN", "delhi": "IN",
+    "brisbane": "AU", "perth": "AU", "wellington": "NZ", "christchurch": "NZ", "rio de janeiro": "BR",
+    "guadalajara": "MX", "monterrey": "MX", "abu dhabi": "AE", "riyadh": "SA", "doha": "QA",
     "london": "GB", "manchester": "GB", "cambridge, uk": "GB", "edinburgh": "GB", "toronto": "CA",
     "vancouver": "CA", "montreal": "CA", "waterloo": "CA", "ottawa": "CA", "calgary": "CA", "berlin": "DE",
     "munich": "DE", "münchen": "DE", "hamburg": "DE", "frankfurt": "DE", "cologne": "DE", "paris": "FR",
@@ -397,12 +419,36 @@ def country_code(value: str | None) -> str | None:
     low = v.lower()
     if low in _COUNTRY_NAMES:
         return _COUNTRY_NAMES[low]
-    first = re.split(r"\s*[;|/]\s*|\s+or\s+", low)[0]
+    first = re.split(r"\s*[;|/•·]\s*|\s+or\s+", low)[0]
     parts = [p.strip(" .") for p in first.split(",") if p.strip(" .")]
+    # A full country name anywhere wins.
+    for p in reversed(parts):
+        if p in _COUNTRY_NAMES and len(p) > 2:
+            return _COUNTRY_NAMES[p]
+    # "City, Region, CC": a trailing two-letter part after a region is an ISO code.
+    # ("Bengaluru, KA, IN", "Montreal, QC, CA"); but "New York, New York, NY" is a state.
+    if len(parts) >= 3 and re.fullmatch(r"[a-z]{2}", parts[-1]):
+        region = parts[-2]
+        if parts[-1] not in _US_STATES or (region not in _US_STATES and region not in _US_STATE_NAMES):
+            return parts[-1].upper()
+    # A known city decides before any two-letter code: "Toronto, CA" and "Berlin, DE" are
+    # Canada and Germany, not California and Delaware.
+    if len(parts) == 2 and parts[1] in _CA_PROVINCES:
+        return "CA"  # "London, ON"
+    city_code = next((code for city, code in _CITY_COUNTRY.items() if parts and parts[0] == city), None)
+    if city_code:
+        second = parts[1] if len(parts) > 1 else ""
+        # "Paris, TX" / "London, KY" are American; "Berlin, DE" and "Toronto, CA" name the
+        # city's own country with its ISO code, which happens to spell a state.
+        if second in _US_STATES and second.upper() != city_code:
+            return "US"
+        return city_code
     for p in reversed(parts):
         if p in _COUNTRY_NAMES:
             return _COUNTRY_NAMES[p]
-        if p in _US_STATES or p in _US_STATE_NAMES:
+        if p in _US_STATE_NAMES:
+            return "US"
+        if p in _US_STATES:
             return "US"
     for city, code in _CITY_COUNTRY.items():
         if re.search(rf"(?<![a-z]){re.escape(city)}(?![a-z])", first):
