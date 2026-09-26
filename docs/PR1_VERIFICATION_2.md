@@ -165,8 +165,74 @@ No blocking bugs found. In order of severity:
 - Nothing I found is a regression or a data-loss risk.
 - Worth a follow-up PR (not blocking): M1 (salary-scale ranges without a pay label) and L1 (`?host=` guard bypass).
 - Follow the runbook exactly: pause ingest, backup branch, migrate, backfill dry run then `--apply`, merge, re-enable ingest.
+- *Amended after the comparison in §6:* adopt the first verifier's runbook change (F1): run the backfill `--apply` immediately before merging (or just after deploy), and roll back by restoring the Neon backup branch.
 - Not verified by me: the replica-scale numbers, signed-in mobile views, and the live Vercel preview (blocked by the sandbox network).
 
 ## 6. Comparison with the first verifier
 
-_(empty — fill this in only AFTER sections 1–5 are written, by reading docs/PR1_VERIFICATION.md on branch `upgrade/pr1-verification`.)_
+_Written after sections 1–5 were committed (commit `6c6e392`), from `docs/PR1_VERIFICATION.md` on
+`upgrade/pr1-verification` (status: complete, 2026-09-26)._
+
+**Verdicts agree.** Both reports say PR 1 is correct and safe to merge after the Neon
+migration and backfill. Report 1 adds one runbook change (its F1), which I re-checked and
+accept (below).
+
+**Checks where we agree.** We got the same results independently:
+- pytest: 360 passed / 8 skipped without a DB; 368 passed / 0 skipped with one;
+- migration round-trip;
+- `eval_pay` reproduces `docs/pay_eval.md` exactly (77/80, 62/65, 117/120, 0/39);
+- hash v2 adopts legacy hashes and keeps embeddings, and v2↔v2 changes null them;
+- the backfill: dry run writes nothing, it terminates, it's idempotent, it skips v2 rows,
+  never touches hash/embedding and never clears pay;
+- tsc, lint, vitest 32/32 and the build are clean;
+- the Vercel preview was unreachable for both of us, so both ran a local build against a local
+  API. Both found 0 overflow at 360/390/414 and 20/20 cards visible under reduced motion;
+- nav breakpoint is `lg`, not `md` (my L5, their F6).
+
+**Findings we both made, in different words:**
+- **Invented pay from non-pay money.** My M1 and their F2 are the same weakness reached two
+  ways. Mine: an unlabeled range with both ends ≥ 20k counts as a salary (`pay.py:650`). Theirs:
+  an explicit period cue with no label counts as pay (`pay.py:651`, "Customers save $50,000 per
+  year"). Both are real; I reproduced cue-only cases too ("Customers pay $15 - $30 per hour").
+  Their extra point is also right: an unlabeled false positive can outrank an unlabeled real
+  wage, because ties go to the earliest candidate. We rate it the same way: real, not a
+  regression for most cases, a follow-up, not a blocker. The fix should cover both paths.
+- **Legacy fake salaries survive the backfill** (my L3, their F3). Same finding. Small
+  correction to report 1: it says no endpoint filters on `salary_*`, but For You does.
+  `recommendations.py:189` drops jobs whose `salary_max` is under the user's salary floor.
+  A stale legacy value can therefore still affect For You until that row is re-ingested.
+  Still low severity.
+
+**Only in report 1. I re-checked each; all are right:**
+- **F1 (medium): the `posted_at` backfill hurts the old code's feed.** Confirmed from the code:
+  `main` orders the feed by `Job.posted_at` desc, nulls last (`origin/main:api/app/routers/jobs.py:101`),
+  filters `posted_after` on `posted_at` (`:146`), and uses `posted_at` for For You recency
+  (`recommendations.py:125`). So once the backfill nulls ~31.7k Greenhouse `posted_at` values,
+  every Greenhouse role sinks below all Lever/Ashby roles until the new code deploys. After a
+  code-only rollback with ingest paused, that lasts indefinitely. I missed this; it's the most
+  important runbook point in either report. **I adopt their fix:** run `--apply` immediately
+  before merging, or just after the deploy (the new code handles un-backfilled rows through
+  `LEAST(posted_at, first_seen_at)` and NULL `pay_*`), and roll back by restoring the Neon
+  backup branch, not by reverting code alone.
+- **F4 (low):** the `posted_at` step is one unbatched UPDATE. Confirmed (`backfill_pr1.py`,
+  step 3). It's fine with ingest paused.
+- **F5 (low, pre-existing):** alert-email HTML interpolates `job.title`, `company_name`,
+  `apply_url` and `search.name` unescaped (`alerts.py:51,64,67,71,80`). Confirmed. It isn't
+  introduced by this PR, and PR 6 plans it.
+- **Neon headroom:** check storage and vacuum after the backfill (~65k dead row versions).
+  Reasonable; I hadn't raised it.
+
+**Only in report 2 (this one):**
+- **L1 (low):** the dbguard can be bypassed with `?host=` in the URL. Report 1 tested only
+  normal URLs. Reproduced above: psycopg2 connects to the query-string host.
+- **L2:** a genuine edit coinciding with a row's first v2 ingest keeps the stale embedding. The
+  code comment documents this; report 1 mentions the hash trade-offs but not this one.
+- **Doc error in `docs/pay_eval.md`:** one of the two PsiQuantum misses *does* have `$` symbols.
+- **Exact department matching changes behaviour for saved searches and the Engineering
+  filter** (L4).
+
+**Combined verdict:** correct and safe to merge after the Neon runbook, **with report 1's F1
+change to the runbook**: apply the backfill right before (or right after) the merge, and roll
+back by restoring the Neon backup branch. Follow-ups, not blockers: tighten free-text pay
+evidence (M1/F2, both paths), close the `?host=` guard bypass (L1), escape alert emails (F5,
+PR 6).
