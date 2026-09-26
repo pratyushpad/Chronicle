@@ -1,5 +1,40 @@
 # Upgrade handoff: PR 2–8 in a cloud session
 
+## Status after the cloud session (2026-09-26)
+
+All of PR 2–8 are open as **stacked drafts**. Each is based on the previous one; merge them
+in order after PR 1. The migrations run before their merge, with the runbook in each PR body.
+
+| PR | Branch | State | Neon step | Owner action |
+|---|---|---|---|---|
+| [#1](https://github.com/pratyushpad/Chronicle/pull/1) Correctness | `upgrade/pr1-correctness` | two verifiers: safe to merge | migration + backfill | run the runbook, merge |
+| [#2](https://github.com/pratyushpad/Chronicle/pull/2) Job pages | `upgrade/pr2-job-pages` | draft, CI green | none | — |
+| [#3](https://github.com/pratyushpad/Chronicle/pull/3) Design | `upgrade/pr3-design` | draft, CI green | none | — |
+| [#4](https://github.com/pratyushpad/Chronicle/pull/4) Student filters | `upgrade/pr4-student-filters` | draft, CI green | migration (10 nullable columns) | run before merge |
+| [#5](https://github.com/pratyushpad/Chronicle/pull/5) Coverage | `upgrade/pr5-coverage` | draft, **partial** | none | Workday/Workable need a session with network access to their hosts |
+| [#6](https://github.com/pratyushpad/Chronicle/pull/6) Quality gates | `upgrade/pr6-quality-gates` | draft, CI green (incl. e2e) | none | set RESEND_API_KEY / RESEND_FROM / APP_URL on Render for email |
+| [#7](https://github.com/pratyushpad/Chronicle/pull/7) Refresh | `upgrade/pr7-refresh` | draft | migration (run lock) | NEON_DATABASE_URL secret + go-ahead before scheduling Actions ingest |
+| #8 Docs | `upgrade/pr8-docs` | draft | none | — |
+
+**What that session could not do, and why.** The sandbox's network policy blocked the job
+boards, huggingface.co and the Workable/Workday hosts. As a result:
+
+- the replica for PR 2–8 was built from the 119 committed real postings
+  (`tools/upgrade/build_fixture_replay.py`), not a fresh recording;
+- similar roles were checked locally with stand-in vectors;
+- the PR 4 labeled set is 135 postings, not about 200;
+- PR 5's adapters are not built.
+
+**Still open, in plan order:**
+
+- PR 4's default hides (citizenship, clearance, MS/PhD-only) wait on a larger labeled set.
+  Split it by company.
+- The LCP ≤ 2.5 s goal (feed measures about 3.0 s in CI).
+- Measure the full-refresh cycle once the Actions ingest is scheduled.
+- The Workday and Workable adapters.
+
+All numbers: [`metrics.md`](metrics.md).
+
 PR 1 was built and verified locally (`upgrade/pr1-correctness`, PR #1 — https://github.com/pratyushpad/Chronicle/pull/1). PR 2–8 of
 `docs/UPGRADE_PLAN.md` are meant to run in Claude Code on the web (claude.ai/code), so the
 maintainer's computer can be off. This file is the complete context for that session.
