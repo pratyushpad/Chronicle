@@ -165,6 +165,12 @@ def _select(cands: list[_Cand], source: str) -> Pay | None:
         )
 
     (period, currency), members = max(groups.items(), key=lambda kv: rank(kv[1]))
+    # Stray unlabeled amounts that share the period ("Fertility HRA up to $10,000 per
+    # year" next to a labeled salary band) must not widen the band.
+    # (an explicit period cue keeps a member too: "$55/hr for Bachelors and $59/hr for
+    # Master's" labels only the first rate.)
+    if any(c.labeled for c in members):
+        members = [c for c in members if c.labeled or c.strength == 2]
     return Pay(
         min=min(c.lo for c in members),
         max=max(c.hi for c in members),
@@ -328,7 +334,7 @@ _SYMBOLS = {
 }
 _SYM = r"(?<![A-Za-z])(?:US|CA|AU|NZ|SG|HK|MX|C|A|S|R)\$|\$|£|€|₹"
 # 150,000 · 1,234,567.89 · 45.000 / 1.234,56 (European) · 6,00,000 (Indian) · 38.47 · 45,50
-_NUM = r"\d{1,3}(?:[,.]\d{3})+(?:[.,]\d{1,2})?|\d{1,2}(?:,\d{2})+,\d{3}(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?"
+_NUM = r"\d{1,3}(?:[,.]\d{3})+(?:[.,]\d{1,2})?|\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?:[.,]\d{1,2})?|\d{1,2}(?:,\d{2})+,\d{3}(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?"
 _K = r"(?P<k>[kK](?![A-Za-z]))?(?!\s?%)"
 _MULT = r"(?P<mult>\+?\s?(?:million|billion|trillion|mln|bln|bn|mn|mm)\b|[mMbBtT](?![A-Za-z]))?"
 
@@ -358,7 +364,7 @@ _BARE_FIRST_RE = re.compile(
 # Explicit period right after an amount: "/hr", "/ HR", "per hour", "an hour", "USD Hourly",
 # "/per year", "annually", "a month", "p.a." …
 _AFTER_CUE_RE = re.compile(
-    r"^\s*\)?\s*(?:(?:net|gross)\s+)?(?:(?:/\s*per|/|per|an?|each)\s*(?P<unit>hour|hr|h|day|week|wk|month|mo|year|yr|annum|pay\s?period)\b"
+    r"^\s*\)?\s*(?:(?:net|gross)\s+)?(?:(?:/\s*per|/|per|an?|each)\s*(?P<unit>hour|hr|h|day|week|wk|month|mo|year|yr|annum|pay\s?period|night)\b"
     r"|(?P<adv>hourly|daily|weekly|monthly|annually|yearly|annual|p\.\s?a\.|p/h))",
     re.I,
 )
@@ -369,7 +375,7 @@ _UNIT_PERIOD = {
     "yearly": "year", "annual": "year", "p.a.": "year", "p. a.": "year", "p/h": "hour",
     # "$20/pay period cell phone reimbursement": an explicit unit that is none of ours —
     # the amount is dropped rather than read as $20/hr by magnitude.
-    "pay period": "pay_period", "payperiod": "pay_period",
+    "pay period": "pay_period", "payperiod": "pay_period", "night": "night",
 }
 # Explicit period somewhere in the lead-in: "The expected hourly range for this role is …"
 _BEFORE_CUE_RE = re.compile(
@@ -382,14 +388,14 @@ _BEFORE_CUE_RE = re.compile(
 _LABEL_RE = re.compile(
     r"(?P<ex>(?:incentive|variable|bonus|commission|on[\s-]?target)\s+(?:pay|compensation|comp|earnings)|"
     r"total\s+(?:target(?:ed)?\s+)?(?:cash|comp\w*|rewards)(?:\s+(?:range|package|target))?|"
-    r"quotas?|\bacv\b|deal\s+sizes?|book\s+of\s+business|"
+    r"quotas?|\bacv\b|\bdeals?\b(?:\s+sizes?)?|book\s+of\s+business|"
     r"\bote\b|on[\s-]?target|variable|bonus(?:es)?|commissions?|equity|\bstock\b|\brsus?\b|"
     r"incentive|allowance|budget|reimburs\w*|"
     r"relocation|sign[\s-]?on|signing|401\s*\(?k\)?|\bmatch\b|credits?\b|raised|funding|valuation|"
     r"revenue|\barr\b|\bspend\b|saved|traded|invest\w*|donat\w*|\bgrants?\b|prizes?|awards?|"
     r"\bfees?\b|\bcosts?\b|\bprice|tuition|per\s+diem|discount|referral|learning|wellness|"
     r"transport\w*|commut\w*|\bphone\b|internet|home[\s-]office|equipment|\blunch|\bmeals?\b|"
-    r"\bgym\b|fitness|childcare|housing|\btravel\b)"
+    r"\bgym\b|fitness|childcare|housing|\btravel\b|\bhra\b|\bfsa\b|\bhsa\b|fertility|insurance|premiums?)"
     r"|(?P<inc>\bbase\b|salar(?:y|ies)|\bpay\b|\bwages?\b|\brates?\b|hourly|compensation|"
     r"\branges?\b|\bearn\w*|\bpaid\b)",
     re.I,
@@ -410,7 +416,8 @@ _NOT_WAGE_NOUNS_RE = re.compile(
     r"\b(?:budgets?|allowances?|bonus(?:es)?|credits?|reimburse\w*|relocation|equity|stock|rsus?|"
     r"funding|raised|revenue|arr|valuation|signing|sign-on|referral|education|learning|wellness|"
     r"home|equipment|phone|internet|gym|fitness|commut\w*|transport\w*|meals?|lunch|food|"
-    r"childcare|travel|housing|towards?|ote|quotas?)\b",
+    r"childcare|travel|housing|towards?|ote|quotas?|commissions?|deals?|arr|acv|nights?|"
+    r"gift|cards?|hra|fsa|hsa|premiums?|insurance)\b",
     re.I,
 )
 # An amount restated in another currency right after the first ("$75/£75", "$100 (£80)")
@@ -423,12 +430,25 @@ _CLAUSE_BREAK_RE = re.compile(r"[.!?;](?=\s)|\n")
 # schedule ("(5 days per week)"). An "(including base salary and on-target incentive
 # pay)" aside is kept: it's what marks an OTE figure as not-base.
 _ASIDE_RE = re.compile(
-    r"\((?:excluding|exclusive of|not including|in addition to|plus)\b[^()]*\)"
+    r"\([^()]*\b(?:excluding|exclusive of|not including|does not include|do not include|in addition to)\b[^()]*\)"
+    r"|\((?:plus)\b[^()]*\)"
     r"|\([^()]*\b(?:days?|hours?)\s+(?:per|a|each)\s+(?:week|month|day)\b[^()]*\)"
     r"|\b(?:excluding|exclusive of|not including|in addition to)\b[^:$()]*",
     re.I,
 )
-_STATED_BASE_RE = re.compile(r"\bbase\b|salar(?:y|ies)|\bwages?\b", re.I)
+# The lead-in INTRODUCES the amount as base pay: "Base Salary: ", "salary of ",
+# "base pay range is ". (" base salary and " before a second amount does not — that
+# label belonged to the amount before it.)
+_STATED_BASE_RE = re.compile(
+    r"(?:\bbase\b|salar(?:y|ies)|\bwages?\b)[^.$:]{0,30}(?::|\b(?:is|of|between|from|at)\b)[^$]{0,20}$",
+    re.I,
+)
+# A pay word within the few words AFTER an amount: "$120,000 base", "$72,000 base salary",
+# "$23- $31.65 The salary range above reflects …".
+_AFTER_INC_RE = re.compile(
+    r"^[\s)\]:,.\-]{0,4}(?:[A-Za-z][\w'-]*\s+){0,3}?(?:base\b|salar(?:y|ies)|wages?\b|pay\b|compensation|hourly)",
+    re.I,
+)
 
 
 def _after_excluded(after: str) -> bool:
@@ -459,9 +479,11 @@ class _TextCand:
     excluded: bool
     start: int
     end: int
+    after_labeled: bool = False  # a pay word right AFTER the amount ("$120,000 base")
 
 
 def _num(s: str) -> Decimal | None:
+    s = re.sub(r"[ \u00a0\u202f](?=\d{3}\b)", "", s)  # "86 000" (European thousands)
     if re.fullmatch(r"\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?", s):  # 45.000 / 1.234,56
         s = s.replace(".", "").replace(",", ".")
     elif re.fullmatch(r"\d+,\d{1,2}", s):  # 45,50
@@ -588,6 +610,7 @@ def _text_candidates(text: str) -> list[_TextCand]:
             weak="year" if _SALARY_WORD_RE.search(lead) else None,
             labeled=bool(last and last.group("inc")),
             excluded=bool(last and last.group("ex")) or (_after_excluded(after) and not stated_base),
+            after_labeled=bool(_AFTER_INC_RE.match(after)),
             start=start, end=end,
         )
         prev = out[-1] if out else None
@@ -618,7 +641,17 @@ def parse_pay_text(text: str | None) -> Pay | None:
     for t in _text_candidates(text):
         if t.excluded:
             continue
-        c = _resolve(t.lo, t.hi, t.currency, t.cue, t.weak, t.start, labeled=t.labeled, reinterpret=False)
+        # Free text needs evidence that an amount is pay at all: a pay label ("salary",
+        # "pay range", "hourly rate" …), "salary" in the lead-in, or an explicit period
+        # cue. Magnitude alone only decides the PERIOD of an amount already known to be
+        # pay — otherwise "$500K+ deals", "$50 gift card" or "($10–15M ARR)" read as pay.
+        # A RANGE whose both ends are salary-scale ("CAD 90,000 - 110,000") is its own
+        # evidence; a lone or small amount is not.
+        salary_scale_range = t.lo != t.hi and _magnitude_period(t.lo, t.hi, t.currency) == "year"
+        if not (t.labeled or t.after_labeled or t.cue or t.weak or salary_scale_range):
+            continue
+        c = _resolve(t.lo, t.hi, t.currency, t.cue, t.weak, t.start,
+                     labeled=t.labeled or t.after_labeled, reinterpret=False)
         if c:
             cands.append(c)
     return _select(cands, "text")

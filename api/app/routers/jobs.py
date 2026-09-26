@@ -123,7 +123,9 @@ def list_jobs(
         if company_id:
             s = s.where(Job.company_id == company_id)
         if department:
-            s = s.where(Job.department.ilike(f"%{department}%"))
+            # Exact (case-insensitive): the vocabulary is closed, and a substring match made
+            # department=IT also return Quality and Security.
+            s = s.where(func.lower(Job.department) == department.strip().lower())
         if location:
             # The filter sends a canonical value ("chicago, il" / "remote"). Match on the
             # city token so every raw variant of that place is caught ("chicago",

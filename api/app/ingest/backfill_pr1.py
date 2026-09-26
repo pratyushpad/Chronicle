@@ -14,7 +14,10 @@ What it changes, per active or inactive row:
   * posted_at on Greenhouse rows → NULL. It held Greenhouse's updated_at (any edit moved
     it); the next ingest fills in the real first_published. Age falls back to
     first_seen_at meanwhile.
-It never touches content_hash or embedding, so nothing is re-embedded.
+It never touches content_hash or embedding, so nothing is re-embedded. It skips every row
+already written by the new ingest (a "v2" content hash), so re-running it after ingest has
+resumed can't overwrite structured ATS pay, hint-derived departments or real
+first-published dates with guesses from stored text.
 
 Dry run by default. From api/:
     python -m app.ingest.backfill_pr1            # report only, writes nothing
@@ -25,6 +28,7 @@ import argparse
 import collections
 import logging
 import os
+import re
 
 from dotenv import load_dotenv
 
@@ -34,7 +38,7 @@ from app.dbguard import assert_local_or_allowed  # noqa: E402
 
 assert_local_or_allowed(os.environ.get("DATABASE_URL"), "backfill_pr1")
 
-from sqlalchemy import func, or_, select, update  # noqa: E402
+from sqlalchemy import and_, func, or_, select, update  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from app.db import get_session  # noqa: E402 — db reads DATABASE_URL at import
@@ -52,12 +56,29 @@ _PAY_CANDIDATE = or_(
     Job.description_text.op("~")(r"[$£€₹]|USD|CAD|GBP|EUR|AUD"),
     Job.salary_min.is_not(None),
 )
+# Only rows the new ingest hasn't rewritten yet.
+_LEGACY_ROW = or_(Job.content_hash.is_(None), ~Job.content_hash.like("v2%"))
+
+# The old strip_html joined every text node with a space, so stored legacy text has
+# numbers split at inline markup: "$ 243 , 800 -$ 303 , 000 /year", "£150, 000". Rejoin
+# them before parsing (this text only — ingest's plain_text never splits them).
+_SPLIT_THOUSANDS_RE = re.compile(r"(?<=\d)\s*([,.])\s+(?=\d{3}\b)|(?<=\d)\s+([,.])(?=\d{3}\b)")
+_SPLIT_SYMBOL_RE = re.compile(r"([$£€₹])\s+(?=\d)")
+
+
+def _repair_legacy_text(desc: str | None) -> str | None:
+    if not desc:
+        return desc
+    desc = _SPLIT_THOUSANDS_RE.sub(lambda m: m.group(1) or m.group(2), desc)
+    return _SPLIT_SYMBOL_RE.sub(r"\1", desc)
+
+
 _PAY_FIELDS = ("pay_min", "pay_max", "pay_currency", "pay_period", "pay_source", "salary_min", "salary_max")
 
 
 def _pay_values(desc: str | None) -> dict | None:
     """New pay columns for a stored description, or None to leave the row as it is."""
-    pay = parse_pay_text(desc)
+    pay = parse_pay_text(_repair_legacy_text(desc))
     if pay is None:
         return None
     lo, hi = annual_usd(pay)
@@ -86,7 +107,7 @@ def run(apply: bool, batch: int, session: Session | None = None) -> dict:
                    "pay_scanned": 0, "pay_set": 0, "gh_posted_at_nulled": 0}
     try:
         # 1) departments — small columns only
-        stmt = select(Job.id, Job.department, Job.department_raw, Job.title)
+        stmt = select(Job.id, Job.department, Job.department_raw, Job.title).where(_LEGACY_ROW)
         for rows in _batches(session, stmt, batch):
             updates = []
             for r in rows:
@@ -101,7 +122,7 @@ def run(apply: bool, batch: int, session: Session | None = None) -> dict:
                 session.commit()
 
         # 2) pay — only rows that can carry it
-        stmt = select(Job.id, Job.description_text, *(getattr(Job, f) for f in _PAY_FIELDS)).where(_PAY_CANDIDATE)
+        stmt = select(Job.id, Job.description_text, *(getattr(Job, f) for f in _PAY_FIELDS)).where(_PAY_CANDIDATE, _LEGACY_ROW)
         for rows in _batches(session, stmt, batch):
             updates = []
             for r in rows:
@@ -119,7 +140,7 @@ def run(apply: bool, batch: int, session: Session | None = None) -> dict:
                 session.commit()
 
         # 3) Greenhouse posted_at held updated_at — clear it (one statement)
-        gh = Job.source == ATSSource.greenhouse
+        gh = and_(Job.source == ATSSource.greenhouse, _LEGACY_ROW)
         stats["gh_posted_at_nulled"] = session.execute(
             select(func.count()).select_from(Job).where(gh, Job.posted_at.is_not(None))
         ).scalar_one()

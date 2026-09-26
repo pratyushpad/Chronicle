@@ -387,3 +387,34 @@ def test_salaries_the_legacy_text_backfill_must_keep(text, expected):
     pay = parse_pay_text(text)
     assert pay is not None
     assert (float(pay.min), float(pay.max), pay.currency, pay.period) == expected
+
+
+@_pytest.mark.parametrize("text", [
+    # Non-wage amounts the code review reproduced as pay (2026-09-26).
+    "You will land $500K+ multi-year deals with enterprise customers.",
+    "Own a book of $100K+ ACV accounts.",
+    "Stay at Any House, $100 a night, as a member perk.",
+    "New hires get a $50 Amazon gift card on day one.",
+    "We grew fast ($10–15M ARR) last year.",
+])
+def test_unlabeled_non_wage_amounts_are_not_pay(text):
+    from app.ingest.pay import parse_pay_text
+
+    assert parse_pay_text(text) is None
+
+
+@_pytest.mark.parametrize("text, expected", [
+    ("Salary range: $150,000 - $200,000. Benefits include a Fertility HRA (up to $10,000 per year).",
+     (150000.0, 200000.0, "USD", "year")),
+    ("This role offers $72,000 base salary and $18,000 commission at target.",
+     (72000.0, 72000.0, "USD", "year")),
+    ("Salary: €86 000 - €122 000 per year", (86000.0, 122000.0, "EUR", "year")),
+    ("Base pay (this does not include bonus, equity and benefits): $120,000 - $140,000",
+     (120000.0, 140000.0, "USD", "year")),
+])
+def test_labeled_pay_survives_its_neighbours(text, expected):
+    from app.ingest.pay import parse_pay_text
+
+    pay = parse_pay_text(text)
+    assert pay is not None
+    assert (float(pay.min), float(pay.max), pay.currency, pay.period) == expected

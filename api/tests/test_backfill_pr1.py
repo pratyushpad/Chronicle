@@ -106,3 +106,36 @@ def test_dry_run_writes_nothing(pg_engine):
             assert job.department == "Other" and job.salary_min == 45000 and job.pay_min is None
         finally:
             outer.rollback()
+
+
+def test_rows_written_by_new_ingest_are_never_touched(pg_engine):
+    # After ingest resumes, a row with a v2 hash carries structured pay, hint-derived
+    # department and a real first_published date — a re-run must leave all of it alone.
+    with pg_engine.connect() as conn:
+        outer = conn.begin()
+        try:
+            session = Session(bind=conn)
+            session.commit = session.flush
+            co = Company(name="V2Co", ats=ATSSource.greenhouse, slug="v2-co-test", active=True)
+            session.add(co)
+            session.flush()
+            posted = datetime(2026, 6, 11, tzinfo=timezone.utc)
+            session.add(_job(co, "v1", content_hash="v2" + "c" * 62, department_raw="Internships",
+                             department="Hardware", posted_at=posted, pay_min=30, pay_max=45,
+                             pay_currency="USD", pay_period="hour", pay_source="ats",
+                             description_text="Salary range $100,000 - $120,000 per year"))
+            session.flush()
+            backfill_pr1.run(apply=True, batch=10, session=session)
+            job = session.execute(select(Job).where(Job.company_id == co.id)).scalar_one()
+            session.refresh(job)
+            assert job.department == "Hardware" and job.posted_at == posted
+            assert (float(job.pay_min), job.pay_period, job.pay_source) == (30.0, "hour", "ats")
+        finally:
+            outer.rollback()
+
+
+def test_split_numbers_in_legacy_text_are_rejoined():
+    # The old strip_html joined text nodes with spaces: "$ 243 , 800 -$ 303 , 000 /year".
+    vals = backfill_pr1._pay_values("Salary: $ 243 , 800 -$ 303 , 000 /year")
+    assert (float(vals["pay_min"]), float(vals["pay_max"]), vals["pay_period"]) == (243800.0, 303000.0, "year")
+    assert backfill_pr1._repair_legacy_text("Hourly rate: $33.00") == "Hourly rate: $33.00"
