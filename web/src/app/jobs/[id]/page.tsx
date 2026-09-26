@@ -150,7 +150,7 @@ export default async function JobDetailPage({ params }: PageProps) {
         <MoreAtCompany job={job} now={now} />
       </Suspense>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border-light bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden">
+      <div className="apply-bar fixed inset-x-0 bottom-0 z-40 border-t border-border-light bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate font-sans text-sm text-foreground">{closed ? "Closed" : pay ?? job.company_name}</p>

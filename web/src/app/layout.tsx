@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Source_Serif_4, Inter } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SessionWrapper } from "@/components/SessionWrapper";
 import { getMeta } from "@/lib/api";
 import { SITE_URL } from "@/lib/site";
@@ -70,6 +71,7 @@ export default async function RootLayout({
         <SessionWrapper>
           <Nav companyCount={meta?.total_companies ?? null} />
           {children}
+          <SiteFooter />
         </SessionWrapper>
       </body>
     </html>

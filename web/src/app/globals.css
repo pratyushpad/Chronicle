@@ -254,3 +254,11 @@
     transform: scaleY(0);
   }
 }
+
+/* The job page's fixed mobile Apply bar would cover the site footer at the end of the
+   page; give the footer room under it (the bar is hidden from lg up). */
+@media (max-width: 1023px) {
+  body:has(.apply-bar) footer {
+    padding-bottom: 6rem;
+  }
+}

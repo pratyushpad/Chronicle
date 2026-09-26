@@ -61,7 +61,7 @@ export default async function CompaniesPage({ searchParams }: Props) {
           name="q"
           defaultValue={sp.q ?? ""}
           placeholder="Search companies"
-          className="h-11 min-w-0 flex-1 border border-input bg-background px-3 font-sans text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+          className="h-11 w-full min-w-0 border border-input sm:flex-1 bg-background px-3 font-sans text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
         />
         {sp.industry && <input type="hidden" name="industry" value={sp.industry} />}
         {sp.sort && <input type="hidden" name="sort" value={sp.sort} />}
