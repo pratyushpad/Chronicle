@@ -6,10 +6,10 @@ import { JobCard } from "@/components/JobCard";
 import { SectionLabel } from "@/components/SectionLabel";
 
 const CTA_BUTTON =
-  "inline-flex min-h-[44px] items-center border-2 border-foreground bg-foreground px-8 font-mono text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]";
+  "inline-flex min-h-[44px] items-center border border-input bg-foreground px-8 font-sans text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]";
 const INPUT_CLS =
-  "border border-foreground bg-background px-3 py-2 font-body text-sm text-foreground focus:outline-none focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2";
-const LABEL_CLS = "font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground";
+  "border border-input bg-background px-3 py-2 font-sans text-sm text-foreground focus:outline-none focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2";
+const LABEL_CLS = "font-sans text-[11px] uppercase tracking-[0.15em] text-muted-foreground";
 
 export default function SavedPage() {
   const { data: session, status } = useSession();
@@ -79,9 +79,9 @@ export default function SavedPage() {
       <SectionLabel className="mb-8">Saved Jobs</SectionLabel>
 
       {/* Alerts box */}
-      <div className="mb-12 border border-foreground p-6">
+      <div className="mb-12 border border-input p-6">
         <h2 className="font-display text-xl text-foreground mb-1">Alerts</h2>
-        <p className="font-body text-sm text-muted-foreground mb-4">
+        <p className="font-sans text-sm text-muted-foreground mb-4">
           When new roles match a keyword after an ingest run, you get an in-app
           notification — and an email digest.
         </p>
@@ -104,7 +104,7 @@ export default function SavedPage() {
           <button
             onClick={createAlert}
             disabled={!alertSearch.trim()}
-            className="inline-flex min-h-[44px] items-center bg-foreground px-5 font-mono text-xs font-medium uppercase tracking-[0.12em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)] disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex min-h-[44px] items-center bg-foreground px-5 font-sans text-xs font-medium uppercase tracking-[0.12em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {alertCreated ? "✓ Alert set" : "Set alert"}
           </button>
@@ -117,13 +117,13 @@ export default function SavedPage() {
           <div className="mt-4 space-y-2">
             {searches.map((s) => (
               <div key={s.id} className="flex items-center justify-between border border-border-light px-3 py-2">
-                <span className="font-body text-sm text-foreground">{s.name}</span>
+                <span className="font-sans text-sm text-foreground">{s.name}</span>
                 <div className="flex items-center gap-3">
                   <span className={LABEL_CLS}>{s.alert_frequency}</span>
                   <button
                     onClick={() => deleteSearch(s.id)}
                     aria-label={`Delete alert ${s.name}`}
-                    className="font-mono text-xs text-muted-foreground hover:text-foreground"
+                    className="font-sans text-xs text-muted-foreground hover:text-foreground"
                   >
                     ✕
                   </button>
@@ -136,12 +136,12 @@ export default function SavedPage() {
 
       {/* Saved jobs list */}
       {loading ? (
-        <p className="font-body text-muted-foreground">Loading…</p>
+        <p className="font-sans text-muted-foreground">Loading…</p>
       ) : saved.length === 0 ? (
         <div className="text-center py-16">
           <p className="font-display text-2xl text-foreground mb-2">No saved jobs yet</p>
-          <p className="font-body text-muted-foreground mb-6">Click the bookmark icon on any role to save it here.</p>
-          <Link href="/jobs" className="font-body text-sm text-foreground underline underline-offset-4 hover:no-underline">Browse roles →</Link>
+          <p className="font-sans text-muted-foreground mb-6">Click the bookmark icon on any role to save it here.</p>
+          <Link href="/jobs" className="font-sans text-sm text-foreground underline underline-offset-4 hover:no-underline">Browse roles →</Link>
         </div>
       ) : (
         <div className="flex flex-col gap-4">

@@ -87,23 +87,23 @@ export default async function JobDetailPage({ params }: PageProps) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       )}
       <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <Link href="/jobs" className="font-body text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/jobs" className="font-sans text-sm text-muted-foreground hover:text-foreground">
           ← All roles
         </Link>
-        <Link href={`/companies/${job.company_id}`} className="font-body text-sm text-muted-foreground hover:text-foreground">
+        <Link href={`/companies/${job.company_id}`} className="font-sans text-sm text-muted-foreground hover:text-foreground">
           {job.company_name} →
         </Link>
       </nav>
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-14">
         <article className="min-w-0">
-          <p className="font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="font-sans text-xs uppercase tracking-[0.16em] text-muted-foreground">
             {job.company_name}
           </p>
           <h1 className="mt-3 font-display text-3xl leading-[1.2] text-foreground sm:text-4xl">{job.title}</h1>
 
           {closed && (
-            <div role="note" className="mt-6 border border-foreground bg-muted px-4 py-3 font-body text-sm text-foreground">
+            <div role="note" className="mt-6 border border-input bg-muted px-4 py-3 font-sans text-sm text-foreground">
               <strong className="font-semibold">This role is closed.</strong>{" "}
               {seenLive
                 ? `Chronicle last saw it live on ${job.company_name}'s board ${seenLive}.`
@@ -115,8 +115,8 @@ export default async function JobDetailPage({ params }: PageProps) {
             <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-border-light py-5 sm:grid-cols-3">
               {glance.map((g) => (
                 <div key={g.label} className="min-w-0">
-                  <dt className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{g.label}</dt>
-                  <dd className="mt-1 break-words font-body text-sm text-foreground">{g.value}</dd>
+                  <dt className="font-sans text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{g.label}</dt>
+                  <dd className="mt-1 break-words font-sans text-sm text-foreground">{g.value}</dd>
                 </div>
               ))}
             </dl>
@@ -126,7 +126,7 @@ export default async function JobDetailPage({ params }: PageProps) {
             {blocks.length > 0 ? (
               <JobDescription blocks={blocks} />
             ) : (
-              <p className="font-body italic text-muted-foreground">
+              <p className="font-sans italic text-muted-foreground">
                 The posting has no description. The full details are on {job.company_name}&rsquo;s site.
               </p>
             )}
@@ -135,7 +135,7 @@ export default async function JobDetailPage({ params }: PageProps) {
 
         {/* Desktop: sticky right rail. Mobile gets the fixed bottom bar below. */}
         <aside className="hidden lg:block">
-          <div className="sticky top-24 border border-foreground bg-card p-6">
+          <div className="sticky top-24 border border-input bg-card p-6">
             <ApplyPanel job={job} closed={closed} pay={pay} age={age} seenLive={seenLive} />
           </div>
         </aside>
@@ -148,12 +148,12 @@ export default async function JobDetailPage({ params }: PageProps) {
         <MoreAtCompany job={job} now={now} />
       </Suspense>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-foreground bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border-light bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="truncate font-body text-sm text-foreground">{closed ? "Closed" : pay ?? job.company_name}</p>
+            <p className="truncate font-sans text-sm text-foreground">{closed ? "Closed" : pay ?? job.company_name}</p>
             {seenLive && (
-              <p className="truncate font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+              <p className="truncate font-sans text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
                 {closed ? "Last seen" : "Verified"} {seenLive}
               </p>
             )}
@@ -172,7 +172,7 @@ function ApplyLink({ job, closed, className = "" }: { job: JobDetail; closed: bo
         href={job.apply_url}
         target="_blank"
         rel="noopener noreferrer"
-        className={`inline-flex min-h-[44px] items-center justify-center border border-foreground font-body text-sm text-foreground hover:bg-muted ${className}`}
+        className={`inline-flex min-h-[44px] items-center justify-center border border-input font-sans text-sm text-foreground hover:bg-muted ${className}`}
       >
         Original posting
       </a>
@@ -183,7 +183,7 @@ function ApplyLink({ job, closed, className = "" }: { job: JobDetail; closed: bo
       href={job.apply_url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex min-h-[44px] items-center justify-center bg-accent font-body text-sm font-medium tracking-wide text-accent-foreground transition-colors hover:bg-foreground/85 ${className}`}
+      className={`inline-flex min-h-[44px] items-center justify-center bg-accent font-sans text-sm font-medium tracking-wide text-accent-foreground transition-colors hover:bg-foreground/85 ${className}`}
     >
       Apply on {job.company_name}&rsquo;s site<span aria-hidden>&nbsp;→</span>
     </a>
@@ -207,7 +207,7 @@ function ApplyPanel({
     <>
       {pay && <p className="font-display text-2xl text-foreground">{pay}</p>}
       <ApplyLink job={job} closed={closed} className="mt-4 w-full px-4" />
-      <dl className="mt-5 space-y-2 font-body text-sm">
+      <dl className="mt-5 space-y-2 font-sans text-sm">
         {age && (
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">{age.kind === "posted" ? "Posted" : "First seen"}</dt>
@@ -227,7 +227,7 @@ function ApplyPanel({
           </div>
         )}
       </dl>
-      <p className="mt-4 font-body text-xs leading-relaxed text-muted-foreground">
+      <p className="mt-4 font-sans text-xs leading-relaxed text-muted-foreground">
         {age?.kind === "first_seen"
           ? `${job.company_name}'s board doesn't publish a posting date, so this is when Chronicle first saw the role. `
           : ""}
@@ -278,7 +278,7 @@ async function MoreAtCompany({ job, now }: { job: JobDetail; now: number }) {
       {related.total > others.length + 1 && (
         <Link
           href={`/companies/${job.company_id}`}
-          className="mt-6 inline-block font-body text-sm text-foreground underline underline-offset-4 hover:text-muted-foreground"
+          className="mt-6 inline-block font-sans text-sm text-foreground underline underline-offset-4 hover:text-muted-foreground"
         >
           All {related.total} roles at {job.company_name} →
         </Link>

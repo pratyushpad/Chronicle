@@ -1,0 +1,30 @@
+{
+ "baseURL": "http://localhost:3000",
+ "prefix": "after-dark",
+ "routes": {
+  "home": {
+   "path": "/",
+   "shots": [
+    "after-dark-home-1440.jpg",
+    "after-dark-home-390.jpg"
+   ],
+   "overflow": {}
+  },
+  "jobs": {
+   "path": "/jobs?level=intern",
+   "shots": [
+    "after-dark-jobs-1440.jpg",
+    "after-dark-jobs-390.jpg"
+   ],
+   "overflow": {}
+  },
+  "job": {
+   "path": "/jobs/73",
+   "shots": [
+    "after-dark-job-1440.jpg",
+    "after-dark-job-390.jpg"
+   ],
+   "overflow": {}
+  }
+ }
+}

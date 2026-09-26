@@ -1,6 +1,6 @@
 export function JobCardSkeleton() {
   return (
-    <article className="relative border border-foreground border-l-4 bg-card">
+    <article className="relative border border-border-light bg-card">
       <div className="p-5">
         <div className="flex items-start gap-3">
           <div className="shrink-0 h-10 w-10 border border-border-light animate-shimmer" />

@@ -17,8 +17,8 @@ interface Props extends ResumeInfo {
 type Status = "idle" | "dragging" | "working" | "success" | "error";
 
 const btnOutline =
-  "inline-flex min-h-[36px] items-center justify-center border border-foreground px-5 font-mono text-xs uppercase tracking-[0.12em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background disabled:opacity-50 cursor-pointer";
-const labelCls = "font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground";
+  "inline-flex min-h-[36px] items-center justify-center border border-input px-5 font-sans text-xs uppercase tracking-[0.12em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background disabled:opacity-50 cursor-pointer";
+const labelCls = "font-sans text-[11px] uppercase tracking-[0.15em] text-muted-foreground";
 
 /**
  * Drag-and-drop resume dropzone with idle / dragging / working / success / error
@@ -133,7 +133,7 @@ export function ResumeDropzone({ resume_chars, resume_updated_at, onChange }: Pr
           </m.span>
         ) : (
           <>
-            <span className="font-body text-sm text-foreground">
+            <span className="font-sans text-sm text-foreground">
               {status === "dragging" ? "Drop to upload" : hasResume ? "Drop a new file, or click to replace" : "Drop your resume, or click to browse"}
             </span>
             <span className={labelCls}>PDF or .txt — we keep only the extracted text, never the file</span>
@@ -144,7 +144,7 @@ export function ResumeDropzone({ resume_chars, resume_updated_at, onChange }: Pr
       {/* Current state + success/error reveals */}
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {hasResume && !working && (
-          <span className="font-body text-sm text-foreground">
+          <span className="font-sans text-sm text-foreground">
             Resume on file ({formatNumber(resume_chars as number)} characters
             {resume_updated_at && `, updated ${new Date(resume_updated_at).toLocaleDateString()}`})
           </span>
@@ -164,7 +164,7 @@ export function ResumeDropzone({ resume_chars, resume_updated_at, onChange }: Pr
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: duration.base, ease }}
-            className="mt-3 font-mono text-[10px] uppercase tracking-[0.15em] text-foreground"
+            className="mt-3 font-sans text-[11px] uppercase tracking-[0.15em] text-foreground"
           >
             ✓ Extracted {formatNumber(extracted)} characters — matching updated
           </m.p>
@@ -176,7 +176,7 @@ export function ResumeDropzone({ resume_chars, resume_updated_at, onChange }: Pr
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: duration.base, ease }}
-            className="mt-3 font-mono text-[10px] uppercase tracking-[0.15em] text-foreground"
+            className="mt-3 font-sans text-[11px] uppercase tracking-[0.15em] text-foreground"
           >
             {message}
           </m.p>

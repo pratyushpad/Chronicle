@@ -17,8 +17,8 @@ export function HiringVelocity({ data }: { data: CompanyVelocity }) {
 
   const max = Math.max(1, ...weeks.map((w) => Math.max(w.opened, w.closed)));
   const W = 640;
-  const H = 140;
-  const padB = 22; // room for x labels
+  const H = 120;
+  const padB = 2; // week labels are HTML below the SVG
   const chartH = H - padB;
   const slot = W / weeks.length;
   const barW = Math.min(14, slot * 0.28);
@@ -81,43 +81,50 @@ export function HiringVelocity({ data }: { data: CompanyVelocity }) {
                 strokeWidth="1.25"
                 {...barReveal(i)}
               />
-              <text
-                x={cx}
-                y={H - 6}
-                textAnchor="middle"
-                className="fill-current font-mono"
-                fontSize="8"
-                opacity="0.55"
-              >
-                {monthLabel(w.week)}
-              </text>
             </g>
           );
         })}
       </svg>
+      {/* Week labels in HTML, not SVG text: SVG text scales with the viewBox and fell to
+          ~4.5px on a phone. */}
+      <div className="mt-1 flex" aria-hidden>
+        {weeks.map((w) => (
+          <span key={w.week} className="flex-1 text-center font-sans text-[11px] text-muted-foreground">
+            {monthLabel(w.week)}
+          </span>
+        ))}
+      </div>
 
       <div className="mt-3 flex items-center gap-5">
         <Legend filled label="Opened" />
         <Legend label="Closed" />
       </div>
+      <p className="mt-3 max-w-prose font-sans text-xs leading-relaxed text-muted-foreground">
+        How this is counted: a role counts as opened in the week the company&rsquo;s board says
+        it was posted, or, when the board gives no date, the week Chronicle first saw it.
+        Roles that were already open when Chronicle first read this board aren&rsquo;t counted
+        as openings
+        {data.first_ingest_excluded ? ` (${data.first_ingest_excluded} left out)` : ""}. Closed
+        is the week a role was last seen before it left the board.
+      </p>
     </section>
   );
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="border border-foreground p-3">
+    <div className="border border-input p-3">
       <CountUp value={value} className="font-display text-2xl text-foreground" />
-      <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div>
+      <div className="font-sans text-[11px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div>
     </div>
   );
 }
 
 function Legend({ filled, label }: { filled?: boolean; label: string }) {
   return (
-    <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+    <span className="flex items-center gap-2 font-sans text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
       <span
-        className={`inline-block h-2.5 w-2.5 ${filled ? "bg-foreground" : "border border-foreground"}`}
+        className={`inline-block h-2.5 w-2.5 ${filled ? "bg-foreground" : "border border-input"}`}
         aria-hidden
       />
       {label}

@@ -40,7 +40,7 @@ export default async function CompanyPage({ params, searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
-      <Link href="/companies" className="font-body text-sm text-muted-foreground hover:text-foreground">
+      <Link href="/companies" className="font-sans text-sm text-muted-foreground hover:text-foreground">
         ← All Companies
       </Link>
 
@@ -50,11 +50,11 @@ export default async function CompanyPage({ params, searchParams }: Props) {
           <div>
             <h1 className="font-display text-4xl text-foreground">{company.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-3">
-              <span className="font-mono text-xs text-muted-foreground uppercase tracking-[0.1em]">
+              <span className="font-sans text-xs text-muted-foreground uppercase tracking-[0.1em]">
                 {company.ats}
               </span>
               {company.last_ingested_at && (
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="font-sans text-xs text-muted-foreground">
                   Updated {formatDate(company.last_ingested_at)}
                 </span>
               )}
@@ -62,14 +62,14 @@ export default async function CompanyPage({ params, searchParams }: Props) {
           </div>
           <div className="text-right shrink-0">
             <div className="font-display text-5xl text-accent">{formatNumber(company.active_job_count)}</div>
-            <div className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">open roles</div>
+            <div className="font-sans text-xs uppercase tracking-[0.12em] text-muted-foreground">open roles</div>
           </div>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
             href={`/jobs?company_id=${company.id}`}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-accent px-6 font-body text-sm font-medium text-white shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-accent px-6 font-sans text-sm font-medium text-accent-foreground shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
           >
             Browse All {company.name} Roles
           </Link>
@@ -78,7 +78,7 @@ export default async function CompanyPage({ params, searchParams }: Props) {
               href={company.careers_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-border px-6 font-body text-sm text-muted-foreground hover:border-accent hover:text-accent transition-all duration-200"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-border px-6 font-sans text-sm text-muted-foreground hover:border-accent hover:text-accent transition-all duration-200"
             >
               Careers Page →
             </a>
@@ -98,7 +98,7 @@ export default async function CompanyPage({ params, searchParams }: Props) {
 
       <div className="mt-8">
         <SectionLabel className="mb-6">Open Roles</SectionLabel>
-        <p className="mb-4 font-body text-sm text-muted-foreground">
+        <p className="mb-4 font-sans text-sm text-muted-foreground">
           Showing {jobs.items.length} of {formatNumber(jobs.total)} roles
         </p>
         <div className="flex flex-col gap-4">

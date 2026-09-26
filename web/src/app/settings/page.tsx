@@ -35,13 +35,13 @@ const COMMON_SKILLS = [
   "Spark", "Kafka", "dbt", "ROS2", "CUDA",
 ];
 
-const labelCls = "font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground";
+const labelCls = "font-sans text-[11px] uppercase tracking-[0.15em] text-muted-foreground";
 const inputCls =
-  "w-full border border-foreground bg-background px-3 py-2 font-body text-sm text-foreground focus:outline-none focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2";
+  "w-full border border-input bg-background px-3 py-2 font-sans text-sm text-foreground focus:outline-none focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2";
 const btnSolid =
-  "inline-flex min-h-[36px] items-center justify-center bg-foreground px-5 font-mono text-xs font-medium uppercase tracking-[0.12em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)] disabled:opacity-50";
+  "inline-flex min-h-[36px] items-center justify-center bg-foreground px-5 font-sans text-xs font-medium uppercase tracking-[0.12em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)] disabled:opacity-50";
 const btnOutline =
-  "inline-flex min-h-[36px] items-center justify-center border border-foreground px-5 font-mono text-xs uppercase tracking-[0.12em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background disabled:opacity-50";
+  "inline-flex min-h-[36px] items-center justify-center border border-input px-5 font-sans text-xs uppercase tracking-[0.12em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background disabled:opacity-50";
 
 interface Profile {
   location?: string | null;
@@ -63,7 +63,7 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "min-h-[40px] border px-4 py-1.5 font-body text-sm transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
+        "min-h-[40px] border px-4 py-1.5 font-sans text-sm transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
         active
           ? "border-foreground bg-foreground text-background"
           : "border-border-light text-foreground hover:border-foreground",
@@ -133,7 +133,7 @@ export default function SettingsPage() {
   if (status !== "authenticated") {
     return (
       <main className="mx-auto max-w-2xl px-6 py-20">
-        <p className="font-body text-muted-foreground">Sign in to manage your settings.</p>
+        <p className="font-sans text-muted-foreground">Sign in to manage your settings.</p>
       </main>
     );
   }
@@ -144,14 +144,14 @@ export default function SettingsPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
       <h1 className="mb-2 font-display text-4xl text-foreground">Settings</h1>
-      <p className="mb-12 font-body text-muted-foreground">
+      <p className="mb-12 font-sans text-muted-foreground">
         Tune what powers your <strong className="text-foreground">For You</strong> feed and matches.
       </p>
 
       {/* ── Matching profile ── */}
       <section className="mb-16">
         <SectionLabel className="mb-6">Matching Profile</SectionLabel>
-        <p className="mb-6 font-body text-sm text-muted-foreground">
+        <p className="mb-6 font-sans text-sm text-muted-foreground">
           The more it knows, the better the matches.
         </p>
 
@@ -162,7 +162,7 @@ export default function SettingsPage() {
           value={profile.about ?? ""}
           onChange={(e) => set("about", e.target.value)}
         />
-        <p className="mt-1 mb-6 font-body text-xs text-muted-foreground">
+        <p className="mt-1 mb-6 font-sans text-xs text-muted-foreground">
           Free text — it&rsquo;s embedded directly into your matching vector, so write it like you&rsquo;d tell a friend.
         </p>
 
@@ -258,7 +258,7 @@ export default function SettingsPage() {
       {/* ── Account ── */}
       <section>
         <SectionLabel className="mb-6">Account</SectionLabel>
-        <p className="mb-4 font-body text-sm text-muted-foreground">
+        <p className="mb-4 font-sans text-sm text-muted-foreground">
           Signed in as <strong className="text-foreground">{session?.user?.email}</strong>
         </p>
         <button onClick={() => signOut({ callbackUrl: "/" })} className={btnOutline}>

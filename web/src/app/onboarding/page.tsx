@@ -44,7 +44,7 @@ type Step = "tracks" | "seniority" | "remote" | "skills" | "about" | "sponsor";
 const STEPS: Step[] = ["tracks", "seniority", "remote", "skills", "about", "sponsor"];
 
 const inputClass =
-  "w-full border border-foreground bg-background px-3 py-2 font-body text-sm text-foreground placeholder:italic placeholder:text-muted-foreground focus:outline-none focus:border-2";
+  "w-full border border-input bg-background px-3 py-2 font-sans text-sm text-foreground placeholder:italic placeholder:text-muted-foreground focus:outline-none focus:border-2";
 
 function Toggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   const reduce = useReducedMotion();
@@ -55,7 +55,7 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
       transition={springPress}
       aria-pressed={active}
       className={cn(
-        "min-h-[44px] border px-4 py-2 font-body text-sm transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
+        "min-h-[44px] border px-4 py-2 font-sans text-sm transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
         active
           ? "border-foreground bg-foreground text-background"
           : "border-border-light text-foreground hover:border-foreground"
@@ -120,7 +120,7 @@ export default function OnboardingPage() {
   };
 
   const stepLabel = (
-    <p className="font-mono text-xs uppercase tracking-[0.15em] text-foreground mb-3">
+    <p className="font-sans text-xs uppercase tracking-[0.15em] text-foreground mb-3">
       Step {step + 1} of {STEPS.length}
     </p>
   );
@@ -131,7 +131,7 @@ export default function OnboardingPage() {
         <div>
           {stepLabel}
           <h1 className="font-display text-4xl text-foreground mb-2">What do you work on?</h1>
-          <p className="font-body text-muted-foreground mb-8">Select all tracks that apply.</p>
+          <p className="font-sans text-muted-foreground mb-8">Select all tracks that apply.</p>
           <div className="flex flex-wrap gap-3">
             {TRACKS.map((t) => <Toggle key={t.key} label={t.label} active={tracks.includes(t.key)} onClick={() => toggle(tracks, setTracks, t.key)} />)}
           </div>
@@ -142,7 +142,7 @@ export default function OnboardingPage() {
         <div>
           {stepLabel}
           <h1 className="font-display text-4xl text-foreground mb-2">Where are you in your career?</h1>
-          <p className="font-body text-muted-foreground mb-8">Select all that apply.</p>
+          <p className="font-sans text-muted-foreground mb-8">Select all that apply.</p>
           <div className="flex flex-wrap gap-3">
             {SENIORITY.map((s) => <Toggle key={s.key} label={s.label} active={seniority.includes(s.key)} onClick={() => toggle(seniority, setSeniority, s.key)} />)}
           </div>
@@ -153,7 +153,7 @@ export default function OnboardingPage() {
         <div>
           {stepLabel}
           <h1 className="font-display text-4xl text-foreground mb-2">Remote or on-site?</h1>
-          <p className="font-body text-muted-foreground mb-8">We&rsquo;ll use this to rank your recommendations.</p>
+          <p className="font-sans text-muted-foreground mb-8">We&rsquo;ll use this to rank your recommendations.</p>
           <div className="flex flex-wrap gap-3">
             {REMOTE_PREFS.map((r) => <Toggle key={r.key} label={r.label} active={remotePref === r.key} onClick={() => setRemotePref(r.key)} />)}
           </div>
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
         <div>
           {stepLabel}
           <h1 className="font-display text-4xl text-foreground mb-2">Your tech stack</h1>
-          <p className="font-body text-muted-foreground mb-8">Pick skills from your resume — we&rsquo;ll match them against job requirements.</p>
+          <p className="font-sans text-muted-foreground mb-8">Pick skills from your resume — we&rsquo;ll match them against job requirements.</p>
           <div className="flex flex-wrap gap-3 mb-6">
             {COMMON_SKILLS.map((s) => <Toggle key={s} label={s} active={skills.includes(s.toLowerCase())} onClick={() => toggle(skills, setSkills, s.toLowerCase())} />)}
           </div>
@@ -189,7 +189,7 @@ export default function OnboardingPage() {
         <div>
           {stepLabel}
           <h1 className="font-display text-4xl text-foreground mb-2">What are you looking for?</h1>
-          <p className="font-body text-muted-foreground mb-8">
+          <p className="font-sans text-muted-foreground mb-8">
             In your own words — team size, problem space, dealbreakers. This feeds your matches
             directly. Optional, and you can add a resume later in Settings.
           </p>
@@ -206,7 +206,7 @@ export default function OnboardingPage() {
         <div>
           {stepLabel}
           <h1 className="font-display text-4xl text-foreground mb-2">Do you need visa sponsorship?</h1>
-          <p className="font-body text-muted-foreground mb-8">We&rsquo;ll de-rank roles that mention sponsorship restrictions.</p>
+          <p className="font-sans text-muted-foreground mb-8">We&rsquo;ll de-rank roles that mention sponsorship restrictions.</p>
           <div className="flex gap-4">
             {[{ v: false, label: "No" }, { v: true, label: "Yes" }, { v: null, label: "Prefer not to say" }].map(({ v, label }) => (
               <Toggle key={label} label={label} active={needsSponsorship === v} onClick={() => setNeedsSponsorship(v)} />
@@ -252,14 +252,14 @@ export default function OnboardingPage() {
         <button
           onClick={() => go(-1)}
           disabled={step === 0}
-          className="font-body text-sm text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+          className="font-sans text-sm text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
         >
           ← Back
         </button>
         {step < STEPS.length - 1 ? (
           <button
             onClick={() => go(1)}
-            className="inline-flex min-h-[44px] items-center border-2 border-foreground bg-foreground px-8 font-mono text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]"
+            className="inline-flex min-h-[44px] items-center border border-input bg-foreground px-8 font-sans text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]"
           >
             Continue →
           </button>
@@ -267,7 +267,7 @@ export default function OnboardingPage() {
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="inline-flex min-h-[44px] items-center border-2 border-foreground bg-foreground px-8 font-mono text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground disabled:opacity-60 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]"
+            className="inline-flex min-h-[44px] items-center border border-input bg-foreground px-8 font-sans text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground disabled:opacity-60 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]"
           >
             {saving ? "Saving…" : "See my matches →"}
           </button>

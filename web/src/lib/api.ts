@@ -82,6 +82,8 @@ export interface CompanyVelocity {
   active_now: number;
   opened_last_30d: number;
   closed_last_30d: number;
+  /** Roles already open at the board's first ingest, left out of "opened". Absent on the pre-PR-3 API. */
+  first_ingest_excluded?: number;
 }
 
 export interface LastRunSummary {

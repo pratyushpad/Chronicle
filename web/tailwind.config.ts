@@ -1,7 +1,16 @@
 import type { Config } from "tailwindcss";
 import { cssDuration, cssEase, duration } from "./src/lib/motion";
 
+// Theme colors are CSS variables (hex, switched by .dark), so Tailwind can't apply an
+// opacity modifier to them directly: `bg-background/95` generated nothing. <alpha-value>
+// inside color-mix makes modifiers work; without one it is 1, i.e. the plain color.
+const tok = (name: string) =>
+  `color-mix(in srgb, var(--${name}) calc(<alpha-value> * 100%), transparent)`;
+
 const config: Config = {
+  // Dark mode follows the system unless the reader picks one (ThemeToggle); an inline
+  // script in app/layout.tsx sets the class before first paint, so there's no flash.
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,42 +19,47 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        background: tok("background"),
+        foreground: tok("foreground"),
         muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--muted-foreground)",
+          DEFAULT: tok("muted"),
+          foreground: tok("muted-foreground"),
         },
         accent: {
-          DEFAULT: "var(--accent)",
-          secondary: "var(--accent-secondary)",
-          foreground: "var(--accent-foreground)",
+          DEFAULT: tok("accent"),
+          secondary: tok("accent-secondary"),
+          foreground: tok("accent-foreground"),
         },
-        border: "var(--border)",
-        "border-light": "var(--border-light)",
-        input: "var(--input)",
+        border: tok("border"),
+        "border-light": tok("border-light"),
+        input: tok("input"),
         card: {
-          DEFAULT: "var(--card)",
-          foreground: "var(--card-foreground)",
+          DEFAULT: tok("card"),
+          foreground: tok("card-foreground"),
         },
-        ring: "var(--ring)",
+        ring: tok("ring"),
         popover: {
-          DEFAULT: "var(--popover)",
-          foreground: "var(--popover-foreground)",
+          DEFAULT: tok("popover"),
+          foreground: tok("popover-foreground"),
         },
         primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
+          DEFAULT: tok("primary"),
+          foreground: tok("primary-foreground"),
         },
         secondary: {
-          DEFAULT: "var(--secondary)",
-          foreground: "var(--secondary-foreground)",
+          DEFAULT: tok("secondary"),
+          foreground: tok("secondary-foreground"),
         },
+        positive: { DEFAULT: tok("positive"), bg: tok("positive-bg") },
+        warning: { DEFAULT: tok("warning"), bg: tok("warning-bg") },
+        negative: { DEFAULT: tok("negative"), bg: tok("negative-bg") },
       },
       fontFamily: {
+        // Playfair: display headings and job titles only. Inter: all UI chrome and copy.
+        // Source Serif: long-form reading (job descriptions, the landing lede).
         display: ["var(--font-display)", "Georgia", "serif"],
+        sans: ["var(--font-sans)", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
         body: ["var(--font-body)", "Georgia", "serif"],
-        mono: ["var(--font-mono)", "monospace"],
       },
       fontSize: {
         // Dramatic editorial scale — words become graphic elements

@@ -37,6 +37,9 @@ class CompanyVelocity(BaseModel):
     active_now: int
     opened_last_30d: int
     closed_last_30d: int
+    # Roles left out of "opened" because they were already open when Chronicle first
+    # read this board (no posting date, first seen in the board's first-ingest week).
+    first_ingest_excluded: int = 0
 
 
 class JobListItem(BaseModel):
