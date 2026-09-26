@@ -265,7 +265,7 @@ installed by apt, and headless Chromium 1194.
   intern postings, so it's a follow-up, not a merge blocker.
 
 **F3. Low: legacy fake salaries survive the backfill on rows it can't re-parse.**
-- **Where:** `backfill_pr1.py:127-129` never clears. For example, a legacy `salary_min=50000`
+- **Where:** `backfill_pr1.py:130-132` never clears. For example, a legacy `salary_min=50000`
   from "$50 gift card" stays, with `pay_*` NULL.
 - **Why it's harmless:**
   - the UI doesn't show it (`pay_period` is null, so `formatPay` returns null);
