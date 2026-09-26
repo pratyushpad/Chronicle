@@ -8,8 +8,7 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
-  const { email, name, image } = session.user;
-  const user = session.user as any;
+  const { email, name, image, provider, providerAccountId } = session.user;
 
   const res = await apiFetch("/users/sync", email, {
     method: "POST",
@@ -17,8 +16,8 @@ export async function POST() {
       email,
       name: name ?? null,
       avatar_url: image ?? null,
-      provider: user.provider ?? "google",
-      provider_id: user.providerAccountId ?? email,
+      provider: provider ?? "google",
+      provider_id: providerAccountId ?? email,
     }),
   });
 

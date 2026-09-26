@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, defer
 
 from app.db import get_session
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
+from app.ingest.alerts import email_configured
 from app.industries import canonical_industry, fold_counts, raw_labels
 from app.ingest.description import description_blocks, description_plain, description_summary
 from app.job_items import ELIGIBILITY_FIELDS, job_list_item
@@ -881,6 +882,7 @@ def _compute_meta(session: Session) -> MetaResponse:
         freshness=_freshness(session),
         terms=terms,
         countries=countries,
+        email_alerts=email_configured(),
     )
 
 

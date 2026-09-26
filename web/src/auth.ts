@@ -13,8 +13,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).provider = token.provider;
-        (session.user as any).providerAccountId = token.providerAccountId;
+        session.user.provider = typeof token.provider === "string" ? token.provider : undefined;
+        session.user.providerAccountId =
+          typeof token.providerAccountId === "string" ? token.providerAccountId : undefined;
       }
       return session;
     },

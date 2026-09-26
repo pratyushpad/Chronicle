@@ -137,6 +137,8 @@ export interface Meta {
   /** "summer-2027" terms and ISO country codes present among active roles (PR 4). */
   terms?: string[];
   countries?: string[];
+  /** Whether the server sends alert emails (PR 6). Absent on older APIs: treat as false. */
+  email_alerts?: boolean;
 }
 
 export interface JobListResponse {

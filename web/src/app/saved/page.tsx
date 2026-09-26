@@ -4,6 +4,18 @@ import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import { JobCard } from "@/components/JobCard";
 import { SectionLabel } from "@/components/SectionLabel";
+import { getMeta, type JobListItem } from "@/lib/api";
+
+// Shapes of the API's SavedJobOut and SavedSearchOut (the Next routes pass them through).
+interface SavedJob {
+  job_id: number;
+  job: JobListItem;
+}
+interface SavedSearch {
+  id: number;
+  name: string;
+  alert_frequency: "off" | "daily" | "weekly";
+}
 
 const CTA_BUTTON =
   "inline-flex min-h-[44px] items-center border border-input bg-foreground px-8 font-sans text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]";
@@ -13,13 +25,22 @@ const LABEL_CLS = "font-sans text-[11px] uppercase tracking-[0.15em] text-muted-
 
 export default function SavedPage() {
   const { data: session, status } = useSession();
-  const [saved, setSaved] = useState<any[]>([]);
+  const [saved, setSaved] = useState<SavedJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [alertSearch, setAlertSearch] = useState("");
   const [alertFreq, setAlertFreq] = useState<"daily" | "weekly">("daily");
   const [alertCreated, setAlertCreated] = useState(false);
   const [alertHint, setAlertHint] = useState(false);
-  const [searches, setSearches] = useState<any[]>([]);
+  const [searches, setSearches] = useState<SavedSearch[]>([]);
+  // Email digests only when the server can send them (/meta.email_alerts); until then the
+  // page promises in-app notifications only. Unknown (loading, older API) counts as no.
+  const [emailAlerts, setEmailAlerts] = useState(false);
+
+  useEffect(() => {
+    getMeta()
+      .then((m) => setEmailAlerts(m.email_alerts === true))
+      .catch(() => setEmailAlerts(false));
+  }, []);
 
   useEffect(() => {
     if (status !== "authenticated") { setLoading(false); return; }
@@ -83,7 +104,7 @@ export default function SavedPage() {
         <h2 className="font-display text-xl text-foreground mb-1">Alerts</h2>
         <p className="font-sans text-sm text-muted-foreground mb-4">
           When new roles match a keyword after an ingest run, you get an in-app
-          notification — and an email digest.
+          notification{emailAlerts ? " and an email digest" : ""}.
         </p>
         <div className="flex gap-3 flex-wrap">
           <input
@@ -95,11 +116,11 @@ export default function SavedPage() {
           />
           <select
             value={alertFreq}
-            onChange={(e) => setAlertFreq(e.target.value as any)}
+            onChange={(e) => setAlertFreq(e.target.value === "weekly" ? "weekly" : "daily")}
             className={INPUT_CLS}
           >
-            <option value="daily">Daily digest</option>
-            <option value="weekly">Weekly digest</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
           </select>
           <button
             onClick={createAlert}

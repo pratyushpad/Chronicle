@@ -188,6 +188,9 @@ class MetaResponse(BaseModel):
     # soonest first, and ISO country codes, most roles first.
     terms: list[str] = []
     countries: list[str] = []
+    # True only when the server can send alert emails (RESEND_API_KEY, RESEND_FROM and
+    # APP_URL all set). The site promises email digests only when this is true.
+    email_alerts: bool = False
 
 
 class JobListResponse(BaseModel):
