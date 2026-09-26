@@ -14,6 +14,36 @@ os.environ.setdefault("DATABASE_URL", "postgresql+psycopg2://test:test@localhost
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
+def _test_pg_engine():
+    """Engine for database-backed tests: TEST_DATABASE_URL (a migrated, local, disposable
+    Postgres — CI provides one), or None when unset/unreachable so those tests skip.
+    Never DATABASE_URL: that is the app's database, and tests must not touch it."""
+    url = os.environ.get("TEST_DATABASE_URL", "")
+    if "postgres" not in url:
+        return None
+    from app.dbguard import LOCAL_HOSTS, db_host
+
+    if db_host(url) not in LOCAL_HOSTS:
+        raise RuntimeError(f"TEST_DATABASE_URL must point at a local database, got host {db_host(url)!r}")
+    from sqlalchemy import create_engine, text
+
+    try:
+        eng = create_engine(url)
+        with eng.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return eng
+    except Exception:
+        return None
+
+
+@pytest.fixture(scope="session")
+def pg_engine():
+    eng = _test_pg_engine()
+    if eng is None:
+        pytest.skip("no TEST_DATABASE_URL Postgres reachable")
+    return eng
+
+
 @pytest.fixture
 def greenhouse_response():
     return json.loads((FIXTURES / "greenhouse_stripe.json").read_text())

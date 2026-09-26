@@ -4,7 +4,7 @@ import traceback
 from datetime import datetime, timedelta, timezone
 
 import httpx
-from sqlalchemy import case, literal_column, select, update
+from sqlalchemy import and_, case, func, literal_column, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -16,7 +16,6 @@ from .adapters.lever import LeverAdapter
 from .dedupe import make_content_hash, make_dedup_key
 from .normalize import (
     dedup_title,
-    extract_salary,
     extract_tech_tags,
     infer_experience_level,
     infer_remote,
@@ -26,8 +25,9 @@ from .normalize import (
     normalize_location,
     normalize_title,
     parse_posted_at,
-    strip_html,
+    plain_text,
 )
+from .pay import annual_usd, resolve_pay
 from .registry import load_active_companies
 
 log = logging.getLogger(__name__)
@@ -123,7 +123,12 @@ async def _ingest_company(
 
                 async for raw in adapter.fetch(company.slug, client):
                     posted = parse_posted_at(raw.posted_at)
-                    if posted is not None and posted < _CUTOFF:
+                    # Staleness is judged on the last-modified time (Greenhouse
+                    # updated_at), exactly as before posted_at became first-published —
+                    # a still-open role first posted in 2025 must not be silently
+                    # skipped and then soft-closed.
+                    freshness = parse_posted_at(raw.updated_at) or posted
+                    if freshness is not None and freshness < _CUTOFF:
                         continue  # skip stale pre-2026 postings
 
                     result["jobs_seen"] += 1
@@ -131,28 +136,26 @@ async def _ingest_company(
                     l_norm = normalize_location(raw.location)
                     # Key off keying_title (preserves the distinguishing team qualifier), NOT t_norm.
                     dedup = make_dedup_key(company.id, dedup_title(keying_title(raw.title), l_norm))
-                    desc_text = strip_html(raw.description_html)
-                    # Extract from the FULL text before truncating: salary bands and
+                    # One text pipeline: every extractor and the hash read plain_text of
+                    # the RAW HTML (never the stored form, which later PRs restructure).
+                    # Extract from the FULL text before truncating: pay bands and
                     # sponsorship language usually sit at the very bottom of a long
-                    # posting, past _MAX_DESC_CHARS. Truncating first would silently
-                    # drop the comp data that makes those rows worth having.
-                    sal_min, sal_max = extract_salary(desc_text)
-                    tags = extract_tech_tags(desc_text)
-                    sponsor = infer_sponsorship(desc_text)
-                    dept = normalize_department(raw.department)
+                    # posting, past _MAX_DESC_CHARS.
+                    desc_plain = plain_text(raw.description_html)
+                    pay = resolve_pay(raw.pay, desc_plain)
+                    sal_min, sal_max = annual_usd(pay)
+                    tags = extract_tech_tags(desc_plain)
+                    sponsor = infer_sponsorship(desc_plain)
+                    dept = normalize_department(raw.department, raw.title, raw.department_hints)
                     exp_level = infer_experience_level(raw.title)
-                    # Cap what we store AND what we hash, in that order: the hash must
-                    # cover exactly the text we persist. An unchanged long posting then
-                    # hashes identically every run, so it never re-embeds; and an edit
-                    # past the cap — invisible in the stored text — can't churn the
-                    # embedding either.
-                    # strip_html returns None for postings with no description at all
-                    # (common on Lever) — slicing None was the 'NoneType' subscript
-                    # crash that failed four Lever boards; None must flow through
-                    # unchanged, exactly as it did before the cap existed.
-                    if desc_text is not None:
-                        desc_text = desc_text[:_MAX_DESC_CHARS]
-                    chash = make_content_hash(raw.title, desc_text, l_norm, dept, tags)
+                    # plain_text returns None for postings with no description at all
+                    # (common on Lever) — slicing None was the 'NoneType' subscript crash
+                    # that failed four Lever boards; None must flow through unchanged.
+                    desc_text = desc_plain[:_MAX_DESC_CHARS] if desc_plain is not None else None
+                    # Hash v2 covers source fields only (see make_content_hash), so an
+                    # unchanged posting hashes identically every run and never re-embeds,
+                    # whatever the normalizers or the storage format do.
+                    chash = make_content_hash(raw.title, raw.department, raw.location, desc_plain)
 
                     ins = insert(Job).values(
                         company_id=company.id,
@@ -172,6 +175,11 @@ async def _ingest_company(
                         dedup_key=dedup,
                         experience_level=exp_level,
                         tech_tags=tags,
+                        pay_min=pay.min if pay else None,
+                        pay_max=pay.max if pay else None,
+                        pay_currency=pay.currency if pay else None,
+                        pay_period=pay.period if pay else None,
+                        pay_source=pay.source if pay else None,
                         salary_min=sal_min,
                         salary_max=sal_max,
                         sponsorship_flag=sponsor,
@@ -180,10 +188,21 @@ async def _ingest_company(
                         last_seen_at=now,
                         is_active=True,
                     )
-                    # On re-ingest, refresh the mutable content fields, and when the content hash
-                    # changed (title/description/location/dept/tags), null the embedding so
-                    # embed_missing_jobs re-embeds only that row — delta-only, never the whole corpus.
-                    content_changed = Job.content_hash.is_distinct_from(ins.excluded.content_hash)
+                    # On re-ingest, refresh the mutable fields; null the embedding only when
+                    # the content really changed, so embed_missing_jobs re-embeds that row
+                    # alone. Version-aware: hashes are compared only within one hash
+                    # version (the "v2" prefix; legacy hashes are pure hex). A row still
+                    # carrying an older version ADOPTS the new hash and keeps its vector —
+                    # changing the hash definition must never re-embed the corpus. (NULL
+                    # stored hash → the comparison is NULL → keep, same as before for
+                    # rows whose embedding is already there.) Trade-off: a genuine edit
+                    # that coincides with a row's first v2 ingest is caught on its next edit.
+                    stored_hash = Job.content_hash
+                    new_hash = ins.excluded.content_hash
+                    content_changed = and_(
+                        func.left(stored_hash, 2) == func.left(new_hash, 2),
+                        stored_hash != new_hash,
+                    )
                     stmt = ins.on_conflict_do_update(
                         constraint="jobs_source_source_job_id_key",
                         set_={
@@ -201,6 +220,11 @@ async def _ingest_company(
                             "posted_at": posted,
                             "experience_level": exp_level,
                             "tech_tags": tags,
+                            "pay_min": ins.excluded.pay_min,
+                            "pay_max": ins.excluded.pay_max,
+                            "pay_currency": ins.excluded.pay_currency,
+                            "pay_period": ins.excluded.pay_period,
+                            "pay_source": ins.excluded.pay_source,
                             "salary_min": sal_min,
                             "salary_max": sal_max,
                             "sponsorship_flag": sponsor,

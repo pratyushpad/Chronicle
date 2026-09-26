@@ -5,6 +5,7 @@ matching the stored query_json, creates Notification rows, and sends
 email digests via Resend.
 """
 import asyncio
+import html
 import logging
 import os
 from datetime import datetime, timedelta, timezone
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Company, Job, Notification, SavedSearch, User
 from app.db import get_session
+from .pay import format_pay
 
 log = logging.getLogger(__name__)
 
@@ -48,11 +50,12 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
     subject = f"Chronicle: {len(jobs)} new role{'s' if len(jobs) != 1 else ''} matching \"{search.name}\""
     rows = ""
     for job, company_name in jobs[:20]:
+        # Pay as posted ("$45 to 55/hr") — salary_min/max are annualized sort keys, and
+        # rendering them as "$Xk" is exactly the hourly-intern bug the pay_* columns fix.
+        pay_label = format_pay(job.pay_min, job.pay_max, job.pay_currency, job.pay_period)
         salary = ""
-        if job.salary_min:
-            lo = f"${job.salary_min // 1000}k"
-            hi = f"–${job.salary_max // 1000}k" if job.salary_max else ""
-            salary = f"<span style='color:#6b6b6b;font-size:12px;margin-left:8px'>{lo}{hi}</span>"
+        if pay_label:
+            salary = f"<span style='color:#6b6b6b;font-size:12px;margin-left:8px'>{html.escape(pay_label)}</span>"
         rows += f"""
         <tr>
           <td style='padding:12px 0;border-bottom:1px solid #e8e4df'>

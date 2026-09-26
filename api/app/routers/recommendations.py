@@ -13,14 +13,14 @@ import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.models import Application, Company, Interaction, InteractionEvent, Job, User
 from app.routers.users import get_current_user
-from app.schemas import JobListItem, RecommendedJob
-from app.util import root_domain
+from app.schemas import RecommendedJob
+from app.job_items import job_list_item
 
 router = APIRouter(prefix="/users/me/recommendations", tags=["recommendations"])
 
@@ -122,6 +122,15 @@ def _location_fit(job: Job, location_pref: str | None) -> float:
     return 0.0
 
 
+def _job_age_anchor(job) -> datetime | None:
+    """Same rule as the feed's JOB_AGE: first-published, never later than first seen;
+    an unknown publish date falls back to first_seen_at instead of scoring as ancient."""
+    # getattr: rule_score also runs on plain objects (eval personas, tests) that may not
+    # carry first_seen_at.
+    dates = [d for d in (getattr(job, "posted_at", None), getattr(job, "first_seen_at", None)) if d is not None]
+    return min(dates) if dates else None
+
+
 def _recency_decay(posted_at: datetime | None) -> float:
     if not posted_at:
         return 0.1
@@ -185,7 +194,7 @@ def rule_score(job, ctx: RuleContext) -> tuple[float, str] | None:
     seniority_s = _seniority_match(job, ctx.seniority_pref)
     location_s = _location_fit(job, ctx.location_pref)
     remote_s = _remote_fit(job, ctx.remote_pref)
-    recency = _recency_decay(job.posted_at)
+    recency = _recency_decay(_job_age_anchor(job))
 
     affinity = 0.0
     affinity_company = ctx.affinity_companies.get(job.company_id)
@@ -234,7 +243,7 @@ def _rule_scored(
         select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
         .join(Company, Job.company_id == Company.id)
         .where(Job.is_active == True)
-        .order_by(Job.posted_at.desc().nullslast())
+        .order_by(func.least(Job.posted_at, Job.first_seen_at).desc().nullslast())
         .limit(500)
     ).all()
 
@@ -381,25 +390,6 @@ def get_recommendations(
 
     results = []
     for score, why, job, company_name, company_careers_url in deduped[:limit]:
-        job_item = JobListItem(
-            id=job.id,
-            title=job.title,
-            company_name=company_name,
-            company_id=job.company_id,
-            company_domain=root_domain(company_careers_url),
-            location_normalized=job.location_normalized,
-            remote=job.remote,
-            department=job.department,
-            employment_type=job.employment_type,
-            experience_level=job.experience_level,
-            tech_tags=job.tech_tags,
-            sponsorship_flag=job.sponsorship_flag,
-            salary_min=job.salary_min,
-            salary_max=job.salary_max,
-            posted_at=job.posted_at,
-            first_seen_at=job.first_seen_at,
-            apply_url=job.apply_url,
-            is_new=False,
-        )
+        job_item = job_list_item(job, company_name, company_careers_url, is_new=False)
         results.append(RecommendedJob(job=job_item, score=round(score, 3), why=why))
     return results

@@ -54,10 +54,19 @@ class JobListItem(BaseModel):
     experience_level: str | None
     tech_tags: list[str] | None = None
     sponsorship_flag: str | None = None
+    # Annualized USD, for sorting / older clients only — display pay_* instead.
     salary_min: int | None = None
     salary_max: int | None = None
-    posted_at: datetime | None
+    # Pay as posted (own currency and unit); all None when the posting doesn't say.
+    pay_min: float | None = None
+    pay_max: float | None = None
+    pay_currency: str | None = None
+    pay_period: str | None = None   # hour | day | week | month | year
+    pay_source: str | None = None   # ats | text
+    posted_at: datetime | None      # first-published; None when the ATS doesn't say
     first_seen_at: datetime
+    last_seen_at: datetime | None = None  # last time the role was seen live on its board
+    is_active: bool = True
     apply_url: str
     is_new: bool = False
     model_config = {"from_attributes": True}
@@ -79,11 +88,17 @@ class JobDetail(BaseModel):
     sponsorship_flag: str | None = None
     salary_min: int | None = None
     salary_max: int | None = None
+    pay_min: float | None = None
+    pay_max: float | None = None
+    pay_currency: str | None = None
+    pay_period: str | None = None
+    pay_source: str | None = None
     description_text: str | None
     apply_url: str
     posted_at: datetime | None
     first_seen_at: datetime
     last_seen_at: datetime
+    is_active: bool = True
     model_config = {"from_attributes": True}
 
 
@@ -100,6 +115,16 @@ class IndustryCount(BaseModel):
     count: int
 
 
+class Freshness(BaseModel):
+    """How recently the registry's boards were re-checked (companies.last_ingested_at,
+    active boards only) — the source for every freshness claim the site makes."""
+    boards_active: int
+    boards_checked_24h: int
+    boards_checked_7d: int
+    median_check_age_hours: float | None
+    oldest_check_at: datetime | None  # among boards that have succeeded at least once
+
+
 class MetaResponse(BaseModel):
     departments: list[str]
     locations: list[str]
@@ -114,6 +139,7 @@ class MetaResponse(BaseModel):
     remote_count: int = 0
     experience_counts: dict[str, int] = {}
     top_industries: list[IndustryCount] = []
+    freshness: Freshness | None = None
 
 
 class JobListResponse(BaseModel):

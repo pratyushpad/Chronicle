@@ -1,4 +1,5 @@
 import re
+from collections.abc import Iterable
 from datetime import datetime, timezone
 
 from selectolax.parser import HTMLParser
@@ -98,6 +99,77 @@ def strip_html(html: str | None) -> str | None:
     return _WHITESPACE_RE.sub(" ", text).strip() or None
 
 
+# ── HTML → plain text (the one text pipeline) ─────────────────────────────────
+
+# Never rendered as text by a browser, so never text to us: CSS/JS bodies, fallback
+# markup, inline SVG labels, embedded frames, and anything in <head>.
+_DROP_TAGS = frozenset({
+    "script", "style", "noscript", "template", "head", "svg", "iframe", "object",
+    "embed", "canvas", "math", "title",
+})
+# Elements that start a new line in a browser. Their text is fenced with spaces so two
+# blocks never fuse into one word; everything else (strong, span, a, em …) is inline
+# and joins with NO inserted space — "$150,<strong>000</strong>" must stay "$150,000".
+_BLOCK_TAGS = frozenset({
+    "p", "div", "li", "br", "hr", "tr", "td", "th", "section", "article", "ul", "ol",
+    "table", "thead", "tbody", "tfoot", "caption", "blockquote", "pre", "dl", "dd", "dt",
+    "h1", "h2", "h3", "h4", "h5", "h6", "header", "footer", "main", "nav", "aside",
+    "figure", "figcaption", "address", "details", "summary", "center", "form", "fieldset",
+})
+# Zero-width characters aren't whitespace to `\s`, but they'd split tokens invisibly.
+_ZERO_WIDTH_RE = re.compile("[​‌‍⁠﻿]")
+# Blocks end in ONE newline; any other whitespace run is one space. Keeping the line
+# break matters to extractors: "Hourly Rate: $33.00" followed by a "Housing stipend…"
+# bullet must not read as "$33.00 housing" (a benefit), and it keeps stored text readable.
+_INLINE_WS_RE = re.compile(r"[^\S\n]+")
+_LINE_BREAK_RE = re.compile(r"\s*\n\s*")
+
+
+def plain_text(raw_html: str | None) -> str | None:
+    """Readable text of an HTML fragment: the single input for every extractor (pay,
+    tech tags, sponsorship) and for the content hash.
+
+    Block elements end in a single newline, inline text joins with no separator,
+    entities are decoded, non-content elements (script/style/…) are dropped, and any
+    other whitespace collapses to one space. The old `strip_html` joined every text node with a separator, which
+    turned `$150,<strong>000</strong>` into "$150, 000" (unparseable) and kept the body
+    of <script>/<style> tags as if it were posting text.
+
+    Iterative walk (explicit stack): posting HTML nests arbitrarily deep and must
+    never be able to hit Python's recursion limit mid-ingest.
+    """
+    if not raw_html or not raw_html.strip():
+        return None
+    root = HTMLParser(raw_html).root
+    if root is None:
+        return None
+    parts: list[str] = []
+    # Stack items: a node to expand, or a plain string (a block's closing fence).
+    stack: list = [root]
+    while stack:
+        item = stack.pop()
+        if isinstance(item, str):
+            parts.append(item)
+            continue
+        tag = item.tag
+        if tag == "-text":
+            # A newline inside a text node is just whitespace in HTML — only block
+            # boundaries (below) produce line breaks.
+            parts.append(_WHITESPACE_RE.sub(" ", item.text(deep=False)))
+            continue
+        if tag in _DROP_TAGS or tag == "_comment":
+            continue
+        block = tag in _BLOCK_TAGS
+        if block:
+            parts.append("\n")
+            stack.append("\n")  # closing fence, emitted after all children
+        children = list(item.iter(include_text=True))
+        stack.extend(reversed(children))
+    text = _ZERO_WIDTH_RE.sub("", "".join(parts))
+    text = _INLINE_WS_RE.sub(" ", text)
+    return _LINE_BREAK_RE.sub("\n", text).strip() or None
+
+
 def infer_experience_level(title: str) -> str | None:
     if _INTERN_RE.search(title):
         return "Internship"
@@ -117,49 +189,147 @@ def infer_experience_level(title: str) -> str | None:
 # Leading numeric/req code block, e.g. "20213 ", "REQ-123 - ", "#45 ".
 _DEPT_CODE_RE = re.compile(r"^[\s#]*[A-Za-z]{0,4}-?\d[\w\-]*\s*[-–—:]?\s*")
 
-# Ordered (pattern, canonical) — FIRST match wins, so order resolves overlaps:
-# Security before Engineering ("security engineering" → Security); Marketing before
-# Product/Sales ("product marketing" → Marketing); Sales's "account executive" before
-# Finance's "accounting". Position-independent — never slices to the trailing segment
-# (which is how internal org names like "Square Outside" used to leak through).
-_DEPT_KEYWORDS: list[tuple[re.Pattern, str]] = [
-    (re.compile(r"security|infosec|appsec|trust\s*&?\s*(?:and\s*)?safety"), "Security"),
-    (re.compile(r"design|user experience|\bux\b|\bui\b|creative"), "Design"),
-    (re.compile(r"\bdata\b|analytics|machine learning|data science|artificial intelligence|business intelligence|\bml\b|\bai\b"), "Data"),
-    (re.compile(r"marketing|\bmarket\b|\bbrand\b|growth|communications|\bcontent\b|demand gen|\bseo\b|public relations|social media"), "Marketing"),
-    (re.compile(r"product"), "Product"),
-    (re.compile(r"engineer|software|developer|\bdev\b|devops|\bsre\b|infrastructure|\binfra\b|platform|backend|front[\s-]?end|full[\s-]?stack|\bqa\b|quality assurance|technical|hardware|firmware|robotics|\bsystems?\b"), "Engineering"),
-    (re.compile(r"\bsales\b|account executive|account manager|account director|business development|revenue|\bgtm\b|go[\s-]?to[\s-]?market|\bs&m\b|partnership"), "Sales"),
-    (re.compile(r"finance|financial|accounting|controller|treasury|fp&a|\baudit\b|\btax\b|procurement|payroll"), "Finance"),
-    (re.compile(r"people|human resources|\bhr\b|talent|recruit|learning (?:and|&) development|\bl&d\b|compensation|benefits|workplace|diversity"), "People"),
-    (re.compile(r"legal|counsel|compliance|regulatory|privacy|paralegal"), "Legal"),
-    (re.compile(r"customer success|customer experience|customer service|customer support|customer care|\bcx\b|\bsupport\b|help desk"), "Support"),
-    (re.compile(r"research|\br&d\b|\bscience\b"), "Research"),
-    (re.compile(r"information technology|\bit\b|helpdesk|sysadmin"), "IT"),
-    (re.compile(r"operations|\bops\b|logistics|supply chain|fulfillment|warehouse|manufacturing|facilities"), "Operations"),
-    (re.compile(r"g&a|general (?:and|&) administrative|administrative|\badmin\b|corporate|\boffice\b"), "G&A"),
-]
+# The closed vocabulary. "Engineering" is the general/software bucket; the specific
+# engineering disciplines students filter on get their own category. "Other" (a
+# non-empty value nothing maps) is the only value outside this tuple, and the UI never
+# shows it as a chip.
+DEPARTMENTS: tuple[str, ...] = (
+    "Engineering", "ML & AI", "Infrastructure", "Hardware", "Robotics & Autonomy",
+    "Quality", "Manufacturing", "Security", "Data", "Design", "Product", "Research",
+    "Sales", "Marketing", "Finance", "People", "Legal", "Support", "IT", "Operations", "G&A",
+)
 
 
-def normalize_department(raw: str | None) -> str | None:
-    """Map a raw ATS department string to a clean controlled-vocabulary category.
+def _rules(*pairs: tuple[str, str]) -> list[tuple[re.Pattern, str]]:
+    return [(re.compile(p), c) for p, c in pairs]
 
-    Keyword-matched position-independently against a canonical set, so an internal org
-    segment (e.g. "20213 S&M - Sales - Square Outside") resolves to its category
-    ("Sales") instead of leaking the org name. Unknown values collapse to "Other" so
-    filter facets stay clean; the untouched original is preserved in
-    Job.department_raw for retuning without re-ingesting. Empty/None → None (no facet)."""
-    if not raw:
+
+# Department strings (and ATS hints). Ordered — FIRST match wins, so order resolves the
+# overlaps: Security before Engineering ("security engineering"); People's recruiting
+# orgs before Engineering ("Technical Recruiting"); Sales before Marketing and
+# Engineering ("Sales Growth", "Sales Engineering"); Marketing before Product ("Product
+# Marketing"); the specific disciplines before the general Engineering bucket
+# ("Engineering - Infrastructure" → Infrastructure). Position-independent — never
+# slices to the trailing segment (how internal org names like "Square Outside" used to
+# leak through). Deliberately absent: bare "systems"/"tech"/"solutions"/"law"/"growth"
+# — business-unit names like "USA Space Systems" or "Risk Solutions" say nothing about
+# the discipline, so they fall through to the title.
+_DEPT_RULES = _rules(
+    (r"security|infosec|appsec|trust\s*&?\s*(?:and\s*)?safety", "Security"),
+    (r"recruit|talent acquisition|human resources|\bhr\b|\bpeople\b|learning (?:and|&) development|\bl&d\b|compensation|benefits|workplace|diversity", "People"),
+    (r"\bsales\b|account executive|account manager|account director|business development|revenue|\bgtm\b|go[\s-]?to[\s-]?market|\bs&m\b", "Sales"),
+    (r"marketing|\bbrand\b|communications|\bcontent\b|demand gen|\bseo\b|public relations|social media|^growth$", "Marketing"),
+    (r"hardware|electrical|electronic|mechanical|firmware|embedded|silicon|\basic\b|\bfpga\b|\brf\b|avionics|power systems|propulsion|turbomachinery|combustion|\bfluids?\b|structures|aerodynamic|thermal|payload|antenna|launch vehicle", "Hardware"),
+    (r"robot|autonom|perception|controls? (?:engineering|systems)|simulation|motion planning", "Robotics & Autonomy"),
+    (r"data cent(?:er|re)|site reliability|\bsre\b|devops|infrastructure|\binfra\b|cloud|platform|networking|\bnetwork\b", "Infrastructure"),
+    (r"machine learning|deep learning|artificial intelligence|\bml\b|\bai\b|computer vision|\bnlp\b|\bllm", "ML & AI"),
+    (r"manufactur|assembly|production (?:operations|line|planning)|machining|fabrication", "Manufacturing"),
+    (r"quality|\bqa\b|test engineering", "Quality"),
+    (r"design|user experience|\bux\b|\bui\b|creative", "Design"),
+    (r"\bdata\b|analytics|data science|business intelligence", "Data"),
+    (r"\bproducts?\b", "Product"),
+    (r"engineer|software|developer|\bdev\b|backend|front[\s-]?end|full[\s-]?stack|technical", "Engineering"),
+    (r"finance|financial|accounting|controller|treasury|fp&a|\baudit\b|\btax\b|procurement|payroll", "Finance"),
+    (r"legal|counsel|compliance|regulatory|privacy|paralegal", "Legal"),
+    (r"customer success|customer experience|customer service|customer support|customer care|\bcx\b|\bsupport\b|help desk", "Support"),
+    (r"research|\br&d\b|\bscience\b", "Research"),
+    (r"information technology|\bit\b|helpdesk|sysadmin", "IT"),
+    (r"operations|\bops\b|logistics|supply chain|supply planning|fulfillment|warehouse|facilities", "Operations"),
+    (r"g&a|general (?:and|&) administrative|administrative|\badmin\b|corporate|\boffice\b", "G&A"),
+)
+
+# Job titles: keyed on the ROLE noun, so qualifiers don't steal it ("Senior AI Software
+# Engineer" is Engineering, "Product Designer" is Design, "Sales Engineer" is Sales,
+# "Software Development Engineer in Test" is Quality). Ordered, first match wins.
+_TITLE_RULES = _rules(
+    (r"(?:\b|cyber)security\b|infosec|appsec|penetration test|red team|trust\s*&?\s*safety", "Security"),
+    (r"recruit|talent acquisition|sourcer|human resources|\bhrbp\b|people (?:partner|operations|ops)|workplace|employee experience", "People"),
+    (r"\blegal\b|counsel|attorney|lawyer|paralegal|compliance|regulatory", "Legal"),
+    (r"\bsales\b|account executive|account manager|business development|\bbdr\b|\bsdr\b", "Sales"),
+    (r"marketing|\bbrand\b|\bseo\b|communications|public relations|social media|content (?:strategist|writer|marketing)", "Marketing"),
+    (r"designer|\bux\b|\bui\b|user experience|product design|visual design|graphic design", "Design"),
+    (r"product manag|product lead|product owner|\bapm\b|program manag", "Product"),
+    (r"customer success|customer support|technical support|support engineer|customer care|help ?desk", "Support"),
+    (r"machine learning|deep learning|\bml\b|computer vision|\bnlp\b|natural language|\bllms?\b|reinforcement learning|artificial intelligence|\bai (?:engineer|scientist|researcher|research)|recsys|recommender|learning-based", "ML & AI"),
+    (r"site reliability|\bsre\b|devops|infrastructure|\binfra\b|platform engineer|cloud engineer|data cent(?:er|re)|network engineer|systems administrator", "Infrastructure"),
+    (r"software engineer|software developer|full[\s-]?stack|back[\s-]?end|front[\s-]?end|web developer|mobile engineer|\bios\b|android", "Engineering"),
+    (r"manufactur|assembly|machinist|technician, production|production technician|\bmes\b", "Manufacturing"),
+    (r"hardware|electrical|electronics?|mechanical|firmware|embedded|silicon|\basic\b|\bfpga\b|\brf\b|avionics|pcb|analog|circuit|power electronics|propulsion|turbomachinery|combustion|\bfluids?\b|structural|aerodynamic|thermal|mechanisms|payload|antenna|launch vehicle|integration (?:&|and) test|\bgnc\b|\bcad\b|optics", "Hardware"),
+    (r"robot|autonom|perception|controls engineer|control systems|motion planning|simulation|\bslam\b", "Robotics & Autonomy"),
+    (r"\bsdet\b|engineers? in test|\bqa\b|quality|test automation", "Quality"),
+    (r"data scien|data analy|data engineer|analytics|business intelligence|\bbi\b analyst", "Data"),
+    (r"account(?:ing|ant)|finance|financial|\bfp&a\b|controller|treasury|\btax\b|payroll|procurement|\baudit|investment|credit|\brisk\b|m&a|valuation|value creation", "Finance"),
+    (r"research|physics|scientist", "Research"),
+    (r"\bit\b|information technology|helpdesk|sysadmin", "IT"),
+    (r"operations|logistics|supply|buyer|warehouse|fulfillment|facilities|project manag|construction|real estate|\behs\b|environmental, health", "Operations"),
+    (r"engineer|developer|programmer|software", "Engineering"),
+    (r"\bgrowth\b|\bcontent\b|social|events?\b|producer", "Marketing"),
+    (r"customer", "Support"),
+)
+
+# Values that name a hiring PROGRAM or cohort, not a discipline — every intern at a
+# company can share one ("Internships", "Early Career", "University Recruiting"). They
+# must never decide the department (and must never land interns in People via
+# "recruiting"/"talent"), so the title decides instead.
+_GENERIC_DEPT_RE = re.compile(
+    r"^(?:\d{4}\s+)?(?:intern(?:ship)?s?|co-?ops?|early[\s-]?(?:career|talent)s?|emerging talent|"
+    r"university(?: recruiting| relations| programs?)?|general university|campus(?: recruiting)?|"
+    r"college|students?|graduates?|new grads?|grad(?:uate)? programs?|"
+    r"n/?a|\(n/?a\)|none|other|general|all|various|multiple|tbd|misc(?:ellaneous)?)$"
+    r"|intern(?:ship)?s?\b.*\b(?:talent|positions?|program)|\(n/?a\)",
+    re.IGNORECASE,
+)
+
+
+def _clean_dept(value: str | None) -> str | None:
+    if not value:
         return None
-    s = _DEPT_CODE_RE.sub("", raw)
+    s = _DEPT_CODE_RE.sub("", value)
     s = _WHITESPACE_RE.sub(" ", s).strip()
-    if not s:
-        return None
-    low = s.lower()
-    for pattern, canonical in _DEPT_KEYWORDS:
+    return s or None
+
+
+def _match(rules: list[tuple[re.Pattern, str]], text: str) -> str | None:
+    low = text.lower()
+    for pattern, canonical in rules:
         if pattern.search(low):
             return canonical
-    return "Other"
+    return None
+
+
+def normalize_department(
+    raw: str | None,
+    title: str | None = None,
+    hints: Iterable[str] = (),
+) -> str | None:
+    """Map a posting to one controlled-vocabulary department.
+
+    Precedence: a specific raw ATS department → the job title → ATS hints (Greenhouse
+    metadata such as "Job Group", Ashby `team`, Lever `categories.department`). Program
+    or cohort names ("Internships", "Early Career", "University Recruiting", "Pipeline
+    (N/A)") never decide — half of all intern roles used to land in "Other" or "People"
+    that way. The title outranks hints because hints are often the same program label
+    or a coarse org ("Science" for an ML scientist).
+
+    Returns None when there is nothing at all to go on, and "Other" when there was a
+    non-empty department that maps to nothing. The untouched original stays in
+    Job.department_raw so this can be retuned without re-ingesting."""
+    dept = _clean_dept(raw)
+    if dept and not _GENERIC_DEPT_RE.search(dept):
+        found = _match(_DEPT_RULES, dept)
+        if found:
+            return found
+    if title:
+        found = _match(_TITLE_RULES, title)
+        if found:
+            return found
+    for hint in hints:
+        h = _clean_dept(hint)
+        if h and not _GENERIC_DEPT_RE.search(h):
+            found = _match(_DEPT_RULES, h)
+            if found:
+                return found
+    return "Other" if dept else None
 
 
 # ── Heuristic enrichment ──────────────────────────────────────────────────────

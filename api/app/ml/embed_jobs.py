@@ -1,9 +1,10 @@
 """Embed jobs that don't have vectors yet.
 
-Only rows with embedding IS NULL are ever touched: the ingest upsert
-(runner.py on_conflict_do_update) never changes title/description on
-conflict, so an existing embedding never goes stale. If that upsert ever
-starts updating description_text, it must also NULL the embedding.
+Only rows with embedding IS NULL are ever touched. The ingest upsert
+(runner.py) refreshes content on every run and NULLs the embedding exactly
+when the posting's source content changed (same content-hash version,
+different hash) — so this sweep re-embeds changed rows and new rows, never
+the whole corpus.
 """
 import logging
 from datetime import datetime, timezone

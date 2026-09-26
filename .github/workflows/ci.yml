@@ -1,8 +1,9 @@
 name: ci
 
-# API test suite. Runs entirely against fixtures and mocks — conftest.py stubs
-# DATABASE_URL with a dummy DSN and the two tests that want a live Postgres
-# skip themselves when none is reachable, so no services are needed here.
+# API test suite. Most tests run against fixtures and mocks (conftest.py stubs
+# DATABASE_URL with a dummy DSN). Database-backed tests — the upsert's embedding rule,
+# FTS ranking, prune, age ordering — run against a throwaway pgvector Postgres
+# service, migrated to head, via TEST_DATABASE_URL (they skip locally without one).
 on:
   push:
     branches: [main]
@@ -15,6 +16,22 @@ jobs:
     defaults:
       run:
         working-directory: api
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: chronicle
+          POSTGRES_PASSWORD: chronicle
+          POSTGRES_DB: chronicle_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chronicle"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg2://chronicle:chronicle@localhost:5432/chronicle_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,5 +41,7 @@ jobs:
           cache-dependency-path: api/pyproject.toml
       - name: Install API + dev deps
         run: pip install -e ".[dev]"
+      - name: Migrate the test database
+        run: DATABASE_URL="$TEST_DATABASE_URL" python -m alembic upgrade head
       - name: Run tests
         run: python -m pytest tests/ -q

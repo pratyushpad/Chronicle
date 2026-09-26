@@ -10,7 +10,7 @@ from app.schemas import (
     ApplicationCreateIn, ApplicationOut, ApplicationUpdateIn,
     FunnelStats, JobListItem,
 )
-from app.util import root_domain
+from app.job_items import job_list_item
 
 router = APIRouter(prefix="/users/me/applications", tags=["applications"])
 
@@ -184,26 +184,7 @@ def delete_application(app_id: int, user: User = Depends(get_current_user), sess
 
 
 def _row_to_job_item(row) -> JobListItem:
-    return JobListItem(
-        id=row.Job.id,
-        title=row.Job.title,
-        company_name=row.company_name,
-        company_id=row.Job.company_id,
-        company_domain=root_domain(row.company_careers_url),
-        location_normalized=row.Job.location_normalized,
-        remote=row.Job.remote,
-        department=row.Job.department,
-        employment_type=row.Job.employment_type,
-        experience_level=row.Job.experience_level,
-        tech_tags=row.Job.tech_tags,
-        sponsorship_flag=row.Job.sponsorship_flag,
-        salary_min=row.Job.salary_min,
-        salary_max=row.Job.salary_max,
-        posted_at=row.Job.posted_at,
-        first_seen_at=row.Job.first_seen_at,
-        apply_url=row.Job.apply_url,
-        is_new=False,
-    )
+    return job_list_item(row.Job, row.company_name, row.company_careers_url, is_new=False)
 
 
 def _get_app_with_job(app: Application, session: Session) -> ApplicationOut:

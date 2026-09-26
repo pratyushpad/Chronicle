@@ -2,33 +2,18 @@
 
 Proves the weighting makes a title match outrank a skills(tech_tags) match, and that the
 description body is intentionally NOT indexed (so a body-only term doesn't match) — the
-storage tradeoff that keeps FTS within Neon's 512 MB free tier. Postgres only; skips where
-no reachable Postgres. Hermetic: a temp table + the same functional index, rolled back.
+storage tradeoff that keeps FTS within Neon's 512 MB free tier. Postgres only
+(TEST_DATABASE_URL); skips without one. Hermetic: a temp table + the same functional index, rolled back.
 """
-import os
 
-import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
 from app.models import JOB_SEARCH_FTS_EXPR
 
 
-def _pg_engine():
-    url = os.environ.get("DATABASE_URL", "")
-    if "postgres" not in url:
-        return None
-    try:
-        eng = create_engine(url)
-        with eng.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        return eng
-    except Exception:
-        return None
 
-
-@pytest.mark.skipif(_pg_engine() is None, reason="no reachable Postgres for FTS test")
-def test_title_outranks_department_and_body_is_not_indexed():
-    eng = _pg_engine()
+def test_title_outranks_department_and_body_is_not_indexed(pg_engine):
+    eng = pg_engine
     with eng.begin() as conn:
         conn.execute(
             text(

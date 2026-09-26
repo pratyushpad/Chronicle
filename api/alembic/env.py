@@ -7,6 +7,12 @@ from sqlalchemy import engine_from_config, pool
 
 load_dotenv()
 
+from app.dbguard import assert_local_or_allowed  # noqa: E402
+
+# Migrations against anything but a local database must be deliberate
+# (CHRONICLE_ALLOW_REMOTE_DB=1) — see app/dbguard.py.
+assert_local_or_allowed(os.environ["DATABASE_URL"], "alembic migrations")
+
 config = context.config
 config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
 

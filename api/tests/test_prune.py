@@ -3,14 +3,12 @@ tracker (applications FK has no cascade — a tracked job blocking the old bulk 
 crashed the whole prune, so nothing was ever pruned again). Interaction telemetry is
 disposable and must be dropped with the job, not immortalize it.
 
-Postgres only; skips where no reachable Postgres. Hermetic: runs inside one outer
+Postgres only (TEST_DATABASE_URL); skips without one. Hermetic: runs inside one outer
 transaction that is rolled back — prune's internal commit is neutered to a flush.
 """
-import os
 from datetime import datetime, timedelta, timezone
 
-import pytest
-from sqlalchemy import create_engine, select, text
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ingest.prune import prune_stale_jobs
@@ -19,18 +17,6 @@ from app.models import (
     InteractionEvent, InteractionSurface, Job, User,
 )
 
-
-def _pg_engine():
-    url = os.environ.get("DATABASE_URL", "")
-    if "postgres" not in url:
-        return None
-    try:
-        eng = create_engine(url)
-        with eng.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        return eng
-    except Exception:
-        return None
 
 
 def _mk_job(company_id: int, sid: str, active: bool, last_seen: datetime) -> Job:
@@ -42,9 +28,8 @@ def _mk_job(company_id: int, sid: str, active: bool, last_seen: datetime) -> Job
     )
 
 
-@pytest.mark.skipif(_pg_engine() is None, reason="no reachable Postgres for prune test")
-def test_prune_spares_tracked_jobs_and_drops_stale_telemetry():
-    eng = _pg_engine()
+def test_prune_spares_tracked_jobs_and_drops_stale_telemetry(pg_engine):
+    eng = pg_engine
     with eng.connect() as conn:
         outer = conn.begin()
         try:
