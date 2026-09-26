@@ -30,6 +30,17 @@ export interface JobListItem {
   pay_currency?: string | null;
   pay_period?: PayPeriod | null;
   pay_source?: "ats" | "text" | null;
+  /** Student filters as the posting states them (null = unstated). Absent before PR 4. */
+  term_season?: "summer" | "fall" | "spring" | "winter" | null;
+  term_year?: number | null;
+  degree_levels?: ("bachelor" | "master" | "phd")[] | null;
+  grad_year_min?: number | null;
+  grad_year_max?: number | null;
+  us_citizen_required?: boolean | null;
+  us_person_required?: boolean | null;
+  clearance_required?: boolean | null;
+  workplace_type?: "onsite" | "hybrid" | "remote" | null;
+  country?: string | null;
   posted_at: string | null;
   first_seen_at: string;
   /** Last time Chronicle saw the role live on the company's board. */
@@ -123,6 +134,9 @@ export interface Meta {
   experience_counts: Record<string, number>;
   top_industries: IndustryCount[];
   freshness?: Freshness | null;
+  /** "summer-2027" terms and ISO country codes present among active roles (PR 4). */
+  terms?: string[];
+  countries?: string[];
 }
 
 export interface JobListResponse {
@@ -150,6 +164,13 @@ export interface JobParams {
   page?: number;
   page_size?: number;
   sort?: string;
+  hide_citizen_required?: boolean;
+  hide_us_person_required?: boolean;
+  hide_clearance_required?: boolean;
+  hide_grad_only?: boolean;
+  term?: string;
+  workplace?: string;
+  country?: string;
 }
 
 /**

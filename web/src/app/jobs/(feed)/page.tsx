@@ -7,6 +7,7 @@ import { Pagination } from "@/components/Pagination";
 import { JobListSkeleton } from "@/components/JobCardSkeleton";
 import { formatNumber } from "@/lib/utils";
 import { boardsRechecked, relativeAge } from "@/lib/format";
+import { RELEASED, effectiveHides } from "@/lib/eligibility";
 
 interface PageProps {
   searchParams: Promise<Record<string, string>>;
@@ -33,6 +34,10 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
     remote: searchParams.remote === "true" ? true : undefined,
     since_last_run: searchParams.since_last_run === "true" ? true : undefined,
     sort: ["newest", "relevance", "pay"].includes(searchParams.sort) ? searchParams.sort : undefined,
+    ...effectiveHides(searchParams),
+    term: RELEASED.term ? searchParams.term : undefined,
+    workplace: RELEASED.workplace ? searchParams.workplace : undefined,
+    country: RELEASED.country ? searchParams.country : undefined,
     page,
     page_size: compact ? 40 : 20,
   };
@@ -128,6 +133,8 @@ async function Filters() {
       locations={meta?.locations ?? []}
       employmentTypes={meta?.employment_types ?? []}
       industries={meta?.industries ?? []}
+      terms={meta?.terms ?? []}
+      countries={meta?.countries ?? []}
     />
   );
 }
@@ -141,7 +148,7 @@ export default async function JobsPage({ searchParams }: PageProps) {
   return (
     <main id="main" className="mx-auto max-w-6xl px-6 py-10 md:px-8 lg:px-12">
       <h1 className="mb-6 font-display text-3xl text-foreground md:text-4xl">Open roles</h1>
-      <Suspense fallback={<FilterBar departments={[]} locations={[]} employmentTypes={[]} industries={[]} />}>
+      <Suspense fallback={<FilterBar departments={[]} locations={[]} employmentTypes={[]} industries={[]} terms={[]} countries={[]} />}>
         <Filters />
       </Suspense>
       <Suspense fallback={<JobListSkeleton />}>

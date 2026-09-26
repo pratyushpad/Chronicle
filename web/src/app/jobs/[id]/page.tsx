@@ -12,6 +12,7 @@ import { formatAbsoluteDate, formatPay, jobAge, relativeAge } from "@/lib/format
 import { descriptionBlocks, summarize } from "@/lib/description";
 import { jobPostingJsonLd, serializeJsonLd } from "@/lib/jobPosting";
 import { SITE_URL } from "@/lib/site";
+import { eligibilityFacts } from "@/lib/eligibility";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -79,6 +80,7 @@ export default async function JobDetailPage({ params }: PageProps) {
     department ? { label: "Team", value: department } : null,
     job.company_industry ? { label: "Industry", value: job.company_industry } : null,
     age ? { label: age.kind === "posted" ? "Posted" : "First seen", value: age.absolute } : null,
+    ...eligibilityFacts(job).map(({ label, value }) => ({ label, value })),
   ].filter((x): x is { label: string; value: string } => x !== null);
 
   return (

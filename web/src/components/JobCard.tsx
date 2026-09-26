@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { m, useReducedMotion } from "motion/react";
 import { cn, formatLocation, formatDepartment } from "@/lib/utils";
 import { formatPay, jobAge } from "@/lib/format";
+import { eligibilityFacts, jobTerm } from "@/lib/eligibility";
 import type { JobListItem } from "@/lib/api";
 import { duration, ease } from "@/lib/motion";
 import { logInteraction, type InteractionSurface } from "@/lib/interactions";
@@ -82,6 +83,8 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss, no
   const department = formatDepartment(job.department); // "" for the "Other" catch-all
   const pay = formatPay(job);
   const age = jobAge(job, now ?? Date.now());
+  const term = jobTerm(job);
+  const restrictions = eligibilityFacts(job).filter((f) => f.restrictive);
 
   return (
     <m.article
@@ -209,6 +212,16 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss, no
               New
             </span>
           )}
+          {term && (
+            <span className="border border-input px-2 py-0.5 font-sans text-[11px] uppercase tracking-[0.12em] text-foreground">
+              {term}
+            </span>
+          )}
+          {restrictions.map((r) => (
+            <span key={r.value} className="bg-warning-bg px-2 py-0.5 font-sans text-[11px] font-medium text-warning">
+              {r.value}
+            </span>
+          ))}
           {job.experience_level && (
             <span className="border border-input px-2 py-0.5 font-sans text-[11px] uppercase tracking-[0.12em] text-foreground">
               {job.experience_level}

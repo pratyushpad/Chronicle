@@ -5,6 +5,11 @@ from app.models import Job
 from app.schemas import JobListItem
 from app.util import root_domain
 
+ELIGIBILITY_FIELDS = (
+    "term_season", "term_year", "degree_levels", "grad_year_min", "grad_year_max",
+    "us_citizen_required", "us_person_required", "clearance_required", "workplace_type", "country",
+)
+
 
 def _num(value) -> float | None:
     return float(value) if value is not None else None
@@ -31,6 +36,7 @@ def job_list_item(job: Job, company_name: str, company_careers_url: str | None, 
         pay_currency=job.pay_currency,
         pay_period=job.pay_period,
         pay_source=job.pay_source,
+        **{f: getattr(job, f) for f in ELIGIBILITY_FIELDS},
         posted_at=job.posted_at,
         first_seen_at=job.first_seen_at,
         last_seen_at=job.last_seen_at,

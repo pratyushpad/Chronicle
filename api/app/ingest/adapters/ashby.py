@@ -38,4 +38,6 @@ class AshbyAdapter:
             department_hints=[team] if isinstance(team, str) and team else [],
             # includeCompensation=true already puts it on every job; it was ignored.
             pay=pay_from_ashby(item.get("compensation")),
+            workplace_type=item.get("workplaceType"),
+            country=((item.get("address") or {}).get("postalAddress") or {}).get("addressCountry"),
         )

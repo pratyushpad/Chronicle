@@ -11,7 +11,7 @@ from app.db import get_session
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
 from app.industries import canonical_industry, fold_counts, raw_labels
 from app.ingest.description import description_blocks, description_plain, description_summary
-from app.job_items import job_list_item
+from app.job_items import ELIGIBILITY_FIELDS, job_list_item
 from app.schemas import (
     CompanyDetail,
     CompanyItem,
@@ -104,6 +104,15 @@ def list_jobs(
     industry: Optional[str] = Query(None),
     posted_after: Optional[date] = Query(None),
     since_last_run: bool = Query(False),
+    # Student filters (PR 4). "hide_*" drop roles whose posting STATES the requirement;
+    # roles that don't say stay in (unknown is never treated as a yes).
+    hide_citizen_required: bool = Query(False),
+    hide_us_person_required: bool = Query(False),
+    hide_clearance_required: bool = Query(False),
+    hide_grad_only: bool = Query(False),  # open only to master's/PhD students
+    term: Optional[str] = Query(None, pattern=r"^(summer|fall|spring|winter)(-20\d\d)?$"),
+    workplace: Optional[str] = Query(None, pattern="^(onsite|hybrid|remote)$"),
+    country: Optional[str] = Query(None, pattern="^[A-Za-z]{2}$"),
     # newest (alias posted_at, the default) | relevance (default when q is set) | pay |
     # first_seen. Anything unrecognized keeps the old behaviour (first_seen).
     sort: Optional[str] = Query(None),
@@ -170,6 +179,28 @@ def list_jobs(
             s = s.where(JOB_AGE >= datetime(posted_after.year, posted_after.month, posted_after.day, tzinfo=timezone.utc))
         if since_last_run and last_start:
             s = s.where(Job.first_seen_at >= last_start)
+        if hide_citizen_required:
+            s = s.where(Job.us_citizen_required.is_not(True))
+        if hide_us_person_required:
+            s = s.where(Job.us_person_required.is_not(True))
+        if hide_clearance_required:
+            s = s.where(Job.clearance_required.is_not(True))
+        if hide_grad_only:
+            # Keep unknowns and anything open to bachelor's students.
+            s = s.where(or_(
+                Job.degree_levels.is_(None),
+                func.cardinality(Job.degree_levels) == 0,
+                Job.degree_levels.any("bachelor"),
+            ))
+        if term:
+            season, _, year = term.partition("-")
+            s = s.where(Job.term_season == season)
+            if year:
+                s = s.where(Job.term_year == int(year))
+        if workplace:
+            s = s.where(Job.workplace_type == workplace)
+        if country:
+            s = s.where(Job.country == country.upper())
         return s
 
     base = lambda *cols, **kw: _apply_filters(
@@ -441,6 +472,7 @@ def get_job(job_id: int, session: Session = Depends(_db)):
         pay_currency=job.pay_currency,
         pay_period=job.pay_period,
         pay_source=job.pay_source,
+        **{f: getattr(job, f) for f in ELIGIBILITY_FIELDS},
         description_text=description_plain(job.description_text),
         description_blocks=description_blocks(job.description_text),
         description_summary=description_summary(job.description_text),
@@ -831,6 +863,8 @@ def _compute_meta(session: Session) -> MetaResponse:
     ).all()
     top_industries = [IndustryCount(industry=n, count=c) for n, c in fold_counts(top_industry_rows)[:8]]
 
+    terms, countries = _student_filter_options(session)
+
     return MetaResponse(
         departments=distinct_col(Job.department),
         locations=_canonical_locations(session),
@@ -845,4 +879,30 @@ def _compute_meta(session: Session) -> MetaResponse:
         experience_counts=experience_counts,
         top_industries=top_industries,
         freshness=_freshness(session),
+        terms=terms,
+        countries=countries,
     )
+
+
+_SEASON_ORDER = {"winter": 0, "spring": 1, "summer": 2, "fall": 3}
+
+
+def _student_filter_options(session: Session) -> tuple[list[str], list[str]]:
+    """Terms ("summer-2027") and countries that active roles actually have. Terms with a
+    handful of roles are kept too: a student looking for Fall 2026 wants to find all two."""
+    term_rows = session.execute(
+        select(Job.term_season, Job.term_year)
+        .where(Job.is_active == True, Job.term_season != None, Job.term_year != None)  # noqa: E711,E712
+        .distinct()
+    ).all()
+    terms = [
+        f"{season}-{year}"
+        for season, year in sorted(term_rows, key=lambda r: (r[1], _SEASON_ORDER.get(r[0], 9)))
+    ]
+    country_rows = session.execute(
+        select(Job.country, func.count(func.distinct(Job.dedup_key)))
+        .where(Job.is_active == True, Job.country != None)  # noqa: E711,E712
+        .group_by(Job.country)
+        .order_by(func.count(func.distinct(Job.dedup_key)).desc(), Job.country)
+    ).all()
+    return terms, [r[0] for r in country_rows]

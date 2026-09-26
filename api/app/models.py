@@ -2,7 +2,7 @@ import enum
 from datetime import date, datetime, timezone
 from sqlalchemy import (
     Boolean, Column, Date, DateTime, Enum, ForeignKey,
-    Index, Integer, Numeric, String, Text, UniqueConstraint,
+    Index, Integer, Numeric, SmallInteger, String, Text, UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import DeclarativeBase, relationship
@@ -133,6 +133,17 @@ class Job(Base):
     pay_currency = Column(String(3), nullable=True)   # ISO 4217
     pay_period = Column(String(8), nullable=True)     # hour | day | week | month | year
     pay_source = Column(String(8), nullable=True)     # ats (structured field) | text
+    # Student filters, as the posting states them (app/ingest/eligibility.py); NULL = unstated.
+    term_season = Column(String(8), nullable=True)            # summer | fall | spring | winter
+    term_year = Column(SmallInteger, nullable=True)
+    degree_levels = Column(ARRAY(String(8)), nullable=True)   # bachelor | master | phd
+    grad_year_min = Column(SmallInteger, nullable=True)
+    grad_year_max = Column(SmallInteger, nullable=True)
+    us_citizen_required = Column(Boolean, nullable=True)
+    us_person_required = Column(Boolean, nullable=True)       # ITAR/EAR export control
+    clearance_required = Column(Boolean, nullable=True)
+    workplace_type = Column(String(8), nullable=True)         # onsite | hybrid | remote
+    country = Column(String(2), nullable=True)                # ISO 3166-1 alpha-2
     # Annualized USD equivalents of pay_*, for sorting and for clients that predate the
     # pay_* columns only. Never displayed as the posted pay.
     salary_min = Column(Integer, nullable=True)

@@ -76,6 +76,9 @@ class RawJob:
     department_hints: list[str] = field(default_factory=list)
     # Structured pay from the ATS itself (beats anything parsed from the text).
     pay: "Pay | None" = None
+    # The ATS's own workplace and country fields, when it has them (Lever, Ashby).
+    workplace_type: str | None = None
+    country: str | None = None
 
 
 class ATSAdapter(Protocol):

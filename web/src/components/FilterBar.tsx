@@ -4,12 +4,15 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { cn, formatLocation, formatDepartment } from "@/lib/utils";
+import { INTERN_DEFAULT_HIDES, RELEASED, countryName, isInternView, termLabel } from "@/lib/eligibility";
 
 interface FilterBarProps {
   departments: string[];
   locations: string[];
   employmentTypes: string[];
   industries: string[];
+  terms: string[];
+  countries: string[];
 }
 
 // Level folds the two level params into one control: `level` (intern / new_grad, which
@@ -36,7 +39,7 @@ const SEARCH_MODES = [
 ] as const;
 
 // Params the drawer owns (its button shows how many are set).
-const DRAWER_KEYS = ["company", "company_id", "industry", "employment_type", "since_last_run", "mode"];
+const DRAWER_KEYS = ["company", "company_id", "industry", "employment_type", "since_last_run", "mode", "term", "workplace", "country"];
 
 const control =
   "h-11 w-full min-w-0 border border-input bg-background px-3 font-sans text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none";
@@ -91,7 +94,7 @@ function useDebounced(initial: string, onCommit: (v: string) => void) {
   return [value, change, cancel] as const;
 }
 
-export function FilterBar({ departments, locations, employmentTypes, industries }: FilterBarProps) {
+export function FilterBar({ departments, locations, employmentTypes, industries, terms, countries }: FilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -254,7 +257,14 @@ export function FilterBar({ departments, locations, employmentTypes, industries 
               className="w-full overflow-y-auto border-l border-border-light bg-background p-6 sm:max-w-md"
             >
               <SheetTitle className="font-display text-2xl text-foreground">More filters</SheetTitle>
-              <DrawerFilters industries={industries} employmentTypes={employmentTypes} current={searchParams} set={set} />
+              <DrawerFilters
+                industries={industries}
+                employmentTypes={employmentTypes}
+                terms={terms}
+                countries={countries}
+                current={searchParams}
+                set={set}
+              />
             </SheetContent>
           </Sheet>
           {anyFilter && (
@@ -274,18 +284,47 @@ export function FilterBar({ departments, locations, employmentTypes, industries 
           )}
         </div>
       </div>
+      <EligibilityToggles current={searchParams} set={set} />
     </div>
+  );
+}
+
+/** Internship view: roles the posting restricts are hidden by default, and each rule is
+ *  a visible, labelled toggle (checked = those roles are included). */
+function EligibilityToggles({ current, set }: { current: URLSearchParams; set: (k: string, v: string) => void }) {
+  const toggles = INTERN_DEFAULT_HIDES.filter((h) => RELEASED[h.key]);
+  if (toggles.length === 0 || !isInternView(Object.fromEntries(current.entries()))) return null;
+  return (
+    <fieldset className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+      <legend className="sr-only">Include restricted internships</legend>
+      <span className="font-sans text-xs text-muted-foreground">Hidden unless you include them:</span>
+      {toggles.map((h) => (
+        <label key={h.key} className="inline-flex min-h-[32px] cursor-pointer items-center gap-2 font-sans text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={current.get(h.include) === "1"}
+            onChange={(e) => set(h.include, e.target.checked ? "1" : "")}
+            className="h-4 w-4 accent-[var(--foreground)]"
+          />
+          {h.label}
+        </label>
+      ))}
+    </fieldset>
   );
 }
 
 function DrawerFilters({
   industries,
   employmentTypes,
+  terms,
+  countries,
   current,
   set,
 }: {
   industries: string[];
   employmentTypes: string[];
+  terms: string[];
+  countries: string[];
   current: URLSearchParams;
   set: (key: string, value: string) => void;
 }) {
@@ -334,6 +373,43 @@ function DrawerFilters({
           ))}
         </select>
       </label>
+      {RELEASED.term && terms.length > 0 && (
+        <label>
+          <span className={labelClass}>Term</span>
+          <select value={current.get("term") ?? ""} onChange={(e) => set("term", e.target.value)} className={selectClass}>
+            <option value="">Any term</option>
+            {terms.map((t) => (
+              <option key={t} value={t}>
+                {termLabel(t)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {RELEASED.workplace && (
+        <label>
+          <span className={labelClass}>Workplace</span>
+          <select value={current.get("workplace") ?? ""} onChange={(e) => set("workplace", e.target.value)} className={selectClass}>
+            <option value="">Any workplace</option>
+            <option value="onsite">On-site</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="remote">Remote</option>
+          </select>
+        </label>
+      )}
+      {RELEASED.country && countries.length > 0 && (
+        <label>
+          <span className={labelClass}>Country</span>
+          <select value={current.get("country") ?? ""} onChange={(e) => set("country", e.target.value)} className={selectClass}>
+            <option value="">Any country</option>
+            {countries.map((c) => (
+              <option key={c} value={c}>
+                {countryName(c)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label className={cn(control, "flex cursor-pointer items-center gap-3 hover:bg-muted")}>
         <input
           type="checkbox"

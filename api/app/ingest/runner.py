@@ -15,6 +15,7 @@ from .adapters.greenhouse import GreenhouseAdapter
 from .adapters.lever import LeverAdapter
 from .dedupe import make_content_hash, make_dedup_key
 from .description import sanitize_description
+from .eligibility import extract_eligibility
 from .normalize import (
     dedup_title,
     extract_tech_tags,
@@ -148,6 +149,10 @@ async def _ingest_company(
                     tags = extract_tech_tags(desc_plain)
                     sponsor = infer_sponsorship(desc_plain)
                     dept = normalize_department(raw.department, raw.title, raw.department_hints)
+                    elig = extract_eligibility(
+                        raw.title, raw.location, desc_plain,
+                        {"workplace_type": raw.workplace_type, "is_remote": raw.remote, "country": raw.country},
+                    ).as_columns()
                     exp_level = infer_experience_level(raw.title)
                     # Stored for display only: the sanitized HTML subset (see
                     # ingest/description.py), capped at whole blocks. None when the
@@ -184,6 +189,7 @@ async def _ingest_company(
                         salary_min=sal_min,
                         salary_max=sal_max,
                         sponsorship_flag=sponsor,
+                        **elig,
                         content_hash=chash,
                         first_seen_at=now,
                         last_seen_at=now,
@@ -229,6 +235,7 @@ async def _ingest_company(
                             "salary_min": sal_min,
                             "salary_max": sal_max,
                             "sponsorship_flag": sponsor,
+                            **{k: getattr(ins.excluded, k) for k in elig},
                             "content_hash": chash,
                             "embedding": case((content_changed, None), else_=Job.embedding),
                         },

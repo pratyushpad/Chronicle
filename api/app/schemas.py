@@ -66,6 +66,18 @@ class JobListItem(BaseModel):
     pay_currency: str | None = None
     pay_period: str | None = None   # hour | day | week | month | year
     pay_source: str | None = None   # ats | text
+    # Student filters (PR 4), as the posting states them; None = unstated. Absent from
+    # older APIs.
+    term_season: str | None = None
+    term_year: int | None = None
+    degree_levels: list[str] | None = None
+    grad_year_min: int | None = None
+    grad_year_max: int | None = None
+    us_citizen_required: bool | None = None
+    us_person_required: bool | None = None
+    clearance_required: bool | None = None
+    workplace_type: str | None = None
+    country: str | None = None
     posted_at: datetime | None      # first-published; None when the ATS doesn't say
     first_seen_at: datetime
     last_seen_at: datetime | None = None  # last time the role was seen live on its board
@@ -96,6 +108,18 @@ class JobDetail(BaseModel):
     pay_currency: str | None = None
     pay_period: str | None = None
     pay_source: str | None = None
+    # Student filters (PR 4), as the posting states them; None = unstated. Absent from
+    # older APIs.
+    term_season: str | None = None
+    term_year: int | None = None
+    degree_levels: list[str] | None = None
+    grad_year_min: int | None = None
+    grad_year_max: int | None = None
+    us_citizen_required: bool | None = None
+    us_person_required: bool | None = None
+    clearance_required: bool | None = None
+    workplace_type: str | None = None
+    country: str | None = None
     # Readable plain text of the description (kept for older clients).
     description_text: str | None
     # The description as typed blocks (see app/ingest/description.py): paragraph,
@@ -160,6 +184,10 @@ class MetaResponse(BaseModel):
     experience_counts: dict[str, int] = {}
     top_industries: list[IndustryCount] = []
     freshness: Freshness | None = None
+    # Student-filter options present among active roles (PR 4): "summer-2027" style terms,
+    # soonest first, and ISO country codes, most roles first.
+    terms: list[str] = []
+    countries: list[str] = []
 
 
 class JobListResponse(BaseModel):
