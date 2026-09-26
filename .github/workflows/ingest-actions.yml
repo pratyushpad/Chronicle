@@ -12,13 +12,14 @@ name: ingest-actions
 # The run lock (ux_ingest_runs_one_open) makes an overlap with a Render run harmless: the
 # second one exits without starting.
 #
-# Alert emails send from here only if RESEND_API_KEY, RESEND_FROM and APP_URL are also set
-# as repo secrets; otherwise alerts stay in-app for runs made here.
+# Saved-search alerts run here only if RESEND_API_KEY, RESEND_FROM and APP_URL are also
+# repo secrets; otherwise runs made here skip alerts entirely (CHRONICLE_SKIP_ALERTS), so
+# they aren't marked sent without an email.
 on:
   workflow_dispatch:
     inputs:
       budget_seconds:
-        description: "Wall-clock budget for fetching boards (seconds)"
+        description: "Wall-clock budget for fetching boards, seconds (capped at 3600)"
         required: false
         default: "2400"
 
@@ -39,11 +40,17 @@ jobs:
       RESEND_FROM: ${{ secrets.RESEND_FROM }}
       APP_URL: ${{ secrets.APP_URL }}
     steps:
-      - name: Require the database secret
+      - name: Require the database secret; decide about alerts
         run: |
           if [ -z "$DATABASE_URL" ]; then
             echo "NEON_DATABASE_URL repo secret is not set" >&2
             exit 1
+          fi
+          # Without all three email settings, don't run saved-search alerts here: they'd be
+          # marked sent with no email, and the next host that CAN email would skip them.
+          if [ -z "$RESEND_API_KEY" ] || [ -z "$RESEND_FROM" ] || [ -z "$APP_URL" ]; then
+            echo "CHRONICLE_SKIP_ALERTS=1" >> "$GITHUB_ENV"
+            echo "Email settings not all set: saved-search alerts are left for a host that can send them."
           fi
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

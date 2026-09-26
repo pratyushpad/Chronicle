@@ -92,3 +92,32 @@ def test_unchanged_description_keeps_its_toast_value(pg_engine, monkeypatch):
             assert desc.endswith("edited</p>")
         finally:
             outer.rollback()
+
+
+def test_a_crashing_run_closes_its_own_row(pg_engine, monkeypatch):
+    """Any exception after the run is opened stamps THAT run finished (with the reason),
+    so the one-open-run lock doesn't block every trigger for the stale window."""
+    import app.db
+
+    with pg_engine.connect() as conn:
+        outer = conn.begin()
+        try:
+            s = Session(bind=conn, join_transaction_mode="create_savepoint")
+            s.execute(text("UPDATE ingest_runs SET finished_at = started_at WHERE finished_at IS NULL"))
+            fresh = Session(bind=conn, join_transaction_mode="create_savepoint")
+            monkeypatch.setattr(app.db, "get_session", lambda: fresh)
+
+            def boom(*a, **k):
+                raise ConnectionError("neon went away")
+
+            monkeypatch.setattr(runner, "load_active_companies", boom)
+            with pytest.raises(ConnectionError):
+                asyncio.run(runner.run_ingest(s))
+            s.expire_all()
+            row = s.execute(select(IngestRun).order_by(IngestRun.id.desc()).limit(1)).scalar_one()
+            assert row.finished_at is not None
+            assert "run crashed: ConnectionError: neon went away" in row.failures[-1]["error"]
+            # The slot is free again: the next run can start.
+            assert runner._open_run(s, datetime.now(timezone.utc)).id != row.id
+        finally:
+            outer.rollback()

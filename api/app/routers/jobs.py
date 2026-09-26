@@ -712,6 +712,7 @@ def invalidate_meta_cache() -> None:
     """Drop the cached /meta payload. Called at the end of an ingest run so the freshness
     label and "NEW SINCE LAST RUN" counts reflect the new run immediately instead of
     waiting out the TTL."""
+    _STATUS_CACHE.clear()  # a finished run changes /status too
     _META_CACHE.pop("meta", None)
 
 
@@ -914,12 +915,37 @@ def _student_filter_options(session: Session) -> tuple[list[str], list[str]]:
 
 
 _STATUS_RUNS = 20
+# Public and unauthenticated: cached in-process so crawlers or a refresh loop can't keep
+# Neon awake (every uncached call reads 20 runs' failure lists and scans companies).
+_STATUS_CACHE: dict[str, tuple[float, StatusResponse]] = {}
+_STATUS_TTL_SECONDS = 120
+# Error classes whose message is safe to publish (HTTP/network failures name the board's
+# public URL). Anything else, e.g. a database error that names the host and the SQL,
+# is published as its class name only.
+_PUBLIC_ERROR_CLASSES = {
+    "HTTPStatusError", "ConnectError", "ConnectTimeout", "ReadTimeout", "ReadError",
+    "RemoteProtocolError", "PoolTimeout", "TimeoutException", "TimeoutError", "BoardTooLarge",
+}
+
+
+def _public_error(raw: str) -> str | None:
+    text = raw.split(" @ ")[0]  # the run log's crash site stays internal
+    cls = text.split(":", 1)[0].strip()
+    if cls not in _PUBLIC_ERROR_CLASSES:
+        return cls[:80] or None
+    return text.split(" For more information")[0][:300]
 
 
 @router.get("/status", response_model=StatusResponse)
 def status(session: Session = Depends(_db)):
     """Public ingest health: the last runs, boards failing across them, and freshness.
     Everything comes from ingest_runs and companies; nothing is estimated."""
+    import time
+
+    cached = _STATUS_CACHE.get("status")
+    if cached is not None and time.monotonic() - cached[0] < _STATUS_TTL_SECONDS:
+        return cached[1]
+    stale_before = datetime.now(timezone.utc) - timedelta(hours=2)
     runs = session.execute(
         select(IngestRun).order_by(IngestRun.started_at.desc()).limit(_STATUS_RUNS)
     ).scalars().all()
@@ -927,8 +953,12 @@ def status(session: Session = Depends(_db)):
     fails: dict[tuple, dict] = {}
     for r in runs:
         errors = [f for f in (r.failures or []) if isinstance(f, dict)]
-        crashed = any(f.get("slug") is None and "crash" in str(f.get("error", "")) for f in errors) or (
-            r.finished_at is not None and r.finished_at == r.started_at
+        # Crashed: a crash note, a run closed at its own start (stale reclaim), or a run
+        # still open past the stale window (a hard kill that ran no handler).
+        crashed = (
+            any(f.get("slug") is None and "crash" in str(f.get("error", "")) for f in errors)
+            or (r.finished_at is not None and r.finished_at == r.started_at)
+            or (r.finished_at is None and r.started_at < stale_before)
         )
         out_runs.append(StatusRun(
             id=r.id, started_at=r.started_at, finished_at=r.finished_at,
@@ -936,7 +966,7 @@ def status(session: Session = Depends(_db)):
             boards_total=r.companies_total or 0, boards_ok=r.companies_ok or 0,
             boards_failed=r.companies_failed or 0, jobs_seen=r.jobs_seen or 0,
             jobs_new=r.jobs_new or 0, jobs_closed=r.jobs_closed or 0,
-            open=r.finished_at is None, crashed=crashed,
+            open=r.finished_at is None and not crashed, crashed=crashed,
         ))
         for f in errors:
             if f.get("slug") is None:
@@ -945,8 +975,7 @@ def status(session: Session = Depends(_db)):
             entry = fails.setdefault(key, {"company": f.get("company"), "count": 0, "last_error": None})
             entry["count"] += 1
             if entry["last_error"] is None:  # runs are newest first
-                # Public page: drop the " @ file:line" crash site the run log keeps for us.
-                entry["last_error"] = str(f.get("error", "")).split(" @ ")[0][:300] or None
+                entry["last_error"] = _public_error(str(f.get("error", "")))
     last_ok = {}
     if fails:
         slugs = [slug for _, slug in fails]
@@ -960,4 +989,6 @@ def status(session: Session = Depends(_db)):
         ),
         key=lambda b: (-b.failed_runs, b.company or ""),
     )
-    return StatusResponse(runs=out_runs, failing_boards=boards, freshness=_freshness(session))
+    result = StatusResponse(runs=out_runs, failing_boards=boards, freshness=_freshness(session))
+    _STATUS_CACHE["status"] = (time.monotonic(), result)
+    return result

@@ -1,4 +1,5 @@
 import asyncio
+import os
 import logging
 import traceback
 from datetime import datetime, timedelta, timezone
@@ -342,6 +343,32 @@ def _open_run(session: Session, run_start: datetime) -> IngestRun:
     return run
 
 
+def _close_crashed_run(run_id: int | None, exc: BaseException) -> None:
+    """Stamp finished_at on one run (by id) that died, recording why. Uses a fresh
+    session: the run's own is usually what failed."""
+    if not isinstance(run_id, int):
+        return
+    from app.db import get_session
+
+    s = get_session()
+    try:
+        row = s.get(models.IngestRun, run_id)
+        if row is not None and row.finished_at is None:
+            row.finished_at = datetime.now(tz=timezone.utc)
+            row.failures = list(row.failures or []) + [{
+                "company": None, "ats": None, "slug": None,
+                "error": f"run crashed: {type(exc).__name__}: {exc}"[:500],
+            }]
+            s.commit()
+    except Exception:
+        log.exception("could not stamp crashed ingest run %s", run_id)
+    finally:
+        try:
+            s.close()
+        except Exception:
+            pass
+
+
 async def run_ingest(session: Session, budget_seconds: int | None = None) -> IngestRun:
     """Incremental, idempotent ingest of all active boards.
 
@@ -354,6 +381,17 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
     run_start = datetime.now(tz=timezone.utc)
     deadline = run_start + timedelta(seconds=budget_seconds) if budget_seconds else None
     run = _open_run(session, run_start)
+    try:
+        return await _run_body(session, run, run_start, deadline)
+    except BaseException as exc:
+        # Any way out other than a normal finish (a dropped Neon connection in the tail
+        # commit, a cancelled Actions job, SIGTERM at the timeout) closes THIS run, so
+        # the one-open-run lock doesn't block every trigger until the stale window.
+        _close_crashed_run(getattr(run, "id", None), exc)
+        raise
+
+
+async def _run_body(session: Session, run: IngestRun, run_start: datetime, deadline) -> IngestRun:
 
     companies = load_active_companies(session, stale_first=True)
     run.companies_total = len(companies)
@@ -451,7 +489,12 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
         try:
             from .alerts import run_alerts
 
-            await run_alerts(session, run_start)
+            # Set by the Actions ingest when it has no email settings: alerts then wait for
+            # a run that can send them, instead of being marked sent without an email.
+            if os.getenv("CHRONICLE_SKIP_ALERTS") != "1":
+                await run_alerts(session, run_start)
+            else:
+                log.info("saved-search alerts skipped on this host (CHRONICLE_SKIP_ALERTS=1)")
         except Exception:
             session.rollback()
             log.exception("saved-search alerts failed (ingest itself succeeded)")

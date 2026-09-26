@@ -7,6 +7,8 @@ from tests.test_design_api_db import api  # noqa: F401  (fixture)
 
 def test_status_lists_runs_and_failing_boards(api):  # noqa: F811
     client, s = api
+    from app.routers import jobs as jobs_router
+    jobs_router._STATUS_CACHE.clear()
     now = datetime.now(timezone.utc)
     co = Company(name="DeadCo", ats=ATSSource.greenhouse, slug="deadco-status-test", active=True)
     s.add(co)
@@ -26,6 +28,9 @@ def test_status_lists_runs_and_failing_boards(api):  # noqa: F811
     assert runs[1]["crashed"] is True  # closed at its own start time: reclaimed as crashed
     dead = next(b for b in body["failing_boards"] if b["slug"] == "deadco-status-test")
     assert dead["failed_runs"] == 2 and dead["last_error"] == "HTTPStatusError: 404"
+    # Non-network errors publish their class only (a DB error names hosts and SQL).
+    from app.routers.jobs import _public_error
+    assert _public_error("OperationalError: could not connect to ep-x.neon.tech [SQL: INSERT …]") == "OperationalError"
     assert dead["last_success_at"] is None
     assert body["freshness"]["boards_active"] >= 1
 

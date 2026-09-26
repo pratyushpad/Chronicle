@@ -4,8 +4,10 @@
 
 Neon's free plan includes 100 compute-unit hours (CU-h) a month; running out suspends the
 database. This is an ESTIMATE: it assumes the compute is awake for the run's wall-clock
-time plus Neon's 5-minute suspend delay, at NEON_CU (default 0.25, the free tier's
-minimum autoscale size). The real number is in the Neon console (Billing → Compute).
+time (the ingest plus the embedding sweep) plus Neon's 5-minute suspend delay, at NEON_CU:
+set it to your compute endpoint's autoscale MAXIMUM (default 0.25, the free tier's
+minimum, which undercounts if autoscaling goes higher). The real number is in the Neon
+console (Billing → Compute).
 """
 import json
 import os
@@ -23,10 +25,13 @@ def main() -> None:
     if "skipped" in report:
         print(f"Skipped: {report['skipped']}.")
         return
-    secs = report.get("seconds") or 0
+    if "crashed" in report:
+        print(f"**Crashed:** {report['crashed']}. The run row was closed; see /status.")
+        return
+    secs = report.get("seconds_total") or report.get("seconds") or 0
     per_run = (secs + SUSPEND_DELAY_S) / 3600 * cu
     monthly = per_run * runs_per_month
-    print(f"- Run {report['run_id']}: {secs} s, boards {report['boards_ok']}/{report['boards_total']} ok "
+    print(f"- Run {report['run_id']}: {secs} s including the embedding sweep, boards {report['boards_ok']}/{report['boards_total']} ok "
           f"({report['boards_failed']} failed), jobs seen {report['jobs_seen']}, new {report['jobs_new']}, "
           f"closed {report['jobs_closed']}")
     print(f"- Neon compute estimate at {cu} CU: {per_run:.3f} CU-h this run; "

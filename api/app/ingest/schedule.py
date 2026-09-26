@@ -85,11 +85,25 @@ if __name__ == "__main__":
     # --once [--budget SECONDS] [--report PATH]: one run (GitHub Actions / manual); writes a
     # JSON report for the workflow's budget summary when --report is given.
     if "--once" in sys.argv:
-        budget = _arg("--budget")
-        result = asyncio.run(_once(int(budget) if budget else None))
-        if (path := _arg("--report")) is not None:
-            import json
+        import json
+        import time
 
+        # Capped under the 2-hour stale-run window, so a live run is never reclaimed as
+        # crashed while it's still going (and a second run started beside it).
+        budget = min(int(_arg("--budget") or 2400), 3600)
+        path = _arg("--report")
+        started = time.monotonic()
+        try:
+            result = asyncio.run(_once(budget))
+        except BaseException as exc:
+            if path:
+                with open(path, "w") as fh:
+                    json.dump({"crashed": f"{type(exc).__name__}: {exc}"[:300]}, fh)
+            raise
+        if path:
+            if result is not None:
+                # Wall-clock including the embedding sweep, which also uses the database.
+                result["seconds_total"] = round(time.monotonic() - started)
             with open(path, "w") as fh:
                 json.dump(result or {"skipped": "another run in progress"}, fh)
     else:

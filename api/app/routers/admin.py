@@ -37,39 +37,6 @@ def _db():
         session.close()
 
 
-def _close_crashed_run(exc: BaseException) -> None:
-    """Stamp finished_at on a run whose worker died, recording why.
-
-    A run row left with finished_at NULL is indistinguishable from one still in flight,
-    so four consecutive crashed runs looked identical to a healthy backlog and the real
-    cause stayed invisible for days. Uses a fresh session on purpose: the run's own is
-    typically dead by the time we get here (that is usually what killed it).
-    """
-    session = get_session()
-    try:
-        run = session.execute(
-            select(IngestRun)
-            .where(IngestRun.finished_at.is_(None))
-            .order_by(IngestRun.started_at.desc())
-            .limit(1)
-        ).scalar_one_or_none()
-        if run is None:
-            return
-        run.finished_at = datetime.now(tz=timezone.utc)
-        run.failures = list(run.failures or []) + [
-            {"company": None, "ats": None, "slug": None,
-             "error": f"run crashed: {type(exc).__name__}: {exc}"[:500]}
-        ]
-        session.commit()
-    except Exception:
-        log.exception("could not stamp crashed ingest run")
-    finally:
-        try:
-            session.close()
-        except Exception:
-            pass
-
-
 async def _run_ingest_bg(budget_seconds: int | None) -> None:
     """Background worker: its own session (the request session is long gone by now)."""
     from app.ingest.runner import RunInProgress, run_ingest
@@ -79,11 +46,10 @@ async def _run_ingest_bg(budget_seconds: int | None) -> None:
         await run_ingest(session, budget_seconds=budget_seconds)
     except RunInProgress:
         # Lost the race for the run slot (ux_ingest_runs_one_open): another run is open.
-        # Nothing of ours to close; closing "the latest open run" here would end theirs.
         log.info("ingest not started: another run holds the run lock")
-    except Exception as exc:
+    except Exception:
+        # run_ingest has already closed its own run row (by id) before re-raising.
         log.exception("background ingest run failed")
-        _close_crashed_run(exc)
     finally:
         # close() rolls back, which itself raises if the connection is already gone —
         # that escaped this task and surfaced as an unhandled ASGI error.
@@ -159,19 +125,29 @@ def bench_search(
         if name != "session"
     }
     out = {}
-    for mode in modes.split(","):
-        times = []
-        for i in range(n):
-            q = _BENCH_QUERIES[i % len(_BENCH_QUERIES)]
-            t0 = time.perf_counter()
-            list_jobs(**{**defaults, "q": q, "mode": mode, "level": "intern"}, session=session)
-            times.append((time.perf_counter() - t0) * 1000)
-        times.sort()
-        out[mode] = {
-            "n": n,
-            "p50_ms": round(statistics.median(times)),
-            "p95_ms": round(times[max(0, int(len(times) * 0.95) - 1)]),
-            "max_ms": round(times[-1]),
-        }
+    try:
+        for mode in modes.split(","):
+            # Warm-up: the first semantic call loads the model (~2 s); keep it out of timing.
+            list_jobs(**{**defaults, "q": _BENCH_QUERIES[0], "mode": mode}, session=session)
+            session.rollback()
+            times = []
+            for i in range(n):
+                q = _BENCH_QUERIES[i % len(_BENCH_QUERIES)]
+                t0 = time.perf_counter()
+                list_jobs(**{**defaults, "q": q, "mode": mode, "level": "intern"}, session=session)
+                times.append((time.perf_counter() - t0) * 1000)
+                session.rollback()  # never hold one read transaction open across the run
+            times.sort()
+            out[mode] = {
+                "n": n,
+                "p50_ms": round(statistics.median(times)),
+                "p95_ms": round(times[max(0, int(len(times) * 0.95) - 1)]),
+                "max_ms": round(times[-1]),
+            }
+    finally:
+        # Hand the embedding model back: the 512 MB box can't keep it resident.
+        from app.ml.embedder import release_embedder
+
+        release_embedder()
     return {"measured_at": datetime.now(tz=timezone.utc).isoformat(), "results": out,
             "note": "In-process /jobs handler time (database + app), excluding network."}
