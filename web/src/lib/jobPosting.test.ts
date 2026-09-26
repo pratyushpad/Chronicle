@@ -44,7 +44,11 @@ describe("jobPostingJsonLd", () => {
       baseSalary: { "@type": "MonetaryAmount", currency: "USD", value: { "@type": "QuantitativeValue", unitText: "HOUR", value: 54 } },
     });
     expect(ld).not.toHaveProperty("validThrough");
-    expect(ld).not.toHaveProperty("jobLocationType");
+  });
+
+  it("is omitted when the location can't be stated", () => {
+    expect(jobPostingJsonLd({ ...job, location_normalized: "remote", remote: true }, "u", "d")).toBeNull();
+    expect(jobPostingJsonLd({ ...job, location_normalized: null }, "u", "d")).toBeNull();
   });
 
   it("is omitted when the posting date is unknown", () => {
@@ -69,7 +73,7 @@ describe("jobPostingJsonLd", () => {
 describe("postalAddress", () => {
   it("parses US city/state and refuses what it can't parse", () => {
     expect(postalAddress("austin, tx, usa")).toMatchObject({ addressLocality: "Austin", addressRegion: "TX" });
-    expect(postalAddress("london")).toEqual({ "@type": "PostalAddress", addressLocality: "London" });
+    expect(postalAddress("london")).toBeNull();
     expect(postalAddress("toronto, on, canada")).toBeNull();
     expect(postalAddress("georgia, tbilisi")).toBeNull();
     expect(postalAddress("seattle, washington")).toMatchObject({ addressRegion: "WA", addressCountry: "US" });

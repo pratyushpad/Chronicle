@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, or_, select, text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, defer
 
 from app.db import get_session
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
@@ -469,6 +469,8 @@ def similar_jobs(
         )
         .order_by(distance)
         .limit(limit * _SIMILAR_OVERFETCH)
+        # List cards never read these; skip loading 20 KB descriptions and vectors.
+        .options(defer(Job.description_text), defer(Job.embedding))
     ).all()
     seen: set[str] = set()
     items = []

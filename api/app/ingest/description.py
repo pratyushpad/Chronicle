@@ -94,6 +94,11 @@ def _render(node: Node, depth: int) -> list[tuple[int, str]]:
     if tag == "br":
         return [(_INLINE, "<br>")]
 
+    if tag in ("ul", "ol"):
+        # Before the children loop: _list renders the items itself, and rendering them
+        # here too would repeat the work at every nesting level (exponential time).
+        return _list(node, tag, depth)
+
     children: list[tuple[int, str]] = []
     for child in node.iter(include_text=True):
         children.extend(_render(child, depth + 1))
@@ -104,8 +109,6 @@ def _render(node: Node, depth: int) -> list[tuple[int, str]]:
             return []
         level = _HEADING_LEVEL[tag]
         return [(_BLOCK, f"<h{level}>{inner}</h{level}>")]
-    if tag in ("ul", "ol"):
-        return _list(node, tag, depth)
     if tag == "li":
         # A stray <li> outside a list reads as a paragraph.
         return [(_BREAK, "")] + children + [(_BREAK, "")]
@@ -252,11 +255,38 @@ def _blocks_from_segments(segments: list[tuple[int, str]]) -> list[str]:
     return blocks
 
 
+def _cut_block(block: str, max_chars: int) -> str:
+    """A first block longer than the whole budget (e.g. one merged list of hundreds of
+    items): keep its text as escaped lines, one per item or line, cut to fit."""
+    room = max_chars - len("<p></p>")
+    lines: list[str] = []
+    used = 0
+    for line in (plain_text(block) or "").split("\n"):
+        sep = len("<br>") if lines else 0
+        esc = _esc(line)
+        if used + sep + len(esc) > room:
+            # Longest prefix whose escaped form fits (binary search: escaping can
+            # more than double a line's length, so no fixed ratio works).
+            lo, hi = 0, len(line)
+            while lo < hi:
+                mid = (lo + hi + 1) // 2
+                if used + sep + len(_esc(line[:mid])) <= room:
+                    lo = mid
+                else:
+                    hi = mid - 1
+            if line[:lo].strip():
+                lines.append(_esc(line[:lo].rstrip()))
+            break
+        lines.append(esc)
+        used += sep + len(esc)
+    return f"<p>{'<br>'.join(lines)}</p>" if lines else ""
+
+
 def sanitize_description(raw_html: str | None, max_chars: int) -> str | None:
     """Raw ATS HTML → the stored subset (None when the posting has no text).
 
     Whole blocks are kept until `max_chars` would be exceeded, so the output is always
-    well-formed. A first block longer than the budget is kept as escaped text, cut to fit.
+    well-formed. A first block longer than the budget is kept as escaped lines, cut to fit.
     """
     if not raw_html or not raw_html.strip():
         return None
@@ -271,15 +301,8 @@ def sanitize_description(raw_html: str | None, max_chars: int) -> str | None:
     used = 0
     for block in blocks:
         if used + len(block) > max_chars:
-            room = max_chars - used - len("<p></p>")
-            if not out and room > 0:
-                text = _WS_RE.sub(" ", _text_of(block)).strip()
-                # Cut the TEXT, then escape; trim until the escaped form fits.
-                cut = text[:room]
-                while cut and len(_esc(cut)) > room:
-                    cut = cut[: len(cut) - (len(_esc(cut)) - room)]
-                if cut.strip():
-                    out.append(f"<p>{_esc(cut.rstrip())}</p>")
+            if not out:
+                out.append(_cut_block(block, max_chars))
             break
         out.append(block)
         used += len(block)

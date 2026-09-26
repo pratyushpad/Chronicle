@@ -32,9 +32,10 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
   const offset = (Number(id) - 1) * JOB_CHUNK_SIZE;
   const page = await getSitemapJobs(offset, JOB_CHUNK_SIZE).catch(() => null);
   if (!page) return [];
+  // No lastModified: the only per-role timestamp that moves is last_seen_at, which
+  // changes on every ingest and would make every URL look modified every time.
   return page.items.map((j) => ({
     url: `${SITE_URL}/jobs/${j.id}`,
-    lastModified: j.last_seen_at,
     changeFrequency: "daily" as const,
     priority: 0.8,
   }));

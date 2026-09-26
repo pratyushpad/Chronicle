@@ -3,7 +3,8 @@
  *
  * Never invents data: a field the API doesn't know is left out. `datePosted` is required
  * by search engines, so when the posting date is unknown (we only know when Chronicle
- * first saw the role) there is no JobPosting at all. Closed roles get none either.
+ * first saw the role) there is no JobPosting at all; the same goes for a location we
+ * can't parse. Closed roles get none either.
  */
 import type { JobDetail } from "@/lib/api";
 import { jobAge, parseTimestamp, type PayPeriod } from "@/lib/format";
@@ -58,15 +59,15 @@ function usState(part: string | undefined): string | null {
   return STATE_NAMES[p.toLowerCase()] ?? null;
 }
 
-/** "Austin, TX" / "South San Francisco, California, USA" → a US PostalAddress; a bare
- *  city → locality only; anything else → null (not parsed, so not claimed). */
+/** "Austin, TX" / "South San Francisco, California, USA" → a US PostalAddress; anything
+ *  else → null (not parsed, so not claimed). */
 export function postalAddress(locationNormalized: string | null | undefined): Record<string, Json> | null {
   const loc = formatLocation(locationNormalized);
   if (!loc || /remote/i.test(loc) || /[;|/]/.test(loc)) return null;
   const parts = loc.split(",").map((p) => p.trim()).filter(Boolean);
   if (parts.length === 0) return null;
+  if (parts.length < 2) return null; // a bare city: the country would be a guess
   const address: Record<string, Json> = { "@type": "PostalAddress", addressLocality: parts[0] };
-  if (parts.length === 1) return address;
   const state = usState(parts[1]);
   const country = parts[2]?.toUpperCase();
   if (!state || parts.length > 3 || (country && country !== "USA" && country !== "US")) return null;
@@ -111,9 +112,11 @@ export function jobPostingJsonLd(job: JobDetail, url: string, description: strin
   };
   const type = employmentType(job);
   if (type) data.employmentType = type;
+  // Search engines treat a JobPosting without a location as invalid, and a remote one
+  // needs the applicant regions we don't know. So: a parsed address, or no JSON-LD.
   const address = postalAddress(job.location_normalized);
-  if (address) data.jobLocation = { "@type": "Place", address };
-  if (job.remote === true) data.jobLocationType = "TELECOMMUTE";
+  if (!address) return null;
+  data.jobLocation = { "@type": "Place", address };
   const salary = baseSalary(job);
   if (salary) data.baseSalary = salary;
   return data;

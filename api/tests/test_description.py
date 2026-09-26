@@ -196,3 +196,25 @@ def test_summary_is_short_plain_text():
     assert len(summary) <= 180 and summary.endswith("…") and "<" not in summary
     assert description_summary("Short.") == "Short."
     assert description_summary(None) is None
+
+
+def test_deeply_nested_lists_stay_linear_time():
+    import time
+    for depth in (30, 300):
+        body = "<ul>" + "<li>x<ul>" * depth + "<li>deep</li>" + "</ul></li>" * depth + "</ul>"
+        start = time.monotonic()
+        stored = sanitize_description(body, CAP)
+        assert time.monotonic() - start < 1.0, depth
+        assert "deep" in stored
+
+
+def test_an_oversized_first_block_keeps_item_boundaries():
+    assert sanitize_description("<ul><li>alpha</li><li>beta</li></ul>", 20) == "<p>alpha<br>beta</p>"
+    many = "".join(f"<ul><li>item {i}</li></ul>" for i in range(5_000))  # merges into one list
+    stored = sanitize_description(many, 1_000)
+    assert len(stored) <= 1_000 and stored.startswith("<p>item 0<br>item 1<br>")
+
+
+def test_escaping_that_doubles_the_length_still_fits_the_cap():
+    stored = sanitize_description("<p>" + "&lt;" * 30_000 + "</p>", 1_000)
+    assert stored and len(stored) <= 1_000 and stored.startswith("<p>&lt;&lt;")

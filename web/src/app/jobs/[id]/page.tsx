@@ -23,8 +23,11 @@ async function loadJob(params: PageProps["params"]): Promise<JobDetail> {
   if (!Number.isInteger(jobId) || jobId <= 0) notFound();
   try {
     return await getJob(jobId);
-  } catch {
-    notFound();
+  } catch (e) {
+    // Only a real 404 is "not found". A cold start, timeout or 5xx must surface as an
+    // error (a 5xx), never as a not-found page that tells crawlers to drop a live role.
+    if (e instanceof Error && e.message === "Job not found") notFound();
+    throw e;
   }
 }
 
@@ -100,7 +103,7 @@ export default async function JobDetailPage({ params }: PageProps) {
           <h1 className="mt-3 font-display text-3xl leading-[1.2] text-foreground sm:text-4xl">{job.title}</h1>
 
           {closed && (
-            <div role="status" className="mt-6 border border-foreground bg-muted px-4 py-3 font-body text-sm text-foreground">
+            <div role="note" className="mt-6 border border-foreground bg-muted px-4 py-3 font-body text-sm text-foreground">
               <strong className="font-semibold">This role is closed.</strong>{" "}
               {seenLive
                 ? `Chronicle last saw it live on ${job.company_name}'s board ${seenLive}.`
