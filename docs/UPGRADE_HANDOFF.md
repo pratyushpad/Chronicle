@@ -1,6 +1,6 @@
 # Upgrade handoff: PR 2–8 in a cloud session
 
-PR 1 was built and verified locally (`upgrade/pr1-correctness`, PR __PR1_LINK__). PR 2–8 of
+PR 1 was built and verified locally (`upgrade/pr1-correctness`, PR #1 — https://github.com/pratyushpad/Chronicle/pull/1). PR 2–8 of
 `docs/UPGRADE_PLAN.md` are meant to run in Claude Code on the web (claude.ai/code), so the
 maintainer's computer can be off. This file is the complete context for that session.
 
