@@ -185,7 +185,11 @@ def test_description_stored_truncated_at_cap(monkeypatch):
     assert result["error"] is None
     params = _insert_params(session)
     stored = params["description_text"]
-    assert len(stored) == runner._MAX_DESC_CHARS
+    # Stored as the sanitized subset, cut at a whole block: never over the cap, never
+    # a half-open tag.
+    assert len(stored) <= runner._MAX_DESC_CHARS
+    assert len(stored) > runner._MAX_DESC_CHARS - 100
+    assert stored.startswith("<p>") and stored.endswith("</p>")
     assert "$180,000" not in stored  # the tail really is past the cap
 
 
@@ -210,8 +214,7 @@ def test_short_description_is_untouched(monkeypatch):
     _run(adapter, session, monkeypatch)
 
     params = _insert_params(session)
-    assert params["description_text"].endswith("$150,000 - $190,000.")
-    assert len(params["description_text"]) < runner._MAX_DESC_CHARS
+    assert params["description_text"] == html  # already in the stored subset: unchanged
 
 
 def test_posting_with_no_description_ingests_cleanly(monkeypatch):

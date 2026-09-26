@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
+from app.ingest.description import description_blocks, description_plain, description_summary
 from app.job_items import job_list_item
 from app.schemas import (
     CompanyDetail,
@@ -17,9 +18,12 @@ from app.schemas import (
     Freshness,
     IndustryCount,
     JobDetail,
+    JobListItem,
     JobListResponse,
     LastRunSummary,
     MetaResponse,
+    SitemapJob,
+    SitemapJobsResponse,
     VelocityPoint,
 )
 
@@ -423,12 +427,83 @@ def get_job(job_id: int, session: Session = Depends(_db)):
         pay_currency=job.pay_currency,
         pay_period=job.pay_period,
         pay_source=job.pay_source,
-        description_text=job.description_text,
+        description_text=description_plain(job.description_text),
+        description_blocks=description_blocks(job.description_text),
+        description_summary=description_summary(job.description_text),
         apply_url=job.apply_url,
         posted_at=job.posted_at,
         first_seen_at=job.first_seen_at,
         last_seen_at=job.last_seen_at,
         is_active=bool(job.is_active),
+    )
+
+
+# Similar roles: nearest active neighbours of the job's embedding. A few extra rows are
+# fetched so that duplicates of one role (same dedup_key, e.g. a posting per city) and the
+# job's own duplicates can be dropped and still leave `limit` distinct roles.
+_SIMILAR_OVERFETCH = 4
+
+
+@router.get("/jobs/{job_id}/similar", response_model=list[JobListItem])
+def similar_jobs(
+    job_id: int,
+    limit: int = Query(4, ge=1, le=12),
+    session: Session = Depends(_db),
+):
+    source = session.execute(
+        select(Job.embedding, Job.dedup_key).where(Job.id == job_id)
+    ).first()
+    if source is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if source.embedding is None:
+        return []  # not embedded yet: no honest notion of "similar"
+    distance = Job.embedding.cosine_distance(source.embedding)
+    rows = session.execute(
+        select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
+        .join(Company)
+        .where(
+            Job.is_active == True,  # noqa: E712
+            Job.embedding.isnot(None),
+            Job.id != job_id,
+            Job.dedup_key != source.dedup_key,
+        )
+        .order_by(distance)
+        .limit(limit * _SIMILAR_OVERFETCH)
+    ).all()
+    seen: set[str] = set()
+    items = []
+    for row in rows:
+        if row.Job.dedup_key in seen:
+            continue
+        seen.add(row.Job.dedup_key)
+        items.append(job_list_item(row.Job, row.company_name, row.company_careers_url))
+        if len(items) == limit:
+            break
+    return items
+
+
+# Sitemap source: one URL per distinct active role, paged by id. The lowest id of each
+# dedup_key is used because it is stable across runs (the feed's representative is the
+# most recent posting, which can change), so search engines see a steady URL set.
+@router.get("/sitemap/jobs", response_model=SitemapJobsResponse)
+def sitemap_jobs(
+    offset: int = Query(0, ge=0),
+    limit: int = Query(10_000, ge=1, le=20_000),
+    session: Session = Depends(_db),
+):
+    firsts = (
+        select(func.min(Job.id).label("id"), func.max(Job.last_seen_at).label("last_seen_at"))
+        .where(Job.is_active == True)  # noqa: E712
+        .group_by(Job.dedup_key)
+        .subquery()
+    )
+    total = session.execute(select(func.count()).select_from(firsts)).scalar_one()
+    rows = session.execute(
+        select(firsts.c.id, firsts.c.last_seen_at).order_by(firsts.c.id).offset(offset).limit(limit)
+    ).all()
+    return SitemapJobsResponse(
+        total=total,
+        items=[SitemapJob(id=r.id, last_seen_at=r.last_seen_at) for r in rows],
     )
 
 

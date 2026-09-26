@@ -93,13 +93,30 @@ class JobDetail(BaseModel):
     pay_currency: str | None = None
     pay_period: str | None = None
     pay_source: str | None = None
+    # Readable plain text of the description (kept for older clients).
     description_text: str | None
+    # The description as typed blocks (see app/ingest/description.py): paragraph,
+    # heading (level 2-4) and list, with inline text/strong/em/link/break content.
+    # Rendered as elements by the web, never as HTML.
+    description_blocks: list[dict[str, Any]] = []
+    # About 180 characters of plain text, for meta descriptions and social cards.
+    description_summary: str | None = None
     apply_url: str
     posted_at: datetime | None
     first_seen_at: datetime
     last_seen_at: datetime
     is_active: bool = True
     model_config = {"from_attributes": True}
+
+
+class SitemapJob(BaseModel):
+    id: int
+    last_seen_at: datetime
+
+
+class SitemapJobsResponse(BaseModel):
+    total: int
+    items: list[SitemapJob]
 
 
 class LastRunSummary(BaseModel):

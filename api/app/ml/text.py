@@ -13,7 +13,7 @@ def build_embedding_text(
 ) -> str:
     """Render the canonical embedding input for a job.
 
-    description_text must already be HTML-stripped (normalize.strip_html).
+    description_text must be plain text (description.description_plain of the stored form).
     Keep this in sync with any stored embeddings — changing the template
     invalidates them.
     """

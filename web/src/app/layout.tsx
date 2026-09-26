@@ -5,6 +5,7 @@ import { Nav } from "@/components/Nav";
 import { SessionWrapper } from "@/components/SessionWrapper";
 import { RouteCurtain } from "@/components/gsap/RouteCurtain";
 import { getMeta } from "@/lib/api";
+import { SITE_URL } from "@/lib/site";
 
 const display = Playfair_Display({
   subsets: ["latin"],
@@ -23,9 +24,14 @@ const mono = JetBrains_Mono({
 // Static metadata makes no refresh-cadence claim: freshness is measured, not promised
 // (see the /meta-backed copy on the landing page and feed).
 export const metadata: Metadata = {
-  title: "Chronicle — Every open role. Every company.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Chronicle — Every open role. Every company.",
+    template: "%s · Chronicle",
+  },
   description:
     "Chronicle aggregates job listings from top tech companies' own career pages into one searchable feed.",
+  openGraph: { siteName: "Chronicle", type: "website" },
 };
 
 export default async function RootLayout({

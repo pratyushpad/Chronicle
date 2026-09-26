@@ -1,4 +1,5 @@
 import type { PayPeriod } from "@/lib/format";
+import type { DescriptionBlock } from "@/lib/description";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -41,8 +42,18 @@ export interface JobListItem {
 export interface JobDetail extends JobListItem {
   company_industry: string | null;
   location_raw: string | null;
+  /** Plain text of the description (every API version sends it). */
   description_text: string | null;
+  /** The description as typed blocks. Absent on the pre-PR-2 API. */
+  description_blocks?: DescriptionBlock[];
+  /** ~180 characters of plain text for meta tags. Absent on the pre-PR-2 API. */
+  description_summary?: string | null;
   last_seen_at: string;
+}
+
+export interface SitemapJobs {
+  total: number;
+  items: { id: number; last_seen_at: string }[];
 }
 
 export interface CompanyItem {
@@ -232,4 +243,30 @@ export async function getCompanyVelocity(id: number, weeks = 8): Promise<Company
 
 export async function getMeta(): Promise<Meta> {
   return fetchJSON<Meta>(`/meta`, { revalidate: 300, errMsg: "Failed to fetch meta" });
+}
+
+/**
+ * Nearest active roles by embedding. Optional by design: an empty list when the API
+ * predates the endpoint (Vercel previews talk to production), the job isn't embedded
+ * yet, or the call is slow — similar roles must never hold up or break a job page.
+ */
+export async function getSimilarJobs(id: number, limit = 4): Promise<JobListItem[]> {
+  try {
+    return await fetchJSON<JobListItem[]>(`/jobs/${id}/similar?limit=${limit}`, {
+      revalidate: 3600,
+      retries: 0,
+      timeoutMs: 8000,
+      errMsg: "Failed to fetch similar jobs",
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function getSitemapJobs(offset: number, limit: number): Promise<SitemapJobs> {
+  return fetchJSON<SitemapJobs>(`/sitemap/jobs?offset=${offset}&limit=${limit}`, {
+    revalidate: 3600,
+    timeoutMs: 30000,
+    errMsg: "Failed to fetch sitemap jobs",
+  });
 }
