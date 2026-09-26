@@ -26,6 +26,9 @@ from app.schemas import (
     MetaResponse,
     SitemapJob,
     SitemapJobsResponse,
+    FailingBoard,
+    StatusResponse,
+    StatusRun,
     VelocityPoint,
 )
 
@@ -908,3 +911,53 @@ def _student_filter_options(session: Session) -> tuple[list[str], list[str]]:
         .order_by(func.count(func.distinct(Job.dedup_key)).desc(), Job.country)
     ).all()
     return terms, [r[0] for r in country_rows]
+
+
+_STATUS_RUNS = 20
+
+
+@router.get("/status", response_model=StatusResponse)
+def status(session: Session = Depends(_db)):
+    """Public ingest health: the last runs, boards failing across them, and freshness.
+    Everything comes from ingest_runs and companies; nothing is estimated."""
+    runs = session.execute(
+        select(IngestRun).order_by(IngestRun.started_at.desc()).limit(_STATUS_RUNS)
+    ).scalars().all()
+    out_runs = []
+    fails: dict[tuple, dict] = {}
+    for r in runs:
+        errors = [f for f in (r.failures or []) if isinstance(f, dict)]
+        crashed = any(f.get("slug") is None and "crash" in str(f.get("error", "")) for f in errors) or (
+            r.finished_at is not None and r.finished_at == r.started_at
+        )
+        out_runs.append(StatusRun(
+            id=r.id, started_at=r.started_at, finished_at=r.finished_at,
+            seconds=round((r.finished_at - r.started_at).total_seconds()) if r.finished_at else None,
+            boards_total=r.companies_total or 0, boards_ok=r.companies_ok or 0,
+            boards_failed=r.companies_failed or 0, jobs_seen=r.jobs_seen or 0,
+            jobs_new=r.jobs_new or 0, jobs_closed=r.jobs_closed or 0,
+            open=r.finished_at is None, crashed=crashed,
+        ))
+        for f in errors:
+            if f.get("slug") is None:
+                continue  # run-level crash notes, not a board
+            key = (f.get("ats"), f.get("slug"))
+            entry = fails.setdefault(key, {"company": f.get("company"), "count": 0, "last_error": None})
+            entry["count"] += 1
+            if entry["last_error"] is None:  # runs are newest first
+                # Public page: drop the " @ file:line" crash site the run log keeps for us.
+                entry["last_error"] = str(f.get("error", "")).split(" @ ")[0][:300] or None
+    last_ok = {}
+    if fails:
+        slugs = [slug for _, slug in fails]
+        for c in session.execute(select(Company).where(Company.slug.in_(slugs))).scalars():
+            last_ok[(c.ats.value, c.slug)] = c.last_ingested_at
+    boards = sorted(
+        (
+            FailingBoard(company=v["company"], ats=ats, slug=slug, failed_runs=v["count"],
+                         last_error=v["last_error"], last_success_at=last_ok.get((ats, slug)))
+            for (ats, slug), v in fails.items()
+        ),
+        key=lambda b: (-b.failed_runs, b.company or ""),
+    )
+    return StatusResponse(runs=out_runs, failing_boards=boards, freshness=_freshness(session))

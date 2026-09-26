@@ -6,8 +6,10 @@ from datetime import datetime, timedelta, timezone
 import httpx
 from sqlalchemy import and_, case, func, literal_column, update
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app import models
 from app.models import ATSSource, Company, IngestRun, Job
 from .adapters.base import BoardTooLarge
 from .adapters.ashby import AshbyAdapter
@@ -222,7 +224,17 @@ async def _ingest_company(
                             "department": dept,
                             "department_raw": raw.department,
                             "employment_type": raw.employment_type,
-                            "description_text": desc_text,
+                            # Keep the stored description when it hasn't changed. Setting a
+                            # TOASTed column to a new-but-equal value writes a fresh TOAST
+                            # copy and leaves the old one dead; referencing the stored value
+                            # keeps its TOAST pointer, so an unchanged posting (almost all of
+                            # them, every run) writes no description bytes at all. Measured on
+                            # the fixture replica: 3 unchanged passes grew TOAST 3.8x before.
+                            "description_text": case(
+                                (Job.description_text.is_distinct_from(ins.excluded.description_text),
+                                 ins.excluded.description_text),
+                                else_=Job.description_text,
+                            ),
                             "apply_url": raw.apply_url,
                             "posted_at": posted,
                             "experience_level": exp_level,
@@ -300,6 +312,36 @@ async def _ingest_company(
     return result
 
 
+# A run open longer than this is treated as crashed and closed, so a new one may start.
+RUN_STALE_AFTER = timedelta(hours=2)
+
+
+class RunInProgress(Exception):
+    """Another ingest run is open; this one must not start."""
+
+
+def _open_run(session: Session, run_start: datetime) -> IngestRun:
+    """Atomically claim the single open-run slot (ux_ingest_runs_one_open: at most one row
+    with finished_at NULL). Crashed runs past RUN_STALE_AFTER are closed first. A second
+    concurrent trigger fails the INSERT and raises RunInProgress instead of starting a
+    parallel run (which the old check-then-start in /admin/ingest could not prevent)."""
+    stale = models.IngestRun  # the mapped table (tests stub the IngestRun name below)
+    session.execute(
+        update(stale)
+        .where(stale.finished_at.is_(None), stale.started_at < run_start - RUN_STALE_AFTER)
+        .values(finished_at=stale.started_at)
+    )
+    run = IngestRun(started_at=run_start, failures=[])
+    session.add(run)
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise RunInProgress("another ingest run is in progress") from exc
+    session.refresh(run)
+    return run
+
+
 async def run_ingest(session: Session, budget_seconds: int | None = None) -> IngestRun:
     """Incremental, idempotent ingest of all active boards.
 
@@ -311,10 +353,7 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
     """
     run_start = datetime.now(tz=timezone.utc)
     deadline = run_start + timedelta(seconds=budget_seconds) if budget_seconds else None
-    run = IngestRun(started_at=run_start, failures=[])
-    session.add(run)
-    session.commit()
-    session.refresh(run)
+    run = _open_run(session, run_start)
 
     companies = load_active_companies(session, stale_first=True)
     run.companies_total = len(companies)

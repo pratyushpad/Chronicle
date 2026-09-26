@@ -72,11 +72,15 @@ def _close_crashed_run(exc: BaseException) -> None:
 
 async def _run_ingest_bg(budget_seconds: int | None) -> None:
     """Background worker: its own session (the request session is long gone by now)."""
-    from app.ingest.runner import run_ingest
+    from app.ingest.runner import RunInProgress, run_ingest
 
     session = get_session()
     try:
         await run_ingest(session, budget_seconds=budget_seconds)
+    except RunInProgress:
+        # Lost the race for the run slot (ux_ingest_runs_one_open): another run is open.
+        # Nothing of ours to close; closing "the latest open run" here would end theirs.
+        log.info("ingest not started: another run holds the run lock")
     except Exception as exc:
         log.exception("background ingest run failed")
         _close_crashed_run(exc)
@@ -120,3 +124,54 @@ def trigger_ingest(
 
     background_tasks.add_task(_run_ingest_bg, budget_seconds)
     return {"status": "started", "budget_seconds": budget_seconds}
+
+
+# ── Production search benchmark ──────────────────────────────────────────────
+# Runs on the Render box against Neon: the number that matters for users (the local
+# docs/bench_results.md figures are from faster hardware). Protected by the ingest secret
+# and capped, so it can't be used to load the database.
+_BENCH_QUERIES = (
+    "software engineer intern", "machine learning", "data science internship",
+    "product manager new grad", "hardware engineer", "backend distributed systems",
+    "frontend react", "security", "robotics", "quantitative research",
+)
+
+
+@router.post("/bench")
+def bench_search(
+    n: int = Query(20, ge=5, le=100),
+    modes: str = Query("keyword,semantic,hybrid", pattern=r"^(keyword|semantic|hybrid)(,(keyword|semantic|hybrid))*$"),
+    _: None = Depends(require_ingest_secret),
+    session: Session = Depends(_db),
+):
+    """Time the real /jobs handler in-process (handler + database; no network) for each
+    search mode, n queries each, and return p50/p95/max in milliseconds."""
+    import inspect
+    import statistics
+    import time
+
+    from app.routers.jobs import list_jobs
+
+    # Call the handler as FastAPI would: every parameter at its declared default.
+    defaults = {
+        name: (p.default.default if hasattr(p.default, "default") else p.default)
+        for name, p in inspect.signature(list_jobs).parameters.items()
+        if name != "session"
+    }
+    out = {}
+    for mode in modes.split(","):
+        times = []
+        for i in range(n):
+            q = _BENCH_QUERIES[i % len(_BENCH_QUERIES)]
+            t0 = time.perf_counter()
+            list_jobs(**{**defaults, "q": q, "mode": mode, "level": "intern"}, session=session)
+            times.append((time.perf_counter() - t0) * 1000)
+        times.sort()
+        out[mode] = {
+            "n": n,
+            "p50_ms": round(statistics.median(times)),
+            "p95_ms": round(times[max(0, int(len(times) * 0.95) - 1)]),
+            "max_ms": round(times[-1]),
+        }
+    return {"measured_at": datetime.now(tz=timezone.utc).isoformat(), "results": out,
+            "note": "In-process /jobs handler time (database + app), excluding network."}

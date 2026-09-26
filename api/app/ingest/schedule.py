@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.db import get_session  # noqa: E402 — after dotenv
-from .runner import run_ingest  # noqa: E402
+from .runner import RunInProgress, run_ingest  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -34,14 +34,32 @@ def _refresh_embeddings() -> None:
         release_embedder()
 
 
-async def _once() -> None:
+async def _once(budget_seconds: int | None = None) -> dict | None:
+    """One ingest run, then the embedding sweep. Returns a small report, or None when
+    another run holds the run lock (not an error: a double trigger is expected)."""
     session = get_session()
     try:
-        run = await run_ingest(session)  # alerts fire inside run_ingest
+        try:
+            run = await run_ingest(session, budget_seconds=budget_seconds)  # alerts fire inside
+        except RunInProgress:
+            log.info("another ingest run is in progress; nothing to do")
+            return None
         log.info("Run id=%d finished_at=%s", run.id, run.finished_at)
+        report = {
+            "run_id": run.id,
+            "seconds": round((run.finished_at - run.started_at).total_seconds()) if run.finished_at else None,
+            "boards_total": run.companies_total, "boards_ok": run.companies_ok,
+            "boards_failed": run.companies_failed, "jobs_seen": run.jobs_seen,
+            "jobs_new": run.jobs_new, "jobs_closed": run.jobs_closed,
+        }
     finally:
         session.close()
     _refresh_embeddings()
+    return report
+
+
+def _arg(flag: str) -> str | None:
+    return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv[:-1] else None
 
 
 async def _loop() -> None:
@@ -64,7 +82,15 @@ async def _loop() -> None:
 
 
 if __name__ == "__main__":
+    # --once [--budget SECONDS] [--report PATH]: one run (GitHub Actions / manual); writes a
+    # JSON report for the workflow's budget summary when --report is given.
     if "--once" in sys.argv:
-        asyncio.run(_once())
+        budget = _arg("--budget")
+        result = asyncio.run(_once(int(budget) if budget else None))
+        if (path := _arg("--report")) is not None:
+            import json
+
+            with open(path, "w") as fh:
+                json.dump(result or {"skipped": "another run in progress"}, fh)
     else:
         asyncio.run(_loop())

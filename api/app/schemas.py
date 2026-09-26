@@ -351,3 +351,33 @@ class InteractionIn(BaseModel):
 
 class InteractionBatchIn(BaseModel):
     events: list[InteractionIn] = Field(..., max_length=100)
+
+
+class StatusRun(BaseModel):
+    id: int
+    started_at: datetime
+    finished_at: datetime | None
+    seconds: int | None
+    boards_total: int
+    boards_ok: int
+    boards_failed: int
+    jobs_seen: int
+    jobs_new: int
+    jobs_closed: int
+    open: bool          # still running (or crashed within the stale window)
+    crashed: bool       # closed by the crash handler or the stale-run reclaim
+
+
+class FailingBoard(BaseModel):
+    company: str | None
+    ats: str | None
+    slug: str | None
+    failed_runs: int                # among the runs listed on the page
+    last_error: str | None
+    last_success_at: datetime | None  # companies.last_ingested_at; None = never
+
+
+class StatusResponse(BaseModel):
+    runs: list[StatusRun]
+    failing_boards: list[FailingBoard]
+    freshness: Freshness | None = None

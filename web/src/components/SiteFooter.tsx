@@ -11,6 +11,10 @@ export function SiteFooter() {
           Roles come from each company&rsquo;s own public careers board.{" "}
           <Link href="/companies" className="underline underline-offset-4 hover:text-foreground">
             See every company
+          </Link>{" "}
+          or the{" "}
+          <Link href="/status" className="underline underline-offset-4 hover:text-foreground">
+            data status
           </Link>
           .
         </p>

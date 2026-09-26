@@ -76,3 +76,12 @@ test("mobile nav opens as a sheet", async ({ page }, testInfo) => {
   await expect(sheet.getByRole("link", { name: /companies/i }).first()).toBeVisible();
   await expectAccessible(page);
 });
+
+test("status page shows recent runs", async ({ page }) => {
+  await page.goto("/status");
+  await expect(page.getByRole("heading", { name: "Status", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Recent runs" })).toBeVisible();
+  await expect(page.locator("table tbody tr").first()).toBeVisible();
+  await expectNoHorizontalScroll(page);
+  await expectAccessible(page);
+});

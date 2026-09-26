@@ -295,3 +295,38 @@ export async function getSitemapJobs(offset: number, limit: number): Promise<Sit
     errMsg: "Failed to fetch sitemap jobs",
   });
 }
+
+export interface StatusRun {
+  id: number;
+  started_at: string;
+  finished_at: string | null;
+  seconds: number | null;
+  boards_total: number;
+  boards_ok: number;
+  boards_failed: number;
+  jobs_seen: number;
+  jobs_new: number;
+  jobs_closed: number;
+  open: boolean;
+  crashed: boolean;
+}
+
+export interface FailingBoard {
+  company: string | null;
+  ats: string | null;
+  slug: string | null;
+  failed_runs: number;
+  last_error: string | null;
+  last_success_at: string | null;
+}
+
+export interface StatusResponse {
+  runs: StatusRun[];
+  failing_boards: FailingBoard[];
+  freshness?: Freshness | null;
+}
+
+/** Ingest health for /status. Absent on APIs before PR 7 (the page says so). */
+export async function getStatus(): Promise<StatusResponse> {
+  return fetchJSON<StatusResponse>(`/status`, { revalidate: 120, errMsg: "Failed to fetch status" });
+}
