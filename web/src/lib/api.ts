@@ -1,5 +1,9 @@
+import type { PayPeriod } from "@/lib/format";
+
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+// New response fields are optional: Vercel previews run new web against the prod API
+// until the API deploys, so every consumer must degrade when a field is absent.
 export interface JobListItem {
   id: number;
   title: string;
@@ -15,10 +19,21 @@ export interface JobListItem {
   experience_level: string | null;
   tech_tags?: string[] | null;
   sponsorship_flag?: string | null;
+  /** Legacy annualized pay (sorting + old clients). Display goes through formatPay. */
   salary_min?: number | null;
   salary_max?: number | null;
+  /** Structured pay as the source stated it. Absent on the pre-PR-1 API. */
+  pay_min?: number | null;
+  pay_max?: number | null;
+  /** ISO 4217, e.g. "USD". */
+  pay_currency?: string | null;
+  pay_period?: PayPeriod | null;
+  pay_source?: "ats" | "text" | null;
   posted_at: string | null;
   first_seen_at: string;
+  /** Last time Chronicle saw the role live on the company's board. */
+  last_seen_at?: string;
+  is_active?: boolean;
   apply_url: string;
   is_new: boolean;
 }
@@ -71,6 +86,16 @@ export interface IndustryCount {
   count: number;
 }
 
+/** How recently the company boards were actually re-checked (from companies.last_ingested_at
+ *  over active boards). Absent on the pre-PR-1 API — copy must have a number-free fallback. */
+export interface Freshness {
+  boards_active: number;
+  boards_checked_24h: number;
+  boards_checked_7d: number;
+  median_check_age_hours: number | null;
+  oldest_check_at: string | null;
+}
+
 export interface Meta {
   departments: string[];
   locations: string[];
@@ -84,6 +109,7 @@ export interface Meta {
   remote_count: number;
   experience_counts: Record<string, number>;
   top_industries: IndustryCount[];
+  freshness?: Freshness | null;
 }
 
 export interface JobListResponse {

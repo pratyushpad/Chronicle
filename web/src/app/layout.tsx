@@ -20,10 +20,12 @@ const mono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
+// Static metadata makes no refresh-cadence claim: freshness is measured, not promised
+// (see the /meta-backed copy on the landing page and feed).
 export const metadata: Metadata = {
   title: "Chronicle — Every open role. Every company.",
   description:
-    "Chronicle aggregates job listings from top tech companies into one searchable feed. Refreshed every 48 hours.",
+    "Chronicle aggregates job listings from top tech companies' own career pages into one searchable feed.",
 };
 
 export default async function RootLayout({
@@ -34,10 +36,20 @@ export default async function RootLayout({
   const meta = await getMeta().catch(() => null);
 
   return (
+    // suppressHydrationWarning: the inline script below adds `js` to this element's class
+    // before React hydrates (one attribute, this element only).
     <html
       lang="en"
       className={`${display.variable} ${body.variable} ${mono.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Runs before first paint. Scroll-reveal "before" states in globals.css apply only
+            under `.js`, so without JavaScript every entrance renders in its final state. */}
+        <script
+          dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
+        />
+      </head>
       <body className="min-h-screen antialiased">
         <a
           href="#main"

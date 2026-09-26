@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { getJob, getJobs, JobListItem } from "@/lib/api";
 import { SectionLabel } from "@/components/SectionLabel";
 import { JobCard } from "@/components/JobCard";
-import { formatDate, formatDepartment, formatLocation } from "@/lib/utils";
+import { formatDepartment, formatLocation } from "@/lib/utils";
+import { formatPay, jobAge, relativeAge } from "@/lib/format";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -34,13 +35,20 @@ export default async function JobDetailPage({ params }: PageProps) {
     // Non-critical
   }
 
+  // One render time for every relative label on this page (server-rendered, not hydrated).
+  const now = Date.now();
+  const department = formatDepartment(job.department); // "" for the "Other" catch-all
+  const pay = formatPay(job);
+  const age = jobAge(job, now);
+  const seenLive = relativeAge(job.last_seen_at, now);
+
   const metaTags = [
     job.company_name,
     formatLocation(job.location_normalized) || null,
     job.remote === true ? "Remote" : null,
     job.experience_level ?? null,
     job.employment_type ?? null,
-    formatDepartment(job.department) || null,
+    department || null,
     job.company_industry ?? null,
   ].filter(Boolean) as string[];
 
@@ -57,7 +65,7 @@ export default async function JobDetailPage({ params }: PageProps) {
       </div>
 
       <div className="mt-8">
-        <SectionLabel className="mb-6">{formatDepartment(job.department) || job.company_name}</SectionLabel>
+        <SectionLabel className="mb-6">{department || job.company_name}</SectionLabel>
 
         {/* Title */}
         <h1 className="font-display text-4xl leading-[1.2] text-foreground">
@@ -76,9 +84,31 @@ export default async function JobDetailPage({ params }: PageProps) {
           ))}
         </div>
 
-        {job.posted_at && (
+        {pay && (
+          <p className="mt-3 font-mono text-xs tracking-[0.05em] text-foreground">{pay}</p>
+        )}
+
+        {(age || seenLive) && (
           <p className="mt-2 font-body text-sm text-muted-foreground">
-            Posted {formatDate(job.posted_at)}
+            {age && (
+              <time dateTime={age.iso}>
+                {age.label}
+                {age.relative && <> ({age.relative})</>}
+              </time>
+            )}
+            {age && seenLive && <span aria-hidden> · </span>}
+            {seenLive && (
+              <time
+                dateTime={job.last_seen_at}
+                title="The last time Chronicle saw this role live on the company's board"
+              >
+                {job.is_active === false ? "Last seen live" : "Verified"} {seenLive}
+                <span className="sr-only">
+                  {" "}
+                  — the last time Chronicle saw this role live on the company&rsquo;s board
+                </span>
+              </time>
+            )}
           </p>
         )}
 
@@ -87,7 +117,7 @@ export default async function JobDetailPage({ params }: PageProps) {
 
         {/* Description */}
         {job.description_text ? (
-          <div className="font-body text-base leading-[1.75] text-foreground whitespace-pre-line">
+          <div className="whitespace-pre-line break-words font-body text-base leading-[1.75] text-foreground">
             {job.description_text}
           </div>
         ) : (
@@ -115,7 +145,7 @@ export default async function JobDetailPage({ params }: PageProps) {
           <SectionLabel className="mb-8">More at {job.company_name}</SectionLabel>
           <div className="flex flex-col gap-4">
             {related.map((j) => (
-              <JobCard key={j.id} job={j} />
+              <JobCard key={j.id} job={j} now={now} />
             ))}
           </div>
         </div>

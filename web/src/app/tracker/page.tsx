@@ -150,7 +150,7 @@ export default function TrackerPage() {
     return (
       <main className="mx-auto max-w-2xl px-6 py-32 text-center">
         <p className="font-display text-3xl text-foreground mb-4">Sign in to track applications</p>
-        <p className="font-body text-muted-foreground mb-8">Your tracker syncs across devices when you're signed in.</p>
+        <p className="font-body text-muted-foreground mb-8">Your tracker syncs across devices when you&rsquo;re signed in.</p>
         <button onClick={() => signIn("google")} className={CTA_BUTTON}>
           Sign in with Google
         </button>
@@ -175,9 +175,11 @@ export default function TrackerPage() {
         </div>
 
         {funnel.total > 0 && (
-          <div className="mb-10 grid grid-cols-4 divide-x divide-border-light border-y border-foreground">
+          // 2×2 on phones (four columns can't fit "Interviewing" at 360px), one row from sm.
+          // gap-px over a hairline background draws the dividers for either layout.
+          <div className="mb-10 grid grid-cols-2 gap-px border-y border-foreground bg-border-light sm:grid-cols-4">
             {[{ label: "Total", v: funnel.total }, { label: "Applied", v: funnel.applied }, { label: "Interviewing", v: funnel.interviewing }, { label: "Offers", v: funnel.offers }].map(({ label, v }) => (
-              <div key={label} className="px-4 py-5 text-center">
+              <div key={label} className="bg-background px-4 py-5 text-center">
                 <CountUp value={v} className="justify-center font-display text-3xl text-foreground" />
                 <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div>
               </div>

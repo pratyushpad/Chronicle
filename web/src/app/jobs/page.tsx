@@ -7,6 +7,7 @@ import { Pagination } from "@/components/Pagination";
 import { JobListSkeleton } from "@/components/JobCardSkeleton";
 import { Reveal } from "@/components/motion/Reveal";
 import { formatNumber } from "@/lib/utils";
+import { boardsRechecked, relativeAge } from "@/lib/format";
 
 interface PageProps {
   searchParams: Promise<Record<string, string>>;
@@ -46,6 +47,15 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
     if (k !== "page" && v) filterParams[k] = v;
   }
 
+  // One render time for every "3d ago" on the page, passed to the (client) cards so the
+  // server HTML and hydration produce the same text.
+  const now = Date.now();
+  // Freshness is stated, never promised: how many boards were actually re-checked
+  // (from /meta), or — on an API without that block — when the last sync started.
+  const lastSync = relativeAge(meta.last_run?.started_at, now);
+  const freshnessNote =
+    boardsRechecked(meta.freshness) ?? (lastSync ? `Last sync started ${lastSync}` : null);
+
   return (
     <div>
       <FilterBar
@@ -63,7 +73,7 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
         }
       />
 
-      <div className="mt-6 flex items-center justify-between">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <p className="font-body text-sm text-muted-foreground">
           {formatNumber(data.total)} role{data.total !== 1 ? "s" : ""}
           {data.search_mode && (
@@ -72,15 +82,9 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
             </span>
           )}
         </p>
-        {meta.last_run?.started_at && (
+        {freshnessNote && (
           <p className="font-mono text-xs text-muted-foreground tracking-[0.05em]">
-            Updated{" "}
-            {new Intl.DateTimeFormat("en-US", {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            }).format(new Date(meta.last_run.started_at))}
+            {freshnessNote}
           </p>
         )}
       </div>
@@ -96,7 +100,7 @@ async function JobFeed({ searchParams }: { searchParams: Record<string, string> 
         <div className="mt-6 flex flex-col gap-4">
           {data.items.map((job, i) => (
             <Reveal key={job.id} index={i} y={16} step={0.045} trigger="mount">
-              <JobCard job={job} surface="search" />
+              <JobCard job={job} surface="search" now={now} />
             </Reveal>
           ))}
         </div>

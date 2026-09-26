@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { m, useReducedMotion } from "motion/react";
-import { cn, formatDate, formatLocation, formatDepartment } from "@/lib/utils";
+import { cn, formatLocation, formatDepartment } from "@/lib/utils";
+import { formatPay, jobAge } from "@/lib/format";
 import type { JobListItem } from "@/lib/api";
 import { duration, ease } from "@/lib/motion";
 import { logInteraction, type InteractionSurface } from "@/lib/interactions";
@@ -16,9 +17,15 @@ interface Props {
   surface?: InteractionSurface;
   /** When set, shows a "not interested" control; dismissals push future matches away. */
   onDismiss?: () => void;
+  /**
+   * Render time (epoch ms) for the "3d ago" label. Server pages pass their own render
+   * time so the server HTML and hydration compute the identical string. Client-only
+   * lists (for-you, saved) may omit it.
+   */
+  now?: number;
 }
 
-export function JobCard({ job, initialSaved = false, why, surface, onDismiss }: Props) {
+export function JobCard({ job, initialSaved = false, why, surface, onDismiss, now }: Props) {
   const { data: session } = useSession();
   const isAuthed = !!session?.user?.email;
   const reduce = useReducedMotion();
@@ -69,9 +76,9 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss }: 
 
   const location = formatLocation(job.location_normalized);
   const extraLocations = (job.location_count ?? 0) > 1 ? (job.location_count as number) - 1 : 0;
-  const department = formatDepartment(job.department);
-  const salaryMin = (job as any).salary_min as number | undefined;
-  const salaryMax = (job as any).salary_max as number | undefined;
+  const department = formatDepartment(job.department); // "" for the "Other" catch-all
+  const pay = formatPay(job);
+  const age = jobAge(job, now ?? Date.now());
 
   return (
     <m.article
@@ -93,6 +100,7 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss }: 
             <div className="relative shrink-0 h-10 w-10 border border-foreground bg-background flex items-center justify-center overflow-hidden">
               <span className="font-mono text-[11px] font-semibold text-foreground">{initials}</span>
               {showLogo && (
+                // eslint-disable-next-line @next/next/no-img-element -- 40px third-party favicon; next/image would proxy every logo through the optimizer and the onLoad naturalWidth check needs the raw image.
                 <img
                   src={logoUrl!}
                   alt={job.company_name}
@@ -179,19 +187,19 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss }: 
               {job.experience_level}
             </span>
           )}
-          {(job as any).sponsorship_flag === "likely_no" && (
+          {job.sponsorship_flag === "likely_no" && (
             <span className="border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-foreground">
               No Sponsorship
             </span>
           )}
-          {(job as any).sponsorship_flag === "likely_yes" && (
+          {job.sponsorship_flag === "likely_yes" && (
             <span className="bg-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-background">
               Sponsors Visa
             </span>
           )}
-          {salaryMin && (
+          {pay && (
             <span className="font-mono text-[10px] tracking-[0.05em] text-muted-foreground">
-              ${Math.round(salaryMin / 1000)}k{salaryMax ? `–$${Math.round(salaryMax / 1000)}k` : "+"}
+              {pay}
             </span>
           )}
           {job.employment_type && (
@@ -205,9 +213,24 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss }: 
         </div>
 
         <div className="mt-3 flex items-center justify-between border-t border-border-light pt-3">
-          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-            {formatDate(job.posted_at ?? job.first_seen_at)}
-          </span>
+          {age ? (
+            // Compact "3d ago" for sighted readers; the full "Posted Sep 22, 2026" /
+            // "First seen by Chronicle Sep 22, 2026" for screen readers and on hover.
+            <time
+              dateTime={age.iso}
+              title={age.label}
+              className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground"
+            >
+              {/* Only this text depends on the clock; if a caller omitted `now`, let the
+                  client's value win instead of throwing a hydration error. */}
+              <span aria-hidden="true" suppressHydrationWarning>
+                {age.relative ?? age.absolute}
+              </span>
+              <span className="sr-only normal-case">{age.label}</span>
+            </time>
+          ) : (
+            <span />
+          )}
           <a href={job.apply_url} target="_blank" rel="noopener noreferrer"
             className="pointer-events-auto font-mono text-[10px] uppercase tracking-[0.15em] text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2">
             Apply →

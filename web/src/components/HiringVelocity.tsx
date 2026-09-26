@@ -1,16 +1,17 @@
 "use client";
-import { m, useReducedMotion } from "motion/react";
+import { useRef, type CSSProperties } from "react";
+import { useInView } from "motion/react";
 import type { CompanyVelocity } from "@/lib/api";
 import { SectionLabel } from "@/components/SectionLabel";
 import { CountUp } from "@/components/motion/CountUp";
-import { duration, ease } from "@/lib/motion";
 
 // Hand-rolled SVG — no chart dependency, matches the monochrome aesthetic.
 // Each week is a paired column: a filled bar for roles opened, a hollow bar for
 // roles closed, drawn on a shared scale. Bars grow (scaleY) from the baseline on
 // scroll-into-view; the summary stats count up.
 export function HiringVelocity({ data }: { data: CompanyVelocity }) {
-  const reduce = useReducedMotion();
+  const svgRef = useRef<SVGSVGElement>(null);
+  const inView = useInView(svgRef, { once: true, margin: "-10%" });
   const weeks = data.weeks;
   if (!weeks.length) return null;
 
@@ -28,17 +29,18 @@ export function HiringVelocity({ data }: { data: CompanyVelocity }) {
   };
 
   // Grow from the bar's own baseline. `fill-box` makes transform-origin resolve
-  // against the rect rather than the SVG viewport.
-  const barStyle = { transformBox: "fill-box", transformOrigin: "bottom" } as const;
-  const barAnim = (i: number) =>
-    reduce
-      ? {}
-      : {
-          initial: { scaleY: 0 },
-          whileInView: { scaleY: 1 },
-          viewport: { once: true, margin: "-10%" },
-          transition: { duration: duration.slow, ease, delay: Math.min(i * 0.03, 0.3) },
-        };
+  // against the rect rather than the SVG viewport. The server renders every bar at full
+  // height; the `data-reveal="grow-y"` rules in globals.css hold them at scaleY(0) only
+  // for readers who allow motion and have JS, until the chart scrolls into view.
+  const barReveal = (i: number) => ({
+    "data-reveal": "grow-y",
+    "data-revealed": inView ? "" : undefined,
+    style: {
+      transformBox: "fill-box",
+      transformOrigin: "bottom",
+      "--reveal-delay": `${Math.min(i * 0.03, 0.3)}s`,
+    } as CSSProperties,
+  });
 
   return (
     <section className="mb-10">
@@ -52,6 +54,7 @@ export function HiringVelocity({ data }: { data: CompanyVelocity }) {
       </div>
 
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
         className="w-full"
         role="img"
@@ -66,9 +69,9 @@ export function HiringVelocity({ data }: { data: CompanyVelocity }) {
           return (
             <g key={w.week}>
               {/* opened — filled */}
-              <m.rect x={cx - barW - 1} y={chartH - oh} width={barW} height={oh} fill="currentColor" style={barStyle} {...barAnim(i)} />
+              <rect x={cx - barW - 1} y={chartH - oh} width={barW} height={oh} fill="currentColor" {...barReveal(i)} />
               {/* closed — hollow */}
-              <m.rect
+              <rect
                 x={cx + 1}
                 y={chartH - ch}
                 width={barW}
@@ -76,8 +79,7 @@ export function HiringVelocity({ data }: { data: CompanyVelocity }) {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.25"
-                style={barStyle}
-                {...barAnim(i)}
+                {...barReveal(i)}
               />
               <text
                 x={cx}

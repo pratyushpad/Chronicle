@@ -9,6 +9,7 @@ import { HeroRule } from "@/components/gsap/HeroRule";
 import { ScrubCounter } from "@/components/gsap/ScrubCounter";
 import { Marquee } from "@/components/gsap/Marquee";
 import { BatchReveal } from "@/components/gsap/BatchReveal";
+import { boardsRechecked } from "@/lib/format";
 
 export default async function Home() {
   let meta: Meta | null = null;
@@ -34,6 +35,10 @@ export default async function Home() {
   const marquee = [...companies]
     .sort((a, b) => b.active_job_count - a.active_job_count)
     .slice(0, 28);
+
+  // Freshness copy states what was measured (/meta freshness), never a cadence. Without
+  // that block (older API) the copy stays true without a number.
+  const rechecked = boardsRechecked(meta?.freshness);
 
   return (
     <SmoothScrollStage>
@@ -61,9 +66,9 @@ export default async function Home() {
           <p className="font-body text-xl leading-relaxed text-foreground md:col-span-7 lg:text-2xl">
             Chronicle pulls every open role <span className="italic">directly</span>{" "}
             from {meta ? formatNumber(meta.total_companies) : "hundreds of"} companies&rsquo;
-            own career pages — Stripe, Anthropic, OpenAI, Databricks, and more. Verified
-            live every sync. Auto-removed the moment a role closes. No ghost jobs. No
-            recruiters. No noise.
+            own career pages — Stripe, Anthropic, OpenAI, Databricks, and more. Boards are
+            re-checked on a rolling cycle, and a role that disappears from its company&rsquo;s
+            board leaves Chronicle at the next check. No recruiters. No noise.
           </p>
 
           <div className="flex flex-col gap-4 md:col-span-5 md:items-end md:justify-end">
@@ -103,7 +108,7 @@ export default async function Home() {
             <div className="mt-16 border-b border-background/20 pb-16">
               <ScrubCounter
                 value={meta.total_active_jobs}
-                className="font-display text-7xl font-medium leading-none tracking-tight md:text-8xl lg:text-9xl"
+                className="font-display text-6xl font-medium leading-none tracking-tight sm:text-7xl md:text-8xl lg:text-9xl"
               />
               <div className="mt-4 font-mono text-xs uppercase tracking-[0.2em] text-background/60">
                 Open roles indexed across {meta.total_companies} companies
@@ -166,13 +171,15 @@ export default async function Home() {
             },
             {
               n: "02",
-              t: "Verified live each sync",
-              d: `We re-check all ${meta ? meta.total_companies + " " : ""}sources on every run. If a role is still listed, it's still open. What you see is what's actually hiring.`,
+              t: "Re-checked at the source",
+              d: rechecked
+                ? `${rechecked}. The boards checked longest ago go first.`
+                : "Company boards are re-checked on a rolling cycle, and the boards checked longest ago go first.",
             },
             {
               n: "03",
-              t: "Auto-expired when gone",
-              d: "The instant a role disappears from the source, it disappears here. No stale listings, no dead links, no ghost jobs.",
+              t: "Removed at the next check",
+              d: "When a role disappears from its company’s board, it leaves Chronicle the next time that board is checked.",
             },
           ].map((step) => (
             <div
@@ -278,12 +285,12 @@ export default async function Home() {
         <BatchReveal className="mt-16 grid grid-cols-1 gap-x-12 gap-y-12 md:grid-cols-3">
           {[
             {
-              t: "Always live",
-              d: "Every listing is re-verified against its source on each sync. No expired roles wasting your time.",
+              t: "Freshness, shown",
+              d: "Every role page shows when Chronicle last saw it live on the company’s board, so you can judge how fresh a listing is before you apply.",
             },
             {
               t: "Sponsorship-flagged",
-              d: "We parse each posting for visa-sponsorship signals and flag it — so international candidates can filter for roles that will actually consider them.",
+              d: "We parse each posting for visa-sponsorship signals and flag it on the card — so international candidates can spot the roles that will actually consider them.",
             },
             {
               t: "Salary, where shared",
@@ -347,9 +354,11 @@ export default async function Home() {
             <span className="italic">actually</span> open.
           </h2>
           <div className="mt-12 flex justify-center">
+            {/* Full-width on phones like the hero CTAs (the label is ~230px of tracked mono);
+                min-height instead of a fixed one so a longer count wraps inside the box. */}
             <Link
               href="/jobs"
-              className="group inline-flex h-14 items-center gap-4 border-2 border-background bg-background px-10 font-mono text-xs font-medium uppercase tracking-[0.2em] text-foreground transition-colors duration-100 hover:bg-transparent hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-background focus-visible:outline-offset-[3px]"
+              className="group inline-flex min-h-[56px] w-full items-center justify-between gap-3 border-2 border-background bg-background px-5 py-3 text-left font-mono text-xs font-medium uppercase tracking-[0.2em] text-foreground transition-colors duration-100 hover:bg-transparent hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-background focus-visible:outline-offset-[3px] sm:w-auto sm:justify-center sm:gap-4 sm:px-10"
             >
               Browse {meta ? formatNumber(meta.total_active_jobs) : "all"} open roles
               <span aria-hidden>→</span>

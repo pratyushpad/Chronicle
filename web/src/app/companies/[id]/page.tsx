@@ -35,6 +35,9 @@ export default async function CompanyPage({ params, searchParams }: Props) {
     velocity = null;
   }
 
+  // Render time for the cards' "3d ago" labels, shared by server HTML and hydration.
+  const now = Date.now();
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
       <Link href="/companies" className="font-body text-sm text-muted-foreground hover:text-foreground">
@@ -63,7 +66,7 @@ export default async function CompanyPage({ params, searchParams }: Props) {
           </div>
         </div>
 
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex flex-wrap gap-3">
           <Link
             href={`/jobs?company_id=${company.id}`}
             className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-accent px-6 font-body text-sm font-medium text-white shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
@@ -100,7 +103,7 @@ export default async function CompanyPage({ params, searchParams }: Props) {
         </p>
         <div className="flex flex-col gap-4">
           {jobs.items.map((job) => (
-            <JobCard key={job.id} job={job} />
+            <JobCard key={job.id} job={job} now={now} />
           ))}
         </div>
         {jobs.total_pages > 1 && (

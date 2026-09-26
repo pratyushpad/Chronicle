@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
 import { m, useReducedMotion } from "motion/react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { SectionLabel } from "./SectionLabel";
 import { cn, formatLocation, formatDepartment } from "@/lib/utils";
-import { staggerContainer, staggerItem, springPress } from "@/lib/motion";
+import { staggerStep, springPress } from "@/lib/motion";
 import { gsap, useGSAP } from "@/lib/gsapConfig";
 
 interface FilterBarProps {
@@ -278,26 +278,24 @@ export function FilterBar(props: FilterBarProps) {
 
   return (
     <div className="sticky top-16 z-40 -mx-6 border-b-2 border-foreground bg-background px-6 py-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12">
-      {/* Quick filter pills — stagger in on mount so the bar feels alive. */}
-      <m.div
-        className="flex flex-wrap gap-2"
-        variants={staggerContainer}
-        initial={reduce ? false : "hidden"}
-        animate="visible"
-      >
-        {QUICK_PILLS.map((pill) => {
+      {/* Quick filter pills — stagger in on mount so the bar feels alive. The entrance is
+          the CSS `motion-safe:animate-reveal` keyframe (not a Framer `initial`), so the
+          server-rendered pills are never parked at opacity 0: reduced-motion readers get
+          them static and visible. Framer keeps only the press spring. */}
+      <div className="flex flex-wrap gap-2">
+        {QUICK_PILLS.map((pill, i) => {
           const isActive = Object.entries(pill.params).every(
             ([k, v]) => searchParams.get(k) === v
           );
           return (
             <m.button
               key={pill.label}
-              variants={staggerItem}
               whileTap={reduce ? undefined : { scale: 0.95 }}
               transition={springPress}
               onClick={() => applyPill(pill.params as Record<string, string>)}
+              style={{ "--reveal-delay": `${i * staggerStep}s` } as CSSProperties}
               className={cn(
-                "min-h-[32px] border px-3 py-1.5 font-mono text-xs uppercase tracking-[0.08em] transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2",
+                "min-h-[32px] border px-3 py-1.5 font-mono text-xs uppercase tracking-[0.08em] transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2 motion-safe:animate-reveal",
                 isActive
                   ? "border-foreground bg-foreground text-background"
                   : "border-foreground text-foreground hover:bg-foreground hover:text-background"
@@ -309,16 +307,16 @@ export function FilterBar(props: FilterBarProps) {
         })}
         {searchParams.toString() && (
           <m.button
-            variants={staggerItem}
             whileTap={reduce ? undefined : { scale: 0.95 }}
             transition={springPress}
             onClick={() => startTransition(() => router.push(pathname))}
-            className="min-h-[32px] border border-foreground px-3 py-1.5 font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
+            style={{ "--reveal-delay": `${QUICK_PILLS.length * staggerStep}s` } as CSSProperties}
+            className="min-h-[32px] border border-foreground px-3 py-1.5 font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2 motion-safe:animate-reveal"
           >
             ✕ Clear
           </m.button>
         )}
-      </m.div>
+      </div>
 
       {/* Desktop filters */}
       <div className="mt-4 hidden md:block">

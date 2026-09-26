@@ -20,6 +20,14 @@ export const duration = {
 /** House easing — expressive ease-out. */
 export const ease = [0.22, 1, 0.36, 1] as const;
 
+/**
+ * The same tokens for CSS. tailwind.config.ts imports these to generate `ease-house`,
+ * `duration-fast|base|slow` and `animate-reveal`, so CSS-driven motion (the Sheet, the
+ * server-rendered entrance reveals) moves on exactly the Framer/GSAP curve and timings.
+ */
+export const cssEase = `cubic-bezier(${ease.join(", ")})`;
+export const cssDuration = (seconds: number) => `${Math.round(seconds * 1000)}ms`;
+
 /** Stagger step between siblings printing onto the page. */
 export const staggerStep = 0.04;
 
