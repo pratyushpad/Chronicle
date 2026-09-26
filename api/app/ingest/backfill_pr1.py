@@ -5,11 +5,12 @@ full raw posting and with structured ATS pay).
 What it changes, per active or inactive row:
   * department — re-derived with the new normalize_department(department_raw, title).
     (ATS hints aren't stored, so ingest can do slightly better later.)
-  * pay_* and the annualized salary_min/max — re-parsed with the new pay parser from the
-    stored description. Rows whose stored text is complete (not cut at the 20k cap) and
-    has no parseable base pay get their legacy salary cleared: the old parser read that
-    same text, so whatever it found there was not base pay (or was an hourly rate
-    multiplied by 1000).
+  * pay_* and the annualized salary_min/max — set from the new pay parser run over the
+    stored description, ONLY where it finds pay. It never clears anything: stored legacy
+    text lost its line breaks, so the parser can miss pay there that it reads correctly
+    from the raw posting (e.g. "Base Salary: $140,000 to $250,000" followed by an
+    "Equity + Benefits" line). The next ingest re-derives every pay field from the raw
+    posting anyway.
   * posted_at on Greenhouse rows → NULL. It held Greenhouse's updated_at (any edit moved
     it); the next ingest fills in the real first_published. Age falls back to
     first_seen_at meanwhile.
@@ -40,7 +41,6 @@ from app.db import get_session  # noqa: E402 — db reads DATABASE_URL at import
 from app.models import ATSSource, Job  # noqa: E402
 from .normalize import normalize_department  # noqa: E402
 from .pay import annual_usd, parse_pay_text  # noqa: E402
-from .runner import _MAX_DESC_CHARS  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -56,17 +56,14 @@ _PAY_FIELDS = ("pay_min", "pay_max", "pay_currency", "pay_period", "pay_source",
 
 
 def _pay_values(desc: str | None) -> dict | None:
-    """New pay columns for a stored description, or None when nothing should change."""
+    """New pay columns for a stored description, or None to leave the row as it is."""
     pay = parse_pay_text(desc)
-    if pay is not None:
-        lo, hi = annual_usd(pay)
-        return {"pay_min": pay.min, "pay_max": pay.max, "pay_currency": pay.currency,
-                "pay_period": pay.period, "pay_source": pay.source,
-                "salary_min": lo, "salary_max": hi}
-    if desc is not None and len(desc) < _MAX_DESC_CHARS:
-        # Complete text, no base pay in it → the legacy salary came from something else.
-        return dict.fromkeys(_PAY_FIELDS)
-    return None  # truncated text: the old parser saw more than we can — leave it
+    if pay is None:
+        return None
+    lo, hi = annual_usd(pay)
+    return {"pay_min": pay.min, "pay_max": pay.max, "pay_currency": pay.currency,
+            "pay_period": pay.period, "pay_source": pay.source,
+            "salary_min": lo, "salary_max": hi}
 
 
 def _batches(session, stmt, batch: int):
@@ -86,7 +83,7 @@ def run(apply: bool, batch: int, session: Session | None = None) -> dict:
     own_session = session is None
     session = session or get_session()
     stats: dict = {"scanned": 0, "dept_changed": 0, "dept_moves": collections.Counter(),
-                   "pay_scanned": 0, "pay_set": 0, "pay_cleared": 0, "gh_posted_at_nulled": 0}
+                   "pay_scanned": 0, "pay_set": 0, "gh_posted_at_nulled": 0}
     try:
         # 1) departments — small columns only
         stmt = select(Job.id, Job.department, Job.department_raw, Job.title)
@@ -115,7 +112,7 @@ def run(apply: bool, batch: int, session: Session | None = None) -> dict:
                 current = {f: getattr(r, f) for f in _PAY_FIELDS}
                 if all((current[f] == vals[f]) or (current[f] is None and vals[f] is None) for f in _PAY_FIELDS):
                     continue
-                stats["pay_set" if vals["pay_period"] else "pay_cleared"] += 1
+                stats["pay_set"] += 1
                 updates.append({"id": r.id, **vals})
             if apply and updates:
                 session.execute(update(Job), updates)
@@ -147,8 +144,8 @@ def main() -> None:
     log.info("  rows scanned: %d; department changed: %d", stats["scanned"], stats["dept_changed"])
     for (old, new), n in stats["dept_moves"].most_common(25):
         log.info("    %-22s -> %-20s %6d", old, new, n)
-    log.info("  pay: %d candidate rows re-parsed; %d set/corrected; %d legacy salaries cleared",
-             stats["pay_scanned"], stats["pay_set"], stats["pay_cleared"])
+    log.info("  pay: %d candidate rows re-parsed; %d set/corrected (nothing is ever cleared)",
+             stats["pay_scanned"], stats["pay_set"])
     log.info("  greenhouse posted_at cleared (held updated_at): %d", stats["gh_posted_at_nulled"])
 
 

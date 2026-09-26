@@ -419,6 +419,18 @@ _ALT_GAP_RE = re.compile(r"\s*(?:/|or|\(|\|)\s*", re.I)
 _CLAUSE_BREAK_RE = re.compile(r"[.!?;](?=\s)|\n")
 
 
+# Only asides that EXCLUDE something ("(excluding equity and bonus)") or describe a
+# schedule ("(5 days per week)"). An "(including base salary and on-target incentive
+# pay)" aside is kept: it's what marks an OTE figure as not-base.
+_ASIDE_RE = re.compile(
+    r"\((?:excluding|exclusive of|not including|in addition to|plus)\b[^()]*\)"
+    r"|\([^()]*\b(?:days?|hours?)\s+(?:per|a|each)\s+(?:week|month|day)\b[^()]*\)"
+    r"|\b(?:excluding|exclusive of|not including|in addition to)\b[^:$()]*",
+    re.I,
+)
+_STATED_BASE_RE = re.compile(r"\bbase\b|salar(?:y|ies)|\bwages?\b", re.I)
+
+
 def _after_excluded(after: str) -> bool:
     """Is the word right after the amount (past any period cue) a not-a-wage noun?
     "stipend"/"for" look one or two words further ("stipend for meals"). Only the first
@@ -482,7 +494,11 @@ def _token_parts(m: re.Match) -> tuple[Decimal | None, bool, str | None, bool]:
 
 
 def _apply_k(value: Decimal | None, k: bool) -> Decimal | None:
-    return None if value is None else (value * 1000 if k else value)
+    # A K on an amount already in the thousands is a typo ("$158,000-$223,000K"), not
+    # a multiplier.
+    if value is None:
+        return None
+    return value * 1000 if k and value < 1000 else value
 
 
 def _text_candidates(text: str) -> list[_TextCand]:
@@ -548,6 +564,10 @@ def _text_candidates(text: str) -> list[_TextCand]:
         # under it, so line breaks don't end the lead-in; sentence ends do. (The phrase
         # AFTER an amount does stop at a line break — see _after_excluded.)
         lead = _CLAUSE_BREAK_RE.split(lead.replace("\n", " "))[-1]
+        # Asides don't label the amount: "Annual base salary range (excluding equity and
+        # bonus): $218,025 — $256,500" is a salary, and "(5 days per week)" earlier in the
+        # sentence is not its period.
+        lead = _ASIDE_RE.sub(" ", lead)
         after = text[end:end + 40]
         cue = None
         am = _AFTER_CUE_RE.match(after)
@@ -560,11 +580,14 @@ def _text_candidates(text: str) -> list[_TextCand]:
                 cue = _BEFORE_WORD_PERIOD.get(word)
         labels = list(_LABEL_RE.finditer(lead))
         last = labels[-1] if labels else None
+        # An amount introduced as base pay ("Base Salary: $140,000 to $250,000") is base
+        # pay whatever word happens to follow it ("Equity + Benefits" on the next line).
+        stated_base = bool(last and last.group("inc") and _STATED_BASE_RE.search(lead))
         cand = _TextCand(
             lo=min(lo, hi), hi=max(lo, hi), currency=currency, cue=cue,
             weak="year" if _SALARY_WORD_RE.search(lead) else None,
             labeled=bool(last and last.group("inc")),
-            excluded=bool(last and last.group("ex")) or _after_excluded(after),
+            excluded=bool(last and last.group("ex")) or (_after_excluded(after) and not stated_base),
             start=start, end=end,
         )
         prev = out[-1] if out else None

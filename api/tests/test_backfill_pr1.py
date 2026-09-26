@@ -2,8 +2,8 @@
 
 Pins what the production run will do: it terminates (the first version's raw-SQL OR was
 ANDed with the keyset predicate unparenthesized and returned the same batch forever),
-fixes hourly pay stored x1000, clears salaries the old parser invented from non-pay
-text, re-derives departments, nulls Greenhouse posted_at (it held updated_at), and never
+fixes hourly pay stored x1000, never clears a salary (stored legacy text lost its line
+breaks, so a miss there is not proof the salary was wrong), re-derives departments, nulls Greenhouse posted_at (it held updated_at), and never
 touches content_hash or embedding. Hermetic: rolled back.
 """
 from datetime import datetime, timezone
@@ -43,7 +43,7 @@ def test_backfill_terminates_and_rewrites_only_what_it_should(pg_engine):
                 _job(co, "b1", department_raw="Internships", department="Other", posted_at=posted,
                      description_text="Compensation US Salary Range $30 — $45 USD The range is an estimate.",
                      salary_min=30000, salary_max=45000),
-                # Complete text with no base pay: the legacy salary came from equity text.
+                # No base pay the new parser can see: the legacy value is left for re-ingest.
                 _job(co, "b2", department_raw="Engineering", department="Engineering",
                      description_text="Join us. Equity grant of $40k over four years.",
                      salary_min=40000, salary_max=None),
@@ -72,7 +72,7 @@ def test_backfill_terminates_and_rewrites_only_what_it_should(pg_engine):
             assert b1.posted_at is None  # greenhouse updated_at cleared
 
             b2 = rows["b2"]
-            assert b2.salary_min is None and b2.pay_period is None  # invented salary cleared
+            assert b2.salary_min == 40000 and b2.pay_period is None  # untouched, never cleared
 
             b3 = rows["b3"]
             assert (b3.salary_min, b3.salary_max, b3.pay_period) == (150000, 190000, "year")

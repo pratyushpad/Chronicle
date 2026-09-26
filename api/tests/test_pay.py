@@ -363,3 +363,27 @@ def test_per_pay_period_amount_is_not_read_as_an_hourly_wage():
             "Benefits\nFinancial $20/pay period cell phone reimbursement.")
     pay = parse_pay_text(text)
     assert (float(pay.min), float(pay.max), pay.currency, pay.period) == (33.0, 33.0, "USD", "hour")
+
+
+import pytest as _pytest
+
+
+@_pytest.mark.parametrize("text, expected", [
+    # Real rows the first backfill wrongly cleared (replica, 2026-09-26).
+    ("Annual base salary range (excluding equity and bonus): $218,025 — $256,500 USD Application Limit",
+     (218025.0, 256500.0, "USD", "year")),
+    ("COMPENSATION Base Salary: $140,000 to $250,000 Equity + Benefits including Health",
+     (140000.0, 250000.0, "USD", "year")),
+    ("For Bay Area based hires: Estimated annual salary of $194,000-266,000 Equity This role is eligible",
+     (194000.0, 266000.0, "USD", "year")),
+    ("Allowance In-Office Lunch (5 days per week) Compensation and benefits $128K -$168K Suno is proud",
+     (128000.0, 168000.0, "USD", "year")),
+    ("The salary range for this role is $158,000-$223,000K, plus a competitive equity grant",
+     (158000.0, 223000.0, "USD", "year")),
+])
+def test_salaries_the_legacy_text_backfill_must_keep(text, expected):
+    from app.ingest.pay import parse_pay_text
+
+    pay = parse_pay_text(text)
+    assert pay is not None
+    assert (float(pay.min), float(pay.max), pay.currency, pay.period) == expected
