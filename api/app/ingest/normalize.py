@@ -197,7 +197,8 @@ def infer_experience_level(title: str) -> str | None:
 _SENIORITY_RE = re.compile(r"\b(senior|sr\.?|principal|distinguished)\b", re.IGNORECASE)
 _EXECUTIVE_RE = re.compile(r"\b(director|head\s+of|vp|vice\s*president|chief)\b", re.IGNORECASE)
 _EARLY_CAREER_RE = re.compile(
-    r"\b(associate|assistant|junior|jr\.?|graduate|apprentice|rotational|early[\s\-]?career)\b",
+    r"\b(associate|assistant|junior|jr\.?|graduate|apprentice|rotational"
+    r"|early[\s\-]?(career|talent)s?|emerging\s+talent)\b",
     re.IGNORECASE,
 )
 # Entry-level titles that _SENIOR_RE reads as senior: "staff" and "lead" are also
