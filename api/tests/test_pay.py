@@ -396,6 +396,10 @@ def test_salaries_the_legacy_text_backfill_must_keep(text, expected):
     "Stay at Any House, $100 a night, as a member perk.",
     "New hires get a $50 Amazon gift card on day one.",
     "We grew fast ($10–15M ARR) last year.",
+    # Company money both PR 1 verifiers reproduced as pay (2026-09-26).
+    "Customers save $50,000 per year on average using our product.",
+    "Average contract value $120k-$300k.",
+    "You will manage a portfolio of $50,000 - $200,000 accounts.",
 ])
 def test_unlabeled_non_wage_amounts_are_not_pay(text):
     from app.ingest.pay import parse_pay_text
@@ -418,3 +422,11 @@ def test_labeled_pay_survives_its_neighbours(text, expected):
     pay = parse_pay_text(text)
     assert pay is not None
     assert (float(pay.min), float(pay.max), pay.currency, pay.period) == expected
+
+
+def test_real_pay_after_a_savings_sentence_still_parses():
+    from app.ingest.pay import parse_pay_text
+
+    pay = parse_pay_text("Our tool saves teams $20,000 per year. Pay range: $45 - $55 per hour.")
+    assert pay is not None
+    assert (float(pay.min), float(pay.max), pay.period) == (45.0, 55.0, "hour")

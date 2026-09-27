@@ -225,7 +225,17 @@ async def _ingest_company(
                             "department": dept,
                             "department_raw": raw.department,
                             "employment_type": raw.employment_type,
-                            "description_text": desc_text,
+                            # An unchanged posting (identical v2 hash) keeps its stored
+                            # description: SET col = col reuses the TOAST pointer, so a
+                            # refresh stops rewriting ~5 KB per role per run, the main
+                            # source of growth against Neon's 512 MB cap.
+                            "description_text": (
+                                None if listing_only
+                                else case(
+                                    (stored_hash == new_hash, Job.description_text),
+                                    else_=ins.excluded.description_text,
+                                )
+                            ),
                             "apply_url": raw.apply_url,
                             "posted_at": posted,
                             "experience_level": exp_level,

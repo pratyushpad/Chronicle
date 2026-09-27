@@ -355,3 +355,28 @@ def test_senior_and_management_roles_are_stored_as_listings_only(monkeypatch):
     assert stored["Senior Software Engineer"] is None
     assert stored["Director of Engineering"] is None
     assert stored["Associate Product Manager"] == "Join the APM program."
+
+
+def test_unchanged_posting_keeps_its_stored_description_but_listings_clear_it(monkeypatch):
+    """The upsert only rewrites description_text when the content hash changed (a rewrite
+    re-TOASTs ~5 KB per role per run); listing-only roles always clear it."""
+    import re
+
+    adapter = _FakeAdapter([
+        replace(_raw(1, "<p>Join the APM program.</p>"), title="Associate Product Manager"),
+        replace(_raw(2, "<p>Run the org.</p>"), title="Director of Engineering"),
+    ])
+    session = _session()
+    _run(adapter, session, monkeypatch)
+
+    sql = [
+        str(call.args[0].compile(dialect=postgresql.dialect()))
+        for call in session.execute.call_args_list
+        if "ON CONFLICT" in str(call.args[0].compile(dialect=postgresql.dialect()))
+    ]
+    keep = re.compile(
+        r"description_text = CASE WHEN \(jobs\.content_hash = excluded\.content_hash\) "
+        r"THEN jobs\.description_text ELSE excluded\.description_text END"
+    )
+    assert keep.search(sql[0])  # in scope: kept when unchanged
+    assert not keep.search(sql[1]) and "description_text = %(" in sql[1]  # listing: cleared

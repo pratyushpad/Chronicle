@@ -181,3 +181,42 @@ def test_listing_only_role_drops_its_stored_description_and_embedding(pg_engine,
             assert job.embedding is None
         finally:
             outer.rollback()
+
+
+def test_unchanged_posting_keeps_its_stored_description(pg_engine, monkeypatch):
+    """Same v2 hash: the stored description is kept as is (no TOAST rewrite). A changed
+    posting (new hash) replaces it."""
+    from app.ingest.dedupe import make_content_hash
+    from app.ingest.normalize import plain_text
+
+    with pg_engine.connect() as conn:
+        outer = conn.begin()
+        try:
+            session = _session(conn)
+            co = Company(name="KeepCo", ats=ATSSource.greenhouse, slug="keep-co-test", active=True)
+            session.add(co)
+            session.flush()
+            raw = _raw("Build things with Python.")
+            same_hash = make_content_hash(raw.title, raw.department, raw.location,
+                                          plain_text(raw.description_html))
+            now = datetime.now(timezone.utc)
+            session.add(Job(
+                company_id=co.id, source=ATSSource.greenhouse, source_job_id="hv-1",
+                title=raw.title, title_normalized="software engineer intern",
+                apply_url="https://example.com/1", dedup_key="dk-keep-1", first_seen_at=now,
+                last_seen_at=now, is_active=True, content_hash=same_hash, embedding=_VEC,
+                description_text="stored text the refresh must not rewrite",
+            ))
+            session.flush()
+
+            _ingest(session, co, raw, monkeypatch)
+            job = session.execute(select(Job).where(Job.source_job_id == "hv-1")).scalar_one()
+            session.refresh(job)
+            assert job.description_text == "stored text the refresh must not rewrite"
+            assert job.embedding is not None
+
+            _ingest(session, co, _raw("Build different things with Rust."), monkeypatch)
+            session.refresh(job)
+            assert job.description_text == "Build different things with Rust."
+        finally:
+            outer.rollback()
