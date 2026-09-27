@@ -26,14 +26,27 @@ def db_host(url: str | None) -> str | None:
 
 
 def db_hosts(url: str | None) -> set[str]:
-    """Every host the URL would connect to: the host in the netloc plus any `host=` query
-    parameter, which libpq honors (so `...@localhost/db?host=<neon>` reaches Neon)."""
+    """Every host the URL could connect to. libpq accepts a comma-separated host list in the
+    netloc, splits user info at the first "@" (Python's parser at the last), and honors
+    `host=` / `hostaddr=` query parameters, so all of them are collected and every one
+    must be local."""
     if not url or "://" not in url:
         return set()
     parsed = urlparse("postgresql://" + url.split("://", 1)[1])
-    hosts = {parsed.hostname} if parsed.hostname else set()
-    for value in parse_qs(parsed.query).get("host", []):
-        hosts.update(h.strip().lower() for h in value.split(",") if h.strip())
+    hosts: set[str] = set()
+    for hostpart in {parsed.netloc.split("@", 1)[-1], parsed.netloc.rsplit("@", 1)[-1]}:
+        for h in hostpart.split(","):
+            h = h.strip()
+            if h.startswith("["):  # [IPv6]:port
+                h = h[1:h.index("]")] if "]" in h else h[1:]
+            elif h.count(":") == 1:  # host:port
+                h = h.split(":", 1)[0]
+            if h:
+                hosts.add(h.lower())
+    query = parse_qs(parsed.query)
+    for key in ("host", "hostaddr"):
+        for value in query.get(key, []):
+            hosts.update(h.strip().lower() for h in value.split(",") if h.strip())
     return hosts
 
 

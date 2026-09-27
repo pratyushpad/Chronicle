@@ -225,14 +225,21 @@ async def _ingest_company(
                             "department": dept,
                             "department_raw": raw.department,
                             "employment_type": raw.employment_type,
-                            # An unchanged posting (identical v2 hash) keeps its stored
-                            # description: SET col = col reuses the TOAST pointer, so a
-                            # refresh stops rewriting ~5 KB per role per run, the main
-                            # source of growth against Neon's 512 MB cap.
+                            # An unchanged description is kept as stored: SET col = col
+                            # reuses the TOAST pointer, so a refresh stops rewriting ~5 KB
+                            # per role per run, the main source of growth against Neon's
+                            # 512 MB cap. Compared by value, not by content hash: the hash
+                            # ignores Chronicle's own choices (listing-only, the length cap,
+                            # the stored format), and those must still update the text.
                             "description_text": (
                                 None if listing_only
                                 else case(
-                                    (stored_hash == new_hash, Job.description_text),
+                                    (
+                                        Job.description_text.is_not_distinct_from(
+                                            ins.excluded.description_text
+                                        ),
+                                        Job.description_text,
+                                    ),
                                     else_=ins.excluded.description_text,
                                 )
                             ),

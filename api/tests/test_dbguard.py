@@ -57,3 +57,14 @@ def test_unix_socket_host_is_local(monkeypatch):
 ])
 def test_sqlalchemy_url_pins_the_installed_driver(url, expected):
     assert sqlalchemy_url(url) == expected
+
+
+@pytest.mark.parametrize("url", [
+    "postgresql://u:p@localhost:5432,ep-x.neon.tech:5432/db",  # libpq host list
+    "postgresql://u:p@ep-x.neon.tech,x@localhost/db",  # libpq splits user info at the first @
+    "postgresql://u:p@localhost/db?hostaddr=54.0.0.1",
+])
+def test_every_host_libpq_could_use_must_be_local(url, monkeypatch):
+    monkeypatch.delenv(ALLOW_ENV, raising=False)
+    with pytest.raises(SystemExit):
+        assert_local_or_allowed(url, "test")

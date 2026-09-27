@@ -82,6 +82,7 @@ def test_legacy_hash_is_adopted_without_re_embedding_then_v2_changes_re_embed(pg
             session.refresh(job)
             assert job.content_hash.startswith("v2")
             assert job.embedding is not None
+            assert job.description_text == "Build things with Python."  # legacy text rewritten once
             first_v2 = job.content_hash
 
             # Identical re-ingest: stable hash, vector kept.
@@ -183,9 +184,10 @@ def test_listing_only_role_drops_its_stored_description_and_embedding(pg_engine,
             outer.rollback()
 
 
-def test_unchanged_posting_keeps_its_stored_description(pg_engine, monkeypatch):
-    """Same v2 hash: the stored description is kept as is (no TOAST rewrite). A changed
-    posting (new hash) replaces it."""
+def test_description_is_rewritten_only_when_its_text_changes(pg_engine, monkeypatch):
+    """The stored description is kept when the new text is identical (no TOAST rewrite) and
+    replaced whenever it differs, even under the same content hash: a row stored as a
+    listing (NULL) whose title is now in scope gets its text back, then its embedding."""
     from app.ingest.dedupe import make_content_hash
     from app.ingest.normalize import plain_text
 
@@ -204,16 +206,20 @@ def test_unchanged_posting_keeps_its_stored_description(pg_engine, monkeypatch):
                 company_id=co.id, source=ATSSource.greenhouse, source_job_id="hv-1",
                 title=raw.title, title_normalized="software engineer intern",
                 apply_url="https://example.com/1", dedup_key="dk-keep-1", first_seen_at=now,
-                last_seen_at=now, is_active=True, content_hash=same_hash, embedding=_VEC,
-                description_text="stored text the refresh must not rewrite",
+                last_seen_at=now, is_active=True, content_hash=same_hash, embedding=None,
+                description_text=None,
             ))
             session.flush()
 
             _ingest(session, co, raw, monkeypatch)
             job = session.execute(select(Job).where(Job.source_job_id == "hv-1")).scalar_one()
             session.refresh(job)
-            assert job.description_text == "stored text the refresh must not rewrite"
-            assert job.embedding is not None
+            assert job.description_text == "Build things with Python."  # restored
+            assert job.embedding is None  # so embed_jobs (description present) embeds it
+
+            _ingest(session, co, raw, monkeypatch)
+            session.refresh(job)
+            assert job.description_text == "Build things with Python."  # unchanged: kept
 
             _ingest(session, co, _raw("Build different things with Rust."), monkeypatch)
             session.refresh(job)

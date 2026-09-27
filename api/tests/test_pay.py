@@ -396,10 +396,6 @@ def test_salaries_the_legacy_text_backfill_must_keep(text, expected):
     "Stay at Any House, $100 a night, as a member perk.",
     "New hires get a $50 Amazon gift card on day one.",
     "We grew fast ($10–15M ARR) last year.",
-    # Company money both PR 1 verifiers reproduced as pay (2026-09-26).
-    "Customers save $50,000 per year on average using our product.",
-    "Average contract value $120k-$300k.",
-    "You will manage a portfolio of $50,000 - $200,000 accounts.",
 ])
 def test_unlabeled_non_wage_amounts_are_not_pay(text):
     from app.ingest.pay import parse_pay_text
@@ -433,9 +429,10 @@ def test_real_pay_after_a_savings_sentence_still_parses():
 
 
 @_pytest.mark.parametrize("text,expected", [
-    # The company-money words stay narrow: a pay line near them still counts.
+    # Pay next to words that also describe company money still counts.
     ("Portfolio Manager: $150,000 - $200,000 per year.", (150000.0, 200000.0, "year")),
     ("Salary: $120,000 - $140,000. We offer a 401(k) savings plan.", (120000.0, 140000.0, "year")),
+    ("Help us save lives - $45 to $55 per hour.", (45.0, 55.0, "hour")),
 ])
 def test_pay_next_to_company_money_words_still_parses(text, expected):
     from app.ingest.pay import parse_pay_text

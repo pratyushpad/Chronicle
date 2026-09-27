@@ -358,7 +358,7 @@ def test_senior_and_management_roles_are_stored_as_listings_only(monkeypatch):
 
 
 def test_unchanged_posting_keeps_its_stored_description_but_listings_clear_it(monkeypatch):
-    """The upsert only rewrites description_text when the content hash changed (a rewrite
+    """The upsert only rewrites description_text when its text changed (a rewrite
     re-TOASTs ~5 KB per role per run); listing-only roles always clear it."""
     import re
 
@@ -375,8 +375,9 @@ def test_unchanged_posting_keeps_its_stored_description_but_listings_clear_it(mo
         if "ON CONFLICT" in str(call.args[0].compile(dialect=postgresql.dialect()))
     ]
     keep = re.compile(
-        r"description_text = CASE WHEN \(jobs\.content_hash = excluded\.content_hash\) "
-        r"THEN jobs\.description_text ELSE excluded\.description_text END"
+        r"description_text = CASE WHEN \(jobs\.description_text IS NOT DISTINCT FROM "
+        r"excluded\.description_text\) THEN jobs\.description_text "
+        r"ELSE excluded\.description_text END"
     )
     assert keep.search(sql[0])  # in scope: kept when unchanged
     assert not keep.search(sql[1]) and "description_text = %(" in sql[1]  # listing: cleared
