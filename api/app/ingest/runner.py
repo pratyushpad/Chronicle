@@ -132,10 +132,11 @@ async def _ingest_company(
                     if freshness is not None and freshness < _CUTOFF:
                         continue  # skip stale pre-2026 postings
                     exp_level = infer_experience_level(raw.title)
-                    if is_out_of_scope(raw.title, exp_level):
-                        # Senior / management: outside an early-career board's scope. Not
-                        # upserting means a stored copy is soft-closed like any unseen role.
-                        continue
+                    # Senior / management roles are listings only: no stored description
+                    # and no embedding (normalize.is_out_of_scope; embed_jobs skips rows
+                    # without a description). Pay, tags and sponsorship still come from
+                    # the full posting below.
+                    listing_only = is_out_of_scope(raw.title, exp_level)
 
                     result["jobs_seen"] += 1
                     t_norm = normalize_title(raw.title)
@@ -156,7 +157,11 @@ async def _ingest_company(
                     # plain_text returns None for postings with no description at all
                     # (common on Lever) — slicing None was the 'NoneType' subscript crash
                     # that failed four Lever boards; None must flow through unchanged.
-                    desc_text = desc_plain[:_MAX_DESC_CHARS] if desc_plain is not None else None
+                    desc_text = (
+                        desc_plain[:_MAX_DESC_CHARS]
+                        if desc_plain is not None and not listing_only
+                        else None
+                    )
                     # Hash v2 covers source fields only (see make_content_hash), so an
                     # unchanged posting hashes identically every run and never re-embeds,
                     # whatever the normalizers or the storage format do.
@@ -234,7 +239,10 @@ async def _ingest_company(
                             "salary_max": sal_max,
                             "sponsorship_flag": sponsor,
                             "content_hash": chash,
-                            "embedding": case((content_changed, None), else_=Job.embedding),
+                            "embedding": (
+                                None if listing_only
+                                else case((content_changed, None), else_=Job.embedding)
+                            ),
                         },
                     )
                     # xmax = 0 iff the row was freshly inserted (an upsert-update stamps xmax).

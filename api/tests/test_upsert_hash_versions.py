@@ -149,3 +149,35 @@ def test_age_is_least_of_posted_and_first_seen(pg_engine):
             assert order == ["unknown", "real", "republished"]
         finally:
             outer.rollback()
+
+
+def test_listing_only_role_drops_its_stored_description_and_embedding(pg_engine, monkeypatch):
+    """A senior role is a listing only: its next ingest clears the stored description and
+    embedding (freeing the space) but keeps the row listed."""
+    with pg_engine.connect() as conn:
+        outer = conn.begin()
+        try:
+            session = _session(conn)
+            co = Company(name="ScopeCo", ats=ATSSource.greenhouse, slug="scope-co-test", active=True)
+            session.add(co)
+            session.flush()
+            now = datetime.now(timezone.utc)
+            session.add(Job(
+                company_id=co.id, source=ATSSource.greenhouse, source_job_id="hv-1",
+                title="Senior Software Engineer", title_normalized="senior software engineer",
+                apply_url="https://example.com/1", dedup_key="dk-scope-1", first_seen_at=now,
+                last_seen_at=now, is_active=True, content_hash="b" * 64, embedding=_VEC,
+                description_text="a long stored description",
+            ))
+            session.flush()
+
+            raw = _raw("Lead our search team.")
+            raw.title = "Senior Software Engineer"
+            _ingest(session, co, raw, monkeypatch)
+            job = session.execute(select(Job).where(Job.source_job_id == "hv-1")).scalar_one()
+            session.refresh(job)
+            assert job.is_active
+            assert job.description_text is None
+            assert job.embedding is None
+        finally:
+            outer.rollback()

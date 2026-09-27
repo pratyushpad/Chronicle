@@ -122,7 +122,7 @@ export default async function JobDetailPage({ params }: PageProps) {
           </div>
         ) : (
           <p className="font-body text-muted-foreground italic">
-            No description available.
+            The full description is on {job.company_name}&apos;s site.
           </p>
         )}
 
