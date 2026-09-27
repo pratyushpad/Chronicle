@@ -430,3 +430,16 @@ def test_real_pay_after_a_savings_sentence_still_parses():
     pay = parse_pay_text("Our tool saves teams $20,000 per year. Pay range: $45 - $55 per hour.")
     assert pay is not None
     assert (float(pay.min), float(pay.max), pay.period) == (45.0, 55.0, "hour")
+
+
+@_pytest.mark.parametrize("text,expected", [
+    # The company-money words stay narrow: a pay line near them still counts.
+    ("Portfolio Manager: $150,000 - $200,000 per year.", (150000.0, 200000.0, "year")),
+    ("Salary: $120,000 - $140,000. We offer a 401(k) savings plan.", (120000.0, 140000.0, "year")),
+])
+def test_pay_next_to_company_money_words_still_parses(text, expected):
+    from app.ingest.pay import parse_pay_text
+
+    pay = parse_pay_text(text)
+    assert pay is not None
+    assert (float(pay.min), float(pay.max), pay.period) == expected
