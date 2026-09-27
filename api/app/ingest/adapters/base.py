@@ -1,9 +1,11 @@
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, AsyncIterator, Protocol
 
 if TYPE_CHECKING:
     import httpx
+
+    from ..pay import Pay
 
 # Hard cap on a single board's raw JSON. A pathological payload must fail that
 # one company with a recorded error — never take down the whole process.
@@ -60,8 +62,20 @@ class RawJob:
     employment_type: str | None
     description_html: str | None
     apply_url: str
-    posted_at: str | None  # ISO string or epoch-ms string; normalizer parses
+    # When the role was FIRST published (ISO or epoch-ms string); None when the ATS doesn't
+    # say. Never a last-modified time: Greenhouse's updated_at moves on any edit (Anduril
+    # bulk-touched 2,244 of 2,374 jobs in one day), which floated old roles to the top.
+    posted_at: str | None
     remote: bool | None
+    # Last-modified time. Drives ONLY the pre-2026 staleness cutoff, so switching
+    # posted_at to first-published doesn't silently drop still-open evergreen roles.
+    updated_at: str | None = None
+    # Secondary department signals (Greenhouse metadata "Job Group"…, Ashby team, Lever
+    # categories.department) — consulted only when the primary department is a program
+    # label like "Internships" or maps to nothing.
+    department_hints: list[str] = field(default_factory=list)
+    # Structured pay from the ATS itself (beats anything parsed from the text).
+    pay: "Pay | None" = None
 
 
 class ATSAdapter(Protocol):

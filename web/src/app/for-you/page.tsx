@@ -66,8 +66,8 @@ export default function ForYouPage() {
   if (hasProfile === false) {
     return (
       <main className="mx-auto max-w-2xl px-6 py-32 text-center">
-        <p className="font-display text-3xl text-foreground mb-3">Tell us what you're looking for</p>
-        <p className="font-body text-muted-foreground mb-8">Answer 6 quick questions and we'll surface the roles most likely to fit.</p>
+        <p className="font-display text-3xl text-foreground mb-3">Tell us what you&rsquo;re looking for</p>
+        <p className="font-body text-muted-foreground mb-8">Answer 6 quick questions and we&rsquo;ll surface the roles most likely to fit.</p>
         <Link href="/onboarding" className={CTA_BUTTON}>
           Set up my profile →
         </Link>

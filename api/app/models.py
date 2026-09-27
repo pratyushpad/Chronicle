@@ -2,7 +2,7 @@ import enum
 from datetime import date, datetime, timezone
 from sqlalchemy import (
     Boolean, Column, Date, DateTime, Enum, ForeignKey,
-    Index, Integer, String, Text, UniqueConstraint,
+    Index, Integer, Numeric, String, Text, UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import DeclarativeBase, relationship
@@ -119,11 +119,22 @@ class Job(Base):
     # endpoint ever served it.
     description_text = Column(Text, nullable=True)
     apply_url = Column(Text, nullable=False)
+    # First-published time from the ATS; NULL when the ATS doesn't give one. Age is
+    # always LEAST(posted_at, first_seen_at) — a role can't be posted after we saw it.
     posted_at = Column(DateTime(timezone=True), nullable=True)
     dedup_key = Column(String(40), nullable=False)
     experience_level = Column(String, nullable=True)
     # Heuristic enrichment columns
     tech_tags = Column(ARRAY(String), nullable=True)
+    # Pay exactly as posted: amount in the posting's own currency and unit ("$45–55 per
+    # hour" → 45, 55, USD, hour). NULL when the posting doesn't say — never guessed.
+    pay_min = Column(Numeric(12, 2), nullable=True)
+    pay_max = Column(Numeric(12, 2), nullable=True)
+    pay_currency = Column(String(3), nullable=True)   # ISO 4217
+    pay_period = Column(String(8), nullable=True)     # hour | day | week | month | year
+    pay_source = Column(String(8), nullable=True)     # ats (structured field) | text
+    # Annualized USD equivalents of pay_*, for sorting and for clients that predate the
+    # pay_* columns only. Never displayed as the posted pay.
     salary_min = Column(Integer, nullable=True)
     salary_max = Column(Integer, nullable=True)
     sponsorship_flag = Column(String, nullable=True, default="unknown")
@@ -132,8 +143,9 @@ class Job(Base):
     first_seen_at = Column(DateTime(timezone=True), nullable=False)
     last_seen_at = Column(DateTime(timezone=True), nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)
-    # sha256 of the embed text; lets incremental ingest re-embed only changed content
-    # (not just rows where embedding IS NULL). NULL for legacy rows until first re-ingest.
+    # Versioned hash of the posting's source content (see dedupe.make_content_hash). Lets
+    # incremental ingest re-embed only rows whose content changed; a row carrying an older
+    # hash version adopts the new one without re-embedding. NULL on very old rows.
     content_hash = Column(String(64), nullable=True)
     # Full-text keyword ranking is served by a functional GIN index on JOB_SEARCH_FTS_EXPR
     # (created in the Alembic migration), not a stored column — see the constant's note.

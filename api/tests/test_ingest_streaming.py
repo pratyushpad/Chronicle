@@ -231,11 +231,13 @@ def test_posting_with_no_description_ingests_cleanly(monkeypatch):
     assert params["description_text"] is None
 
 
-def test_content_hash_matches_the_stored_truncated_text(monkeypatch):
-    """Hash covers exactly what's persisted, so an unchanged long posting hashes the
-    same every run and never re-embeds."""
+def test_content_hash_covers_source_fields_from_the_raw_text(monkeypatch):
+    """Hash v2 is computed from the RAW posting (plain_text of the full HTML) plus the raw
+    title/department/location — not from the truncated stored text or any normalized
+    field — so an unchanged posting hashes the same every run and never re-embeds, even
+    when the stored form or a normalizer changes."""
     from app.ingest.dedupe import make_content_hash
-    from app.ingest.normalize import extract_tech_tags, normalize_location, strip_html
+    from app.ingest.normalize import plain_text
 
     desc = _long_description_with_trailing_salary()
     adapter = _FakeAdapter([_raw(1, desc)])
@@ -244,15 +246,9 @@ def test_content_hash_matches_the_stored_truncated_text(monkeypatch):
     _run(adapter, session, monkeypatch)
     params = _insert_params(session)
 
-    full = strip_html(desc)
-    expected = make_content_hash(
-        "Software Engineer 1",
-        full[: runner._MAX_DESC_CHARS],
-        normalize_location("San Francisco, CA"),
-        "Engineering",
-        extract_tech_tags(full),
-    )
+    expected = make_content_hash("Software Engineer 1", "Engineering", "San Francisco, CA", plain_text(desc))
     assert params["content_hash"] == expected
+    assert params["content_hash"].startswith("v2")
 
 
 # ── (c) mid-stream failure retry ──────────────────────────────────────────────

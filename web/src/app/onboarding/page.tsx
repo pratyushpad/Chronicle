@@ -153,7 +153,7 @@ export default function OnboardingPage() {
         <div>
           {stepLabel}
           <h1 className="font-display text-4xl text-foreground mb-2">Remote or on-site?</h1>
-          <p className="font-body text-muted-foreground mb-8">We'll use this to rank your recommendations.</p>
+          <p className="font-body text-muted-foreground mb-8">We&rsquo;ll use this to rank your recommendations.</p>
           <div className="flex flex-wrap gap-3">
             {REMOTE_PREFS.map((r) => <Toggle key={r.key} label={r.label} active={remotePref === r.key} onClick={() => setRemotePref(r.key)} />)}
           </div>
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
         <div>
           {stepLabel}
           <h1 className="font-display text-4xl text-foreground mb-2">Your tech stack</h1>
-          <p className="font-body text-muted-foreground mb-8">Pick skills from your resume — we'll match them against job requirements.</p>
+          <p className="font-body text-muted-foreground mb-8">Pick skills from your resume — we&rsquo;ll match them against job requirements.</p>
           <div className="flex flex-wrap gap-3 mb-6">
             {COMMON_SKILLS.map((s) => <Toggle key={s} label={s} active={skills.includes(s.toLowerCase())} onClick={() => toggle(skills, setSkills, s.toLowerCase())} />)}
           </div>
@@ -206,7 +206,7 @@ export default function OnboardingPage() {
         <div>
           {stepLabel}
           <h1 className="font-display text-4xl text-foreground mb-2">Do you need visa sponsorship?</h1>
-          <p className="font-body text-muted-foreground mb-8">We'll de-rank roles that mention sponsorship restrictions.</p>
+          <p className="font-body text-muted-foreground mb-8">We&rsquo;ll de-rank roles that mention sponsorship restrictions.</p>
           <div className="flex gap-4">
             {[{ v: false, label: "No" }, { v: true, label: "Yes" }, { v: null, label: "Prefer not to say" }].map(({ v, label }) => (
               <Toggle key={label} label={label} active={needsSponsorship === v} onClick={() => setNeedsSponsorship(v)} />

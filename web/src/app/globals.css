@@ -179,3 +179,35 @@
     animation: none;
   }
 }
+
+/* ─── Scroll-into-view entrances (Reveal trigger="inView", BarFill, HiringVelocity) ───
+   The server always renders the FINAL, visible state. The hidden "before" state exists
+   only when the reader allows motion AND JS is running to reveal it again (`html.js` is
+   set by an inline script in app/layout.tsx before first paint). Reduced-motion readers,
+   no-JS readers and crawlers therefore never see content parked at opacity 0, and the
+   server markup never depends on a client-only media query, so hydration can't mismatch.
+   Components set `data-revealed` once the element scrolls into view. Timings come from
+   src/lib/motion.ts through the Tailwind theme. */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-reveal] {
+    transition-property: opacity, transform;
+    transition-duration: theme("transitionDuration.base");
+    transition-timing-function: theme("transitionTimingFunction.house");
+    transition-delay: var(--reveal-delay, 0s);
+  }
+  .js [data-reveal="rise"]:not([data-revealed]) {
+    opacity: 0;
+    transform: translate3d(0, var(--reveal-y, 8px), 0);
+  }
+  /* Chart bars grow out of their own baseline (the data's zero), on the slower token. */
+  .js [data-reveal="grow-x"],
+  .js [data-reveal="grow-y"] {
+    transition-duration: theme("transitionDuration.slow");
+  }
+  .js [data-reveal="grow-x"]:not([data-revealed]) {
+    transform: scaleX(0);
+  }
+  .js [data-reveal="grow-y"]:not([data-revealed]) {
+    transform: scaleY(0);
+  }
+}

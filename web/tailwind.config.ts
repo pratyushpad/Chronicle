@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { cssDuration, cssEase, duration } from "./src/lib/motion";
 
 const config: Config = {
   content: [
@@ -51,6 +52,26 @@ const config: Config = {
         "7xl": ["6rem", { lineHeight: "1" }],
         "8xl": ["8rem", { lineHeight: "1" }],
         "9xl": ["10rem", { lineHeight: "1" }],
+      },
+      // Motion vocabulary, generated from src/lib/motion.ts (the single source of truth).
+      transitionTimingFunction: {
+        house: cssEase,
+      },
+      transitionDuration: {
+        fast: cssDuration(duration.fast),
+        base: cssDuration(duration.base),
+        slow: cssDuration(duration.slow),
+      },
+      keyframes: {
+        // Entrance "print": fade + rise from --reveal-y into the element's resting state.
+        "reveal-rise": {
+          from: { opacity: "0", transform: "translate3d(0, var(--reveal-y, 8px), 0)" },
+        },
+      },
+      animation: {
+        // `backwards` holds the hidden frame only during the stagger delay and never pins
+        // the end state, so hover/press transforms keep working after the entrance.
+        reveal: `reveal-rise ${cssDuration(duration.base)} ${cssEase} var(--reveal-delay, 0s) backwards`,
       },
       // Minimalist Monochrome: no depth from shadows, no rounded corners.
       boxShadow: {

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { displayDepartment } from "@/lib/format";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -75,12 +76,13 @@ export function formatLocation(raw: string | null | undefined): string {
 }
 
 /**
- * Passthrough for the department label. Normalization now happens server-side at
- * ingest (see api/app/ingest/normalize.py `normalize_department`) — the API returns a
- * clean controlled-vocab category ("Sales", "Engineering", "G&A", "IT", "Other") or
- * null. We only trim; deliberately no re-casing (would break "G&A"/"IT") and no
- * segment peeling (the old client-side cleanup leaked internal org names).
+ * Department label for display. Normalization happens server-side at ingest (see
+ * api/app/ingest/normalize.py `normalize_department`) — the API returns a clean
+ * controlled-vocab category ("Sales", "Engineering", "G&A", "IT", "Other") or null.
+ * We only trim; deliberately no re-casing (would break "G&A"/"IT") and no segment
+ * peeling (the old client-side cleanup leaked internal org names). The "Other"
+ * catch-all and null render as "" so no surface ever shows an "Other" chip.
  */
 export function formatDepartment(raw: string | null | undefined): string {
-  return raw?.trim() ?? "";
+  return displayDepartment(raw);
 }

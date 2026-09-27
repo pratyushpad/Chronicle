@@ -5,6 +5,7 @@ matching the stored query_json, creates Notification rows, and sends
 email digests via Resend.
 """
 import asyncio
+import html
 import logging
 import os
 from datetime import datetime, timedelta, timezone
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Company, Job, Notification, SavedSearch, User
 from app.db import get_session
+from .pay import format_pay
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +35,8 @@ def _matches_query(job: Job, company_name: str, query: dict) -> bool:
         if company.lower() not in company_name.lower():
             return False
     if dept := query.get("department"):
-        if not job.department or dept.lower() not in job.department.lower():
+        # Exact match, like the feed filter (a substring made "IT" match "Quality").
+        if not job.department or dept.strip().lower() != job.department.lower():
             return False
     if query.get("remote") is not None:
         if job.remote != query["remote"]:
@@ -48,11 +51,12 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
     subject = f"Chronicle: {len(jobs)} new role{'s' if len(jobs) != 1 else ''} matching \"{search.name}\""
     rows = ""
     for job, company_name in jobs[:20]:
+        # Pay as posted ("$45 to 55/hr") — salary_min/max are annualized sort keys, and
+        # rendering them as "$Xk" is exactly the hourly-intern bug the pay_* columns fix.
+        pay_label = format_pay(job.pay_min, job.pay_max, job.pay_currency, job.pay_period)
         salary = ""
-        if job.salary_min:
-            lo = f"${job.salary_min // 1000}k"
-            hi = f"–${job.salary_max // 1000}k" if job.salary_max else ""
-            salary = f"<span style='color:#6b6b6b;font-size:12px;margin-left:8px'>{lo}{hi}</span>"
+        if pay_label:
+            salary = f"<span style='color:#6b6b6b;font-size:12px;margin-left:8px'>{html.escape(pay_label)}</span>"
         rows += f"""
         <tr>
           <td style='padding:12px 0;border-bottom:1px solid #e8e4df'>
@@ -68,7 +72,9 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
           </td>
         </tr>"""
 
-    html = f"""
+    # Not named `html`: that would shadow the html module used for escaping above and
+    # raise UnboundLocalError for any job with pay.
+    body = f"""
     <div style='max-width:560px;margin:0 auto;font-family:system-ui,sans-serif;background:#fafaf8;padding:32px 24px'>
       <p style='font-family:Georgia,serif;font-size:28px;color:#1a1a1a;margin:0 0 4px'>Chronicle</p>
       <p style='font-size:13px;color:#b8860b;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 32px'>JOB ALERT · {search.name}</p>
@@ -88,7 +94,7 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
         <a href='{APP_URL}/saved' style='color:#b0a898'>Manage alerts</a>
       </p>
     </div>"""
-    return subject, html
+    return subject, body
 
 
 async def _send_email(to: str, subject: str, html: str) -> bool:
@@ -172,8 +178,8 @@ async def run_alerts(session: Session, run_start: datetime) -> None:
         session.add(notif)
 
         # Send email digest
-        subject, html = _build_email(user, search, matched)
-        sent = await _send_email(user.email, subject, html)
+        subject, body = _build_email(user, search, matched)
+        sent = await _send_email(user.email, subject, body)
         if sent:
             log.info("Alert email sent to %s: %d jobs for search '%s'", user.email, len(matched), search.name)
 

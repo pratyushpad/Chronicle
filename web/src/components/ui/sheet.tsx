@@ -7,6 +7,19 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
+/*
+ * Sheet — Base UI Dialog as an edge-anchored panel.
+ *
+ * Written for this project's Tailwind 3.4: Base UI marks the enter/exit frames with the
+ * `data-starting-style` / `data-ending-style` attributes, which Tailwind 3 targets with
+ * arbitrary data variants (`data-[starting-style]:…`). Base UI waits for the resulting
+ * CSS transitions to finish before unmounting, so exits are never cut off.
+ *
+ * Motion follows lib/motion.ts (ease-house, duration-base in / duration-fast out — exits
+ * are quicker than entrances). The panel slides from its edge only for readers who allow
+ * motion; with prefers-reduced-motion it fades in place instead of travelling.
+ */
+
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
 }
@@ -28,13 +41,24 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/10 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
+        "fixed inset-0 z-50 bg-black/10 transition-opacity duration-base ease-house data-[ending-style]:duration-fast data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 supports-[backdrop-filter]:backdrop-blur-sm",
         className
       )}
       {...props}
     />
   )
 }
+
+// Position per side, plus the off-screen frame it slides from (motion-safe only).
+const SIDE_CLASSES = {
+  right:
+    "inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm motion-safe:data-[starting-style]:translate-x-full motion-safe:data-[ending-style]:translate-x-full",
+  left:
+    "inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm motion-safe:data-[starting-style]:-translate-x-full motion-safe:data-[ending-style]:-translate-x-full",
+  top: "inset-x-0 top-0 h-auto border-b motion-safe:data-[starting-style]:-translate-y-full motion-safe:data-[ending-style]:-translate-y-full",
+  bottom:
+    "inset-x-0 bottom-0 h-auto border-t motion-safe:data-[starting-style]:translate-y-full motion-safe:data-[ending-style]:translate-y-full",
+} as const
 
 function SheetContent({
   className,
@@ -43,7 +67,7 @@ function SheetContent({
   showCloseButton = true,
   ...props
 }: SheetPrimitive.Popup.Props & {
-  side?: "top" | "right" | "bottom" | "left"
+  side?: keyof typeof SIDE_CLASSES
   showCloseButton?: boolean
 }) {
   return (
@@ -53,7 +77,10 @@ function SheetContent({
         data-slot="sheet-content"
         data-side={side}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-ending-style:translate-y-[2.5rem] data-[side=bottom]:data-starting-style:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:data-ending-style:translate-x-[-2.5rem] data-[side=left]:data-starting-style:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:data-ending-style:translate-x-[2.5rem] data-[side=right]:data-starting-style:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-ending-style:translate-y-[-2.5rem] data-[side=top]:data-starting-style:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm",
+          "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground outline-none",
+          "transition-[transform,opacity] duration-base ease-house data-[ending-style]:duration-fast",
+          "motion-reduce:data-[ending-style]:opacity-0 motion-reduce:data-[starting-style]:opacity-0",
+          SIDE_CLASSES[side],
           className
         )}
         {...props}
@@ -65,13 +92,13 @@ function SheetContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-3 right-3"
-                size="icon-sm"
+                size="icon"
+                // 44px target; hover fills like the rest of the monochrome chrome.
+                className="absolute right-2.5 top-2.5 size-11 hover:bg-muted"
               />
             }
           >
-            <XIcon
-            />
+            <XIcon aria-hidden />
             <span className="sr-only">Close</span>
           </SheetPrimitive.Close>
         )}
@@ -105,7 +132,7 @@ function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
     <SheetPrimitive.Title
       data-slot="sheet-title"
       className={cn(
-        "font-heading text-base font-medium text-foreground",
+        "font-display text-base font-medium text-foreground",
         className
       )}
       {...props}

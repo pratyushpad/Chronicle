@@ -9,14 +9,14 @@ from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
-from app.util import root_domain
+from app.job_items import job_list_item
 from app.schemas import (
     CompanyDetail,
     CompanyItem,
     CompanyVelocity,
+    Freshness,
     IndustryCount,
     JobDetail,
-    JobListItem,
     JobListResponse,
     LastRunSummary,
     MetaResponse,
@@ -71,6 +71,13 @@ _LEVEL_FILTERS: dict[str, dict] = {
 }
 
 
+# A role's age: its first-published date, but never later than the day Chronicle first
+# saw it live (a role can't be posted after we saw it — this also neutralizes re-publish
+# dates). LEAST skips NULLs, so an unknown publish date falls back to first_seen_at.
+# Used everywhere age matters: feed order, posted_after, recommendations.
+JOB_AGE = func.least(Job.posted_at, Job.first_seen_at)
+
+
 def _last_run_start(session: Session) -> datetime | None:
     return session.execute(
         select(IngestRun.started_at).order_by(IngestRun.started_at.desc()).limit(1)
@@ -98,7 +105,7 @@ def list_jobs(
     session: Session = Depends(_db),
 ):
     last_start = _last_run_start(session)
-    order_col = Job.posted_at if sort == "posted_at" else Job.first_seen_at
+    order_col = JOB_AGE if sort == "posted_at" else Job.first_seen_at
 
     # All filter statements join Company because several filters reference it.
     # include_q=False leaves out the free-text match — the semantic arm ranks by
@@ -116,7 +123,9 @@ def list_jobs(
         if company_id:
             s = s.where(Job.company_id == company_id)
         if department:
-            s = s.where(Job.department.ilike(f"%{department}%"))
+            # Exact (case-insensitive): the vocabulary is closed, and a substring match made
+            # department=IT also return Quality and Security.
+            s = s.where(func.lower(Job.department) == department.strip().lower())
         if location:
             # The filter sends a canonical value ("chicago, il" / "remote"). Match on the
             # city token so every raw variant of that place is caught ("chicago",
@@ -143,7 +152,8 @@ def list_jobs(
         if industry:
             s = s.where(Company.industry.ilike(f"%{industry}%"))
         if posted_after:
-            s = s.where(Job.posted_at >= datetime(posted_after.year, posted_after.month, posted_after.day, tzinfo=timezone.utc))
+            # JOB_AGE, not posted_at: an unknown publish date must not silently drop the role.
+            s = s.where(JOB_AGE >= datetime(posted_after.year, posted_after.month, posted_after.day, tzinfo=timezone.utc))
         if since_last_run and last_start:
             s = s.where(Job.first_seen_at >= last_start)
         return s
@@ -290,27 +300,9 @@ def _build_response(
         is_new = bool(last_start and job.first_seen_at >= last_start)
         locs = loc_map.get(job.dedup_key, [])
         items.append(
-            JobListItem(
-                id=job.id,
-                title=job.title,
-                company_name=row.company_name,
-                company_id=job.company_id,
-                company_domain=root_domain(row.company_careers_url),
-                location_normalized=job.location_normalized,
-                locations=locs or None,
-                location_count=len(locs) or None,
-                remote=job.remote,
-                department=job.department,
-                employment_type=job.employment_type,
-                experience_level=job.experience_level,
-                tech_tags=job.tech_tags,
-                sponsorship_flag=job.sponsorship_flag,
-                salary_min=job.salary_min,
-                salary_max=job.salary_max,
-                posted_at=job.posted_at,
-                first_seen_at=job.first_seen_at,
-                apply_url=job.apply_url,
-                is_new=is_new,
+            job_list_item(
+                job, row.company_name, row.company_careers_url,
+                locations=locs or None, location_count=len(locs) or None, is_new=is_new,
             )
         )
 
@@ -420,11 +412,23 @@ def get_job(job_id: int, session: Session = Depends(_db)):
         department=job.department,
         employment_type=job.employment_type,
         experience_level=job.experience_level,
+        # These were declared on JobDetail but never passed, so the detail page always
+        # received None for pay, tags and sponsorship.
+        tech_tags=job.tech_tags,
+        sponsorship_flag=job.sponsorship_flag,
+        salary_min=job.salary_min,
+        salary_max=job.salary_max,
+        pay_min=float(job.pay_min) if job.pay_min is not None else None,
+        pay_max=float(job.pay_max) if job.pay_max is not None else None,
+        pay_currency=job.pay_currency,
+        pay_period=job.pay_period,
+        pay_source=job.pay_source,
         description_text=job.description_text,
         apply_url=job.apply_url,
         posted_at=job.posted_at,
         first_seen_at=job.first_seen_at,
         last_seen_at=job.last_seen_at,
+        is_active=bool(job.is_active),
     )
 
 
@@ -600,6 +604,28 @@ def _canonical_locations(session: Session) -> list[str]:
     return (["remote"] + present) if remote else present
 
 
+def _freshness(session: Session) -> Freshness:
+    """How recently active boards were re-checked. `last_ingested_at` is stamped only
+    after a board's jobs are committed, so a failing board keeps its last good time."""
+    now = datetime.now(timezone.utc)
+    stamps = session.execute(
+        select(Company.last_ingested_at).where(Company.active == True)  # noqa: E712
+    ).scalars().all()
+    checked = [t for t in stamps if t is not None]
+    ages = sorted((now - t).total_seconds() / 3600 for t in checked)
+    median = None
+    if ages:
+        mid = len(ages) // 2
+        median = ages[mid] if len(ages) % 2 else (ages[mid - 1] + ages[mid]) / 2
+    return Freshness(
+        boards_active=len(stamps),
+        boards_checked_24h=sum(1 for a in ages if a <= 24),
+        boards_checked_7d=sum(1 for a in ages if a <= 24 * 7),
+        median_check_age_hours=round(median, 1) if median is not None else None,
+        oldest_check_at=min(checked) if checked else None,
+    )
+
+
 def _compute_meta(session: Session) -> MetaResponse:
     def distinct_col(col):
         return [
@@ -686,4 +712,5 @@ def _compute_meta(session: Session) -> MetaResponse:
         remote_count=remote_count,
         experience_counts=experience_counts,
         top_industries=top_industries,
+        freshness=_freshness(session),
     )

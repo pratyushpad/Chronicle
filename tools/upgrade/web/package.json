@@ -1,0 +1,11 @@
+{
+  "name": "chronicle-upgrade-harness",
+  "private": true,
+  "type": "module",
+  "description": "Headless verification harness: screenshots, overflow audit, Lighthouse. Dev-only.",
+  "dependencies": {
+    "chrome-launcher": "^1",
+    "lighthouse": "^12",
+    "playwright": "^1.63.0"
+  }
+}
