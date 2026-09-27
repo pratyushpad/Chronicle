@@ -6,6 +6,7 @@ fit in RAM as a download but not as a list[RawJob] of description HTML.
 """
 import asyncio
 import inspect
+from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -323,3 +324,21 @@ def test_successful_stream_commits_checkpoint_once(monkeypatch):
     session.commit.assert_called_once()
     # 3 job upserts + 1 last_ingested_at checkpoint
     assert session.execute.call_count == 4
+
+
+# ── early-career scope ────────────────────────────────────────────────────────
+
+
+def test_senior_and_management_roles_are_not_stored(monkeypatch):
+    adapter = _FakeAdapter([
+        replace(_raw(1, "<p>Lead our search team.</p>"), title="Senior Software Engineer"),
+        replace(_raw(2, "<p>Run the org.</p>"), title="Director of Engineering"),
+        replace(_raw(3, "<p>Join the APM program.</p>"), title="Associate Product Manager"),
+    ])
+    session = _session()
+
+    result = _run(adapter, session, monkeypatch)
+
+    assert result["error"] is None
+    assert result["jobs_seen"] == 1
+    assert _insert_params(session)["title"] == "Associate Product Manager"

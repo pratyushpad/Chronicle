@@ -184,6 +184,28 @@ def infer_experience_level(title: str) -> str | None:
     return None
 
 
+# Chronicle lists internship and early-career roles. Senior and management roles are most
+# of what company boards post (about 98% of stored rows in Sept 2026) and don't fit the
+# free 512 MB database, so ingest skips them. A "manager" title with an early-career
+# marker ("Associate Product Manager", "Rotational Program Manager") is kept.
+_EARLY_CAREER_RE = re.compile(
+    r"\b(associate|junior|jr\.?|graduate|apprentice|rotational|early[\s\-]?career)\b", re.IGNORECASE
+)
+_SENIOR_ASSOCIATE_RE = re.compile(
+    r"\bassociate\s+(director|vice\s*president|vp|partner|principal|general\s+counsel)\b", re.IGNORECASE
+)
+
+
+def is_out_of_scope(title: str, level: str | None) -> bool:
+    """True for roles Chronicle doesn't store: senior roles, and management roles
+    without an early-career marker. `level` is infer_experience_level(title)."""
+    if level == "Senior":
+        return True
+    if level == "Management":
+        return not _EARLY_CAREER_RE.search(title) or bool(_SENIOR_ASSOCIATE_RE.search(title))
+    return False
+
+
 # ── Department normalization (controlled vocabulary) ──────────────────────────
 
 # Leading numeric/req code block, e.g. "20213 ", "REQ-123 - ", "#45 ".
@@ -221,7 +243,7 @@ _DEPT_RULES = _rules(
     (r"marketing|\bbrand\b|communications|\bcontent\b|demand gen|\bseo\b|public relations|social media|^growth$", "Marketing"),
     (r"hardware|electrical|electronic|mechanical|firmware|embedded|silicon|\basic\b|\bfpga\b|\brf\b|avionics|power systems|propulsion|turbomachinery|combustion|\bfluids?\b|structures|aerodynamic|thermal|payload|antenna|launch vehicle", "Hardware"),
     (r"robot|autonom|perception|controls? (?:engineering|systems)|simulation|motion planning", "Robotics & Autonomy"),
-    (r"data cent(?:er|re)|site reliability|\bsre\b|devops|infrastructure|\binfra\b|cloud|platform|networking|\bnetwork\b", "Infrastructure"),
+    (r"data cent(?:er|re)|site reliability|\bsre\b|devops|infrastructure|\binfra\b|cloud|platform engineering|networking|\bnetwork\b", "Infrastructure"),
     (r"machine learning|deep learning|artificial intelligence|\bml\b|\bai\b|computer vision|\bnlp\b|\bllm", "ML & AI"),
     (r"manufactur|assembly|production (?:operations|line|planning)|machining|fabrication", "Manufacturing"),
     (r"quality|\bqa\b|test engineering", "Quality"),

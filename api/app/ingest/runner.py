@@ -20,6 +20,7 @@ from .normalize import (
     infer_experience_level,
     infer_remote,
     infer_sponsorship,
+    is_out_of_scope,
     keying_title,
     normalize_department,
     normalize_location,
@@ -130,6 +131,11 @@ async def _ingest_company(
                     freshness = parse_posted_at(raw.updated_at) or posted
                     if freshness is not None and freshness < _CUTOFF:
                         continue  # skip stale pre-2026 postings
+                    exp_level = infer_experience_level(raw.title)
+                    if is_out_of_scope(raw.title, exp_level):
+                        # Senior / management: outside an early-career board's scope. Not
+                        # upserting means a stored copy is soft-closed like any unseen role.
+                        continue
 
                     result["jobs_seen"] += 1
                     t_norm = normalize_title(raw.title)
@@ -147,7 +153,6 @@ async def _ingest_company(
                     tags = extract_tech_tags(desc_plain)
                     sponsor = infer_sponsorship(desc_plain)
                     dept = normalize_department(raw.department, raw.title, raw.department_hints)
-                    exp_level = infer_experience_level(raw.title)
                     # plain_text returns None for postings with no description at all
                     # (common on Lever) — slicing None was the 'NoneType' subscript crash
                     # that failed four Lever boards; None must flow through unchanged.
