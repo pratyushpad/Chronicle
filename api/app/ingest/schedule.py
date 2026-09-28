@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
 
@@ -34,9 +35,33 @@ def _refresh_embeddings() -> None:
         release_embedder()
 
 
+# Same window as POST /admin/ingest: an unfinished run younger than this is in flight.
+_LOCK_STALE_AFTER = timedelta(hours=2)
+
+
+def _open_run_id(session) -> int | None:
+    """The id of an ingest run still in flight, if any. The scheduled refresh (GitHub
+    Actions) and the manual Render trigger share this rule, so they never overlap."""
+    from sqlalchemy import select
+
+    from app.models import IngestRun
+
+    cutoff = datetime.now(tz=timezone.utc) - _LOCK_STALE_AFTER
+    row = session.execute(
+        select(IngestRun.id)
+        .where(IngestRun.finished_at.is_(None), IngestRun.started_at >= cutoff)
+        .order_by(IngestRun.started_at.desc())
+    ).first()
+    return row[0] if row else None
+
+
 async def _once() -> None:
     session = get_session()
     try:
+        open_run = _open_run_id(session)
+        if open_run is not None:
+            log.warning("ingest run %d is still in progress; not starting another", open_run)
+            return
         run = await run_ingest(session)  # alerts fire inside run_ingest
         log.info("Run id=%d finished_at=%s", run.id, run.finished_at)
     finally:
