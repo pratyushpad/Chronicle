@@ -21,14 +21,18 @@ from .pay import format_pay
 log = logging.getLogger(__name__)
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM = os.getenv("RESEND_FROM", "")
-APP_URL = os.getenv("APP_URL", "").rstrip("/")
+# Display name is Chronicle; the sending address stays on the Resend-verified
+# folioapp.dev domain until a Chronicle domain is verified there.
+# `or`, not a getenv default: an unset GitHub secret arrives as an empty string, and an
+# empty sender would make Resend reject every alert email.
+RESEND_FROM = os.getenv("RESEND_FROM") or "Chronicle <alerts@folioapp.dev>"
+APP_URL = (os.getenv("APP_URL") or "http://localhost:3001").rstrip("/")
 
 
 def email_configured() -> bool:
-    """Email digests go out only when all three are set on the server (Render):
-    RESEND_API_KEY, RESEND_FROM (a sender on a Resend-verified domain) and APP_URL (the
-    public site, for links). Until then the site doesn't promise email (/meta says so)."""
+    """Email digests go out only when RESEND_API_KEY is set on the host that runs ingest
+    (RESEND_FROM and APP_URL fall back to defaults above). Until then the site doesn't
+    promise email (/meta says so)."""
     return bool(RESEND_API_KEY and RESEND_FROM and APP_URL)
 
 
@@ -133,7 +137,7 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
 
 async def _send_email(to: str, subject: str, html: str) -> bool:
     if not email_configured():
-        log.info("email alerts not configured (RESEND_API_KEY / RESEND_FROM / APP_URL) — skipping")
+        log.info("RESEND_API_KEY not set; skipping an alert email")  # never log addresses
         return False
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.post(
@@ -149,13 +153,6 @@ async def _send_email(to: str, subject: str, html: str) -> bool:
 
 async def run_alerts(session: Session, run_start: datetime) -> None:
     now = datetime.now(timezone.utc)
-    if RESEND_API_KEY and not email_configured():
-        # Before PR 6, RESEND_FROM had a default, so a server with only the key set sent
-        # digests (with localhost links). Now all three are required: say so loudly.
-        log.warning(
-            "RESEND_API_KEY is set but RESEND_FROM or APP_URL is not: email digests are paused "
-            "(in-app notifications still go out). Set both on the API server to resume."
-        )
 
     # Honor the chosen cadence (slightly under the nominal period so a run that lands
     # a few minutes early doesn't silently push every digest a full day/week out).
@@ -222,7 +219,7 @@ async def run_alerts(session: Session, run_start: datetime) -> None:
         subject, body = _build_email(user, search, matched)
         sent = await _send_email(user.email, subject, body)
         if sent:
-            log.info("Alert email sent to %s: %d jobs for search '%s'", user.email, len(matched), search.name)
+            log.info("Alert email sent: %d jobs for saved search %d", len(matched), search.id)
 
         search.last_alerted_at = now
 

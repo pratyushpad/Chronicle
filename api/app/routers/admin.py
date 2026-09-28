@@ -1,22 +1,16 @@
 import hmac
 import logging
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_session
-from app.models import IngestRun
+from app.ingest.runlock import close_crashed_run, open_run
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin"])
-
-# A run whose row is still open after this long is treated as crashed, so a new run may
-# start. Normal runs finish well inside this window.
-_LOCK_STALE_AFTER = timedelta(hours=2)
-
 
 def require_ingest_secret(x_ingest_secret: str | None = Header(None)) -> None:
     """Guard the ingest trigger with a dedicated shared secret (the caller is a machine —
@@ -39,17 +33,14 @@ def _db():
 
 async def _run_ingest_bg(budget_seconds: int | None) -> None:
     """Background worker: its own session (the request session is long gone by now)."""
-    from app.ingest.runner import RunInProgress, run_ingest
+    from app.ingest.runner import run_ingest
 
     session = get_session()
     try:
         await run_ingest(session, budget_seconds=budget_seconds)
-    except RunInProgress:
-        # Lost the race for the run slot (ux_ingest_runs_one_open): another run is open.
-        log.info("ingest not started: another run holds the run lock")
-    except Exception:
-        # run_ingest has already closed its own run row (by id) before re-raising.
+    except Exception as exc:
         log.exception("background ingest run failed")
+        close_crashed_run(exc)
     finally:
         # close() rolls back, which itself raises if the connection is already gone —
         # that escaped this task and surfaced as an unhandled ASGI error.
@@ -76,16 +67,10 @@ def trigger_ingest(
     Optional budget_seconds bounds wall-clock time so a full 1000+ board run fits a Render
     free-tier window and continues (stalest-first) on the next invocation.
     """
-    cutoff = datetime.now(tz=timezone.utc) - _LOCK_STALE_AFTER
-    open_run = session.execute(
-        select(IngestRun)
-        .where(IngestRun.finished_at.is_(None), IngestRun.started_at >= cutoff)
-        .order_by(IngestRun.started_at.desc())
-        .limit(1)
-    ).scalar_one_or_none()
-    if open_run is not None:
+    running = open_run(session)
+    if running is not None:
         raise HTTPException(
-            status_code=409, detail=f"ingest run {open_run.id} already in progress"
+            status_code=409, detail=f"ingest run {running.id} already in progress"
         )
 
     background_tasks.add_task(_run_ingest_bg, budget_seconds)

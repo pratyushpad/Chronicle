@@ -49,3 +49,21 @@ def test_email_needs_all_three_settings(monkeypatch):
         monkeypatch.setattr(alerts, key, "")
         assert not alerts.email_configured()
         monkeypatch.setattr(alerts, key, "x")
+
+
+def test_empty_email_settings_fall_back_to_defaults(monkeypatch):
+    """An unset GitHub secret arrives as an empty string; the sender must not be empty."""
+    import importlib
+
+    import app.ingest.alerts as alerts
+
+    monkeypatch.setenv("RESEND_FROM", "")
+    monkeypatch.setenv("APP_URL", "")
+    reloaded = importlib.reload(alerts)
+    try:
+        assert reloaded.RESEND_FROM == "Chronicle <alerts@folioapp.dev>"
+        assert reloaded.APP_URL == "http://localhost:3001"
+    finally:
+        monkeypatch.delenv("RESEND_FROM")
+        monkeypatch.delenv("APP_URL")
+        importlib.reload(alerts)

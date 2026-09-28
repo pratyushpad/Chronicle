@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import sys
 
 from dotenv import load_dotenv
@@ -7,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.db import get_session  # noqa: E402 — after dotenv
-from .runner import RunInProgress, run_ingest  # noqa: E402
+from .runner import run_ingest  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -34,32 +35,31 @@ def _refresh_embeddings() -> None:
         release_embedder()
 
 
-async def _once(budget_seconds: int | None = None) -> dict | None:
-    """One ingest run, then the embedding sweep. Returns a small report, or None when
-    another run holds the run lock (not an error: a double trigger is expected)."""
+async def _once(budget_seconds: int | None = None) -> None:
+    """One refresh of every board (or as many as `budget_seconds` allows), then new
+    embeddings. Refuses to start while another run is in flight (runlock), the same rule
+    POST /admin/ingest applies, and stamps a crash on the run row instead of leaving it
+    open (an open row blocks the Render trigger for two hours)."""
+    from .runlock import close_crashed_run, open_run
+
     session = get_session()
     try:
+        running = open_run(session)
+        if running is not None:
+            msg = f"ingest run {running.id} is still in progress; not starting another"
+            log.warning(msg)
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                print(f"::warning::{msg}")  # visible on the workflow run, not just the log
+            return
         try:
-            run = await run_ingest(session, budget_seconds=budget_seconds)  # alerts fire inside
-        except RunInProgress:
-            log.info("another ingest run is in progress; nothing to do")
-            return None
+            run = await run_ingest(session, budget_seconds=budget_seconds)  # alerts inside
+        except BaseException as exc:
+            close_crashed_run(exc)
+            raise
         log.info("Run id=%d finished_at=%s", run.id, run.finished_at)
-        report = {
-            "run_id": run.id,
-            "seconds": round((run.finished_at - run.started_at).total_seconds()) if run.finished_at else None,
-            "boards_total": run.companies_total, "boards_ok": run.companies_ok,
-            "boards_failed": run.companies_failed, "jobs_seen": run.jobs_seen,
-            "jobs_new": run.jobs_new, "jobs_closed": run.jobs_closed,
-        }
     finally:
         session.close()
     _refresh_embeddings()
-    return report
-
-
-def _arg(flag: str) -> str | None:
-    return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv[:-1] else None
 
 
 async def _loop() -> None:
@@ -82,29 +82,8 @@ async def _loop() -> None:
 
 
 if __name__ == "__main__":
-    # --once [--budget SECONDS] [--report PATH]: one run (GitHub Actions / manual); writes a
-    # JSON report for the workflow's budget summary when --report is given.
     if "--once" in sys.argv:
-        import json
-        import time
-
-        # Capped under the 2-hour stale-run window, so a live run is never reclaimed as
-        # crashed while it's still going (and a second run started beside it).
-        budget = min(int(_arg("--budget") or 2400), 3600)
-        path = _arg("--report")
-        started = time.monotonic()
-        try:
-            result = asyncio.run(_once(budget))
-        except BaseException as exc:
-            if path:
-                with open(path, "w") as fh:
-                    json.dump({"crashed": f"{type(exc).__name__}: {exc}"[:300]}, fh)
-            raise
-        if path:
-            if result is not None:
-                # Wall-clock including the embedding sweep, which also uses the database.
-                result["seconds_total"] = round(time.monotonic() - started)
-            with open(path, "w") as fh:
-                json.dump(result or {"skipped": "another run in progress"}, fh)
+        budget = int(sys.argv[sys.argv.index("--budget") + 1]) if "--budget" in sys.argv else None
+        asyncio.run(_once(budget))
     else:
         asyncio.run(_loop())

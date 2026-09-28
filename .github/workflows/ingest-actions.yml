@@ -1,27 +1,17 @@
 name: ingest-actions
 
-# Runs the ingest on a GitHub Actions runner instead of the 512 MB Render box: no memory
-# ceiling, a full budget per run, and free minutes for public repos.
-#
-# DISPATCH-ONLY on purpose. Nothing runs until the maintainer:
-#   1. adds the repo secret NEON_DATABASE_URL (Neon, pooled OFF);
-#   2. dispatches it once by hand (Actions → ingest-actions → Run workflow) and reads the
-#      budget summary;
-#   3. only then adds a `schedule:` trigger (e.g. every 12 hours) and pauses the
-#      Render-triggered `ingest` workflow, so the two don't compete.
-# The run lock (ux_ingest_runs_one_open) makes an overlap with a Render run harmless: the
-# second one exits without starting.
-#
-# Saved-search alerts run here only if RESEND_API_KEY, RESEND_FROM and APP_URL are also
-# repo secrets; otherwise runs made here skip alerts entirely (CHRONICLE_SKIP_ALERTS), so
-# they aren't marked sent without an email.
+# The scheduled refresh. It runs on a GitHub Actions runner (4 CPUs, no memory ceiling,
+# free for public repos) instead of Render's free 512 MB box, where a 10-minute slice
+# reached only ~6-40 boards (a full pass took about two weeks). One run refreshes every
+# board, then embeds new roles. Without the NEON_DATABASE_URL repo secret it skips itself,
+# and the Render-triggered `ingest` workflow's schedule stands down once the secret exists,
+# so exactly one scheduled path is active. Both refuse to start while another run is in
+# flight (an open run younger than two hours). GitHub may start scheduled runs hours late.
 on:
-  workflow_dispatch:
-    inputs:
-      budget_seconds:
-        description: "Wall-clock budget for fetching boards, seconds (capped at 3600)"
-        required: false
-        default: "2400"
+  schedule:
+    - cron: "17 4 * * *"
+    - cron: "17 16 * * *"
+  workflow_dispatch: {}
 
 concurrency:
   group: ingest
@@ -34,46 +24,44 @@ jobs:
     defaults:
       run:
         working-directory: api
-    env:
-      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-      RESEND_FROM: ${{ secrets.RESEND_FROM }}
-      APP_URL: ${{ secrets.APP_URL }}
     steps:
-      - name: Require the database secret; decide about alerts
+      - uses: actions/checkout@v4
+      - name: Check for the database secret
+        id: secret
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         run: |
           if [ -z "$DATABASE_URL" ]; then
-            echo "NEON_DATABASE_URL repo secret is not set" >&2
-            exit 1
+            echo "::notice::NEON_DATABASE_URL repo secret is not set; skipping. The Render-triggered ingest workflow keeps refreshing a slice meanwhile."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
           fi
-          # Without all three email settings, don't run saved-search alerts here: they'd be
-          # marked sent with no email, and the next host that CAN email would skip them.
-          if [ -z "$RESEND_API_KEY" ] || [ -z "$RESEND_FROM" ] || [ -z "$APP_URL" ]; then
-            echo "CHRONICLE_SKIP_ALERTS=1" >> "$GITHUB_ENV"
-            echo "Email settings not all set: saved-search alerts are left for a host that can send them."
-          fi
-      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        if: steps.secret.outputs.present == 'true'
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: api/pyproject.toml
       - name: Install
+        if: steps.secret.outputs.present == 'true'
         run: pip install -e .
       - name: Cache the embedding model
+        if: steps.secret.outputs.present == 'true'
         uses: actions/cache@v4
         with:
           path: api/models/minilm
           key: minilm-onnx-v1
       - name: Fetch the embedding model (skips files already cached)
+        if: steps.secret.outputs.present == 'true'
         run: python -m app.ml.download
-      - name: Ingest
+      - name: Refresh every board, then embed new roles
+        if: steps.secret.outputs.present == 'true'
         env:
-          BUDGET: ${{ github.event.inputs.budget_seconds }}
-        run: python -m app.ingest.schedule --once --budget "${BUDGET:-2400}" --report "$RUNNER_TEMP/report.json"
-      - name: Budget report
-        if: always()
-        run: |
-          if [ -f "$RUNNER_TEMP/report.json" ]; then
-            python ../tools/ingest_budget_report.py "$RUNNER_TEMP/report.json" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          # Saved-search alert emails send only if these are set; addresses are never logged.
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          APP_URL: ${{ vars.APP_URL || 'https://chronicles-weld.vercel.app' }}
+        # A 70-minute budget ends the run cleanly inside the 90-minute job timeout.
+        run: python -m app.ingest.schedule --once --budget 4200

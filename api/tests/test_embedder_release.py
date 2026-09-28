@@ -197,18 +197,3 @@ def test_encode_tracks_the_in_flight_counter(monkeypatch):
         inst.encode(["x"])
     assert embedder_mod._active_encodes == 0
 
-
-def test_alerts_are_skipped_on_a_host_that_cannot_email(drive_run_ingest, fake_company, monkeypatch):
-    """CHRONICLE_SKIP_ALERTS=1 (the Actions ingest without email settings) must not run
-    alerts at all: a run there would mark digests sent without sending them."""
-    calls = []
-
-    async def _alerts(session, run_start):
-        calls.append("alerts")
-
-    monkeypatch.setenv("CHRONICLE_SKIP_ALERTS", "1")
-    drive_run_ingest([fake_company()], {}, alerts=_alerts)
-    assert calls == []
-    monkeypatch.delenv("CHRONICLE_SKIP_ALERTS")
-    drive_run_ingest([fake_company()], {}, alerts=_alerts)
-    assert calls == ["alerts"]
