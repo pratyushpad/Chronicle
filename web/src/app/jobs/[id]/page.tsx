@@ -127,7 +127,7 @@ export default async function JobDetailPage({ params }: PageProps) {
               <JobDescription blocks={blocks} />
             ) : (
               <p className="font-body italic text-muted-foreground">
-                The posting has no description. The full details are on {job.company_name}&rsquo;s site.
+                The full description is on {job.company_name}&rsquo;s site.
               </p>
             )}
           </section>
