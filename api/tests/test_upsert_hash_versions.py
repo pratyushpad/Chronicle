@@ -82,6 +82,7 @@ def test_legacy_hash_is_adopted_without_re_embedding_then_v2_changes_re_embed(pg
             session.refresh(job)
             assert job.content_hash.startswith("v2")
             assert job.embedding is not None
+            assert job.description_text == "<p>Build things with Python.</p>"  # legacy text rewritten once
             first_v2 = job.content_hash
 
             # Identical re-ingest: stable hash, vector kept.
@@ -147,5 +148,81 @@ def test_age_is_least_of_posted_and_first_seen(pg_engine):
                 select(Job.source_job_id).where(Job.company_id == co.id).order_by(JOB_AGE.desc())
             ).scalars().all()
             assert order == ["unknown", "real", "republished"]
+        finally:
+            outer.rollback()
+
+
+def test_listing_only_role_drops_its_stored_description_and_embedding(pg_engine, monkeypatch):
+    """A senior role is a listing only: its next ingest clears the stored description and
+    embedding (freeing the space) but keeps the row listed."""
+    with pg_engine.connect() as conn:
+        outer = conn.begin()
+        try:
+            session = _session(conn)
+            co = Company(name="ScopeCo", ats=ATSSource.greenhouse, slug="scope-co-test", active=True)
+            session.add(co)
+            session.flush()
+            now = datetime.now(timezone.utc)
+            session.add(Job(
+                company_id=co.id, source=ATSSource.greenhouse, source_job_id="hv-1",
+                title="Senior Software Engineer", title_normalized="senior software engineer",
+                apply_url="https://example.com/1", dedup_key="dk-scope-1", first_seen_at=now,
+                last_seen_at=now, is_active=True, content_hash="b" * 64, embedding=_VEC,
+                description_text="a long stored description",
+            ))
+            session.flush()
+
+            raw = _raw("Lead our search team.")
+            raw.title = "Senior Software Engineer"
+            _ingest(session, co, raw, monkeypatch)
+            job = session.execute(select(Job).where(Job.source_job_id == "hv-1")).scalar_one()
+            session.refresh(job)
+            assert job.is_active
+            assert job.description_text is None
+            assert job.embedding is None
+        finally:
+            outer.rollback()
+
+
+def test_description_is_rewritten_only_when_its_text_changes(pg_engine, monkeypatch):
+    """The stored description is kept when the new text is identical (no TOAST rewrite) and
+    replaced whenever it differs, even under the same content hash: a row stored as a
+    listing (NULL) whose title is now in scope gets its text back, then its embedding."""
+    from app.ingest.dedupe import make_content_hash
+    from app.ingest.normalize import plain_text
+
+    with pg_engine.connect() as conn:
+        outer = conn.begin()
+        try:
+            session = _session(conn)
+            co = Company(name="KeepCo", ats=ATSSource.greenhouse, slug="keep-co-test", active=True)
+            session.add(co)
+            session.flush()
+            raw = _raw("Build things with Python.")
+            same_hash = make_content_hash(raw.title, raw.department, raw.location,
+                                          plain_text(raw.description_html))
+            now = datetime.now(timezone.utc)
+            session.add(Job(
+                company_id=co.id, source=ATSSource.greenhouse, source_job_id="hv-1",
+                title=raw.title, title_normalized="software engineer intern",
+                apply_url="https://example.com/1", dedup_key="dk-keep-1", first_seen_at=now,
+                last_seen_at=now, is_active=True, content_hash=same_hash, embedding=None,
+                description_text=None,
+            ))
+            session.flush()
+
+            _ingest(session, co, raw, monkeypatch)
+            job = session.execute(select(Job).where(Job.source_job_id == "hv-1")).scalar_one()
+            session.refresh(job)
+            assert job.description_text == "<p>Build things with Python.</p>"  # restored
+            assert job.embedding is None  # so embed_jobs (description present) embeds it
+
+            _ingest(session, co, raw, monkeypatch)
+            session.refresh(job)
+            assert job.description_text == "<p>Build things with Python.</p>"  # unchanged: kept
+
+            _ingest(session, co, _raw("Build different things with Rust."), monkeypatch)
+            session.refresh(job)
+            assert job.description_text == "<p>Build different things with Rust.</p>"
         finally:
             outer.rollback()

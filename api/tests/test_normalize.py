@@ -3,7 +3,9 @@ from datetime import datetime, timezone
 import pytest
 
 from app.ingest.normalize import (
+    infer_experience_level,
     infer_remote,
+    is_out_of_scope,
     normalize_department,
     normalize_location,
     normalize_title,
@@ -197,6 +199,12 @@ def test_department_from_title_alone(title, expected):
     ("Risk Solutions", "Senior AI Software Engineer, Risk - Insurance Claims Management", [], "Engineering"),
     ("Carta Law", "Lead Product Marketing Manager, Carta Law", [], "Marketing"),
     ("Tech", "Senior Platform Engineer", [], "Infrastructure"),
+    # A team merely named "Platform" isn't infrastructure (live rows, Sept 2026)
+    ("Platform - Elasticsearch", "Principal Software Engineer - Search Algorithms - Elasticsearch", [], "Engineering"),
+    ("8813 Web Presence & Platform", "Full Stack Engineer, Web Presence and Platform", [], "Engineering"),
+    ("Platform Engineering", "Software Engineer", [], "Infrastructure"),
+    ("Platform Eng", "Software Engineer", [], "Infrastructure"),
+    ("Technology : Infrastructure", "Senior DevOps Engineer", [], "Infrastructure"),
     # Unmappable but non-empty → "Other"; nothing at all → None
     ("Clinical", "Neurosurgeon Resident", [], "Other"),
     (None, "Neurosurgeon Resident", [], None),
@@ -230,3 +238,61 @@ def test_department_vocabulary_is_closed():
 ])
 def test_department_real_intern_rows_that_were_other(raw, title, expected):
     assert normalize_department(raw, title) == expected
+
+
+@pytest.mark.parametrize("title,out", [
+    # Listing only (live titles, Sept 2026): senior, executive, and managers without an
+    # early-career marker.
+    ("Senior Data Scientist", True),
+    ("Staff Engineer", True),
+    ("Principal Software Engineer - Postgres", True),
+    ("Senior Engineering Manager, Backend", True),
+    ("Head of Engineering, Defense OS", True),
+    ("Account Director - APAC", True),
+    ("Revenue Operations Manager", True),
+    ("Associate Director, Clinical Operations", True),
+    ("Associate Creative Director", True),
+    ("Director, Graduate Admissions", True),
+    ("Senior Manager, Early Career Recruiting", True),
+    ("Senior Associate", True),
+    ("Solutions Architect", True),
+    # Kept in full: early-career titles, including ones the level rules read as senior or
+    # management (review of PR #9).
+    ("Associate Product Manager", False),
+    ("Junior Project Manager", False),
+    ("Jr. Account Manager", False),
+    ("Rotational Program Manager, Early Career", False),
+    ("Graduate Program Manager", False),
+    ("Product Manager, Early Careers", False),
+    ("Technical Program Manager - Early Talent", False),
+    ("Program Manager, Emerging Talent", False),
+    ("Associate Partner Manager", False),
+    ("Assistant Project Manager", False),
+    ("Assistant Brand Manager", False),
+    ("Associate Solutions Architect", False),
+    ("Junior Solutions Architect", False),
+    ("Associate Architect", False),
+    ("Junior Staff Accountant", False),
+    ("Staff Accountant", False),
+    ("Staff Auditor", False),
+    ("Lead Development Representative", False),
+    ("Solutions Architect, New Graduate", False),
+    ("Product Manager - New College Grad", False),
+    ("Product Manager Intern", False),
+    ("2027 Electrical Engineer Intern", False),
+    ("New Grad Software Engineer", False),
+    ("Software Engineer", False),
+    ("Account Executive", False),
+])
+def test_out_of_scope_roles(title, out):
+    assert is_out_of_scope(title, infer_experience_level(title)) is out
+
+
+@pytest.mark.parametrize("title", [
+    "Solutions Architect, New Graduate",
+    "Product Manager - New College Grad",
+    "University Graduate - Software Engineer",
+    "Recent Graduates Program, Finance",
+])
+def test_graduate_variants_are_entry_level(title):
+    assert infer_experience_level(title) == "Entry Level"
