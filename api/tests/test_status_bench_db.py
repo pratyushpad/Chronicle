@@ -48,3 +48,20 @@ def test_bench_requires_the_secret_and_reports_percentiles(api, monkeypatch):  #
     assert r.status_code == 200, r.text
     res = r.json()["results"]["keyword"]
     assert res["n"] == 5 and 0 <= res["p50_ms"] <= res["p95_ms"] <= res["max_ms"]
+
+
+def test_status_marks_runs_closed_by_runlock_as_crashed(api):  # noqa: F811
+    """main's runlock.close_crashed_run stamps a run-level note (slug None): /status must
+    count that run as crashed, not as a clean one, and not list the note as a board."""
+    client, s = api
+    from app.routers import jobs as jobs_router
+    jobs_router._STATUS_CACHE.clear()
+    now = datetime.now(timezone.utc)
+    note = {"company": None, "ats": None, "slug": None, "error": "run crashed: OperationalError: gone"}
+    s.add(IngestRun(started_at=now - timedelta(minutes=5), finished_at=now - timedelta(minutes=1),
+                    companies_total=3, companies_ok=1, companies_failed=0, jobs_seen=4, jobs_new=0,
+                    jobs_closed=0, failures=[note]))
+    s.flush()
+    body = client.get("/status").json()
+    assert body["runs"][0]["crashed"] is True and body["runs"][0]["open"] is False
+    assert all(b["slug"] is not None for b in body["failing_boards"])

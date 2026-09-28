@@ -70,8 +70,10 @@ departments. Filtering happens at read time in the API/UI, so the company regist
   distinct openings.
 - **Accounts & tracking.** Google OAuth, saved jobs, an application tracker (kanban-style
   statuses), and saved-search alerts for new matching roles: in-app always, plus email
-  digests when the host running ingest has `RESEND_API_KEY` set (`RESEND_FROM` and `APP_URL`
-  fall back to defaults when empty; the site says "email" only then, via `/meta.email_alerts`).
+  digests. Set `RESEND_API_KEY` in **both** places: as a GitHub Actions secret (the scheduled
+  ingest sends the digests) and on the Render API (the site says "email" only when the API
+  has it, via `/meta.email_alerts`, and the `ingest.yml` fallback sends from Render).
+  `RESEND_FROM` and `APP_URL` fall back to defaults when empty.
 - **Facts students need, only when stated.** Pay as posted ("$30 to 45/hr", structured ATS
   pay first, then the text; company money such as "$116M raised" or "saves $2M in contract
   value" is never read as pay, and an explicit pay label wins), the internship term, the degree levels a posting mentions, and

@@ -953,7 +953,8 @@ def status(session: Session = Depends(_db)):
     fails: dict[tuple, dict] = {}
     for r in runs:
         errors = [f for f in (r.failures or []) if isinstance(f, dict)]
-        # Crashed: a crash note, a run closed at its own start (stale reclaim), or a run
+        # Crashed: a crash note (runlock.close_crashed_run), a run closed at its own start
+        # (older rows closed by hand that way), or a run
         # still open past the stale window (a hard kill that ran no handler).
         crashed = (
             any(f.get("slug") is None and "crash" in str(f.get("error", "")) for f in errors)

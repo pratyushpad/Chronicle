@@ -77,8 +77,8 @@ maintainer's computer can be off. This file is the complete context for that ses
 ## Stop and ask only for
 
 1. Anything that would touch Neon (migrations, backfills). Document it; never run it.
-2. Secrets: the Actions secret `NEON_DATABASE_URL` (#12), and `RESEND_API_KEY` (optionally
-   `RESEND_FROM` / `APP_URL`) wherever ingest runs, for email digests. Tell the maintainer where to set them; never ask for the
+2. Secrets: the Actions secret `NEON_DATABASE_URL` (#12), and for email digests
+   `RESEND_API_KEY` both as an Actions secret (the sender) and on Render (`/meta.email_alerts`). Tell the maintainer where to set them; never ask for the
    values in chat.
 3. (Done in #12: the Actions refresh is scheduled and turns itself on with the secret.)
 

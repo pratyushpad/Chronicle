@@ -365,7 +365,7 @@ class StatusRun(BaseModel):
     jobs_new: int
     jobs_closed: int
     open: bool          # still running (or crashed within the stale window)
-    crashed: bool       # closed by the crash handler or the stale-run reclaim
+    crashed: bool       # a crash note, or left open past the two-hour stale window
 
 
 class FailingBoard(BaseModel):

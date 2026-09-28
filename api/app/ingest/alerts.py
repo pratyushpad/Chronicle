@@ -30,9 +30,9 @@ APP_URL = (os.getenv("APP_URL") or "http://localhost:3001").rstrip("/")
 
 
 def email_configured() -> bool:
-    """Email digests go out only when RESEND_API_KEY is set on the host that runs ingest
-    (RESEND_FROM and APP_URL fall back to defaults above). Until then the site doesn't
-    promise email (/meta says so)."""
+    """True when this process can send digests (RESEND_FROM and APP_URL fall back to the
+    defaults above). /meta.email_alerts reports it for the API host, so RESEND_API_KEY
+    must be set on Render as well as in the Actions secrets the scheduled ingest reads."""
     return bool(RESEND_API_KEY and RESEND_FROM and APP_URL)
 
 
