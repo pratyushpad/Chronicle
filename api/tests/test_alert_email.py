@@ -22,3 +22,21 @@ def test_digest_builds_and_shows_pay_as_posted():
     assert "2 new roles" in subject
     assert "$45 to 55/hr" in body
     assert "$45k" not in body  # never the old annualized "$Xk" rendering
+
+
+def test_empty_email_settings_fall_back_to_defaults(monkeypatch):
+    """An unset GitHub secret arrives as an empty string; the sender must not be empty."""
+    import importlib
+
+    import app.ingest.alerts as alerts
+
+    monkeypatch.setenv("RESEND_FROM", "")
+    monkeypatch.setenv("APP_URL", "")
+    reloaded = importlib.reload(alerts)
+    try:
+        assert reloaded.RESEND_FROM == "Chronicle <alerts@folioapp.dev>"
+        assert reloaded.APP_URL == "http://localhost:3001"
+    finally:
+        monkeypatch.delenv("RESEND_FROM")
+        monkeypatch.delenv("APP_URL")
+        importlib.reload(alerts)
