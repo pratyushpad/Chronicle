@@ -396,6 +396,11 @@ def test_salaries_the_legacy_text_backfill_must_keep(text, expected):
     "Stay at Any House, $100 a night, as a member perk.",
     "New hires get a $50 Amazon gift card on day one.",
     "We grew fast ($10–15M ARR) last year.",
+    # Company money written right against the amount (both PR 1 verifiers, 2026-09-26).
+    "Customers save $50,000 per year on average using our product.",
+    "Average contract value $120k-$300k.",
+    "You will manage a portfolio of $50,000 - $200,000 accounts.",
+    "Customers range from $20,000 to $100,000 in annual contract value.",
 ])
 def test_unlabeled_non_wage_amounts_are_not_pay(text):
     from app.ingest.pay import parse_pay_text
@@ -433,6 +438,8 @@ def test_real_pay_after_a_savings_sentence_still_parses():
     ("Portfolio Manager: $150,000 - $200,000 per year.", (150000.0, 200000.0, "year")),
     ("Salary: $120,000 - $140,000. We offer a 401(k) savings plan.", (120000.0, 140000.0, "year")),
     ("Help us save lives - $45 to $55 per hour.", (45.0, 55.0, "hour")),
+    ("Working with our portfolio of companies, you will receive $40/hour.", (40.0, 40.0, "hour")),
+    ("Our tools save teams hours every week. Pay: $30 - $40 per hour.", (30.0, 40.0, "hour")),
 ])
 def test_pay_next_to_company_money_words_still_parses(text, expected):
     from app.ingest.pay import parse_pay_text
