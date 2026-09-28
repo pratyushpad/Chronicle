@@ -528,8 +528,9 @@ def _apply_k(value: Decimal | None, k: bool) -> Decimal | None:
 # "... $100,000 in annual contract value"). Only the adjacent phrase counts, so "help us
 # save lives - $45 to $55 per hour" and "our portfolio of companies ... $40/hour" are pay.
 _ADJ_MONEY_LEAD_RE = re.compile(
-    r"\b(?:saves?|saving|contract\s+values?(?:\s+(?:of|is|was|averages?))?|portfolios?\s+of|"
-    r"(?:acv|arr)\s+of)\s*(?:(?:up\s+to|over|more\s+than|about|around|roughly|nearly|almost|~)\s*)?$",
+    r"\b(?:saves?|saving|contract\s+values?(?:\s+(?:of|is|was|averages?))?|portfolios?\s+of)"
+    r"\s*[:\-\u2013\u2014]?\s*"
+    r"(?:(?:up\s+to|over|more\s+than|about|around|roughly|nearly|almost|an?\s+average\s+of|~)\s*)?$",
     re.I,
 )
 _ADJ_MONEY_AFTER_RE = re.compile(
@@ -623,8 +624,11 @@ def _text_candidates(text: str) -> list[_TextCand]:
             lo=min(lo, hi), hi=max(lo, hi), currency=currency, cue=cue,
             weak="year" if _SALARY_WORD_RE.search(lead) else None,
             labeled=bool(last and last.group("inc")),
-            excluded=bool(last and last.group("ex")) or (_after_excluded(after) and not stated_base)
-            or bool(_ADJ_MONEY_LEAD_RE.search(lead)) or bool(_ADJ_MONEY_AFTER_RE.match(after)),
+            excluded=bool(last and last.group("ex")) or (
+                (_after_excluded(after) or bool(_ADJ_MONEY_LEAD_RE.search(lead))
+                 or bool(_ADJ_MONEY_AFTER_RE.match(after)))
+                and not stated_base
+            ),
             after_labeled=bool(_AFTER_INC_RE.match(after)),
             start=start, end=end,
         )

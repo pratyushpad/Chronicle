@@ -401,6 +401,9 @@ def test_salaries_the_legacy_text_backfill_must_keep(text, expected):
     "Average contract value $120k-$300k.",
     "You will manage a portfolio of $50,000 - $200,000 accounts.",
     "Customers range from $20,000 to $100,000 in annual contract value.",
+    "Customers save up to $50,000 per year.",
+    "Customers save an average of $50,000 per year.",
+    "Average contract value: $120k-$300k.",
 ])
 def test_unlabeled_non_wage_amounts_are_not_pay(text):
     from app.ingest.pay import parse_pay_text
@@ -440,6 +443,8 @@ def test_real_pay_after_a_savings_sentence_still_parses():
     ("Help us save lives - $45 to $55 per hour.", (45.0, 55.0, "hour")),
     ("Working with our portfolio of companies, you will receive $40/hour.", (40.0, 40.0, "hour")),
     ("Our tools save teams hours every week. Pay: $30 - $40 per hour.", (30.0, 40.0, "hour")),
+    # An explicit pay label wins over company-money words next to the amount.
+    ("Salary range: $120,000 - $150,000 of total contract value.", (120000.0, 150000.0, "year")),
 ])
 def test_pay_next_to_company_money_words_still_parses(text, expected):
     from app.ingest.pay import parse_pay_text
