@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import sys
 
 from dotenv import load_dotenv
@@ -34,10 +35,27 @@ def _refresh_embeddings() -> None:
         release_embedder()
 
 
-async def _once() -> None:
+async def _once(budget_seconds: int | None = None) -> None:
+    """One refresh of every board (or as many as `budget_seconds` allows), then new
+    embeddings. Refuses to start while another run is in flight (runlock), the same rule
+    POST /admin/ingest applies, and stamps a crash on the run row instead of leaving it
+    open (an open row blocks the Render trigger for two hours)."""
+    from .runlock import close_crashed_run, open_run
+
     session = get_session()
     try:
-        run = await run_ingest(session)  # alerts fire inside run_ingest
+        running = open_run(session)
+        if running is not None:
+            msg = f"ingest run {running.id} is still in progress; not starting another"
+            log.warning(msg)
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                print(f"::warning::{msg}")  # visible on the workflow run, not just the log
+            return
+        try:
+            run = await run_ingest(session, budget_seconds=budget_seconds)  # alerts inside
+        except BaseException as exc:
+            close_crashed_run(exc)
+            raise
         log.info("Run id=%d finished_at=%s", run.id, run.finished_at)
     finally:
         session.close()
@@ -65,6 +83,7 @@ async def _loop() -> None:
 
 if __name__ == "__main__":
     if "--once" in sys.argv:
-        asyncio.run(_once())
+        budget = int(sys.argv[sys.argv.index("--budget") + 1]) if "--budget" in sys.argv else None
+        asyncio.run(_once(budget))
     else:
         asyncio.run(_loop())

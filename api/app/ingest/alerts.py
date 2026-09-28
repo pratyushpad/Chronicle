@@ -23,8 +23,10 @@ log = logging.getLogger(__name__)
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 # Display name is Chronicle; the sending address stays on the Resend-verified
 # folioapp.dev domain until a Chronicle domain is verified there.
-RESEND_FROM = os.getenv("RESEND_FROM", "Chronicle <alerts@folioapp.dev>")
-APP_URL = os.getenv("APP_URL", "http://localhost:3001")
+# `or`, not a getenv default: an unset GitHub secret arrives as an empty string, and an
+# empty sender would make Resend reject every alert email.
+RESEND_FROM = os.getenv("RESEND_FROM") or "Chronicle <alerts@folioapp.dev>"
+APP_URL = os.getenv("APP_URL") or "http://localhost:3001"
 
 
 def _matches_query(job: Job, company_name: str, query: dict) -> bool:
@@ -99,7 +101,7 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
 
 async def _send_email(to: str, subject: str, html: str) -> bool:
     if not RESEND_API_KEY:
-        log.warning("RESEND_API_KEY not set — skipping email to %s", to)
+        log.warning("RESEND_API_KEY not set; skipping an alert email")  # never log addresses
         return False
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.post(
@@ -181,7 +183,7 @@ async def run_alerts(session: Session, run_start: datetime) -> None:
         subject, body = _build_email(user, search, matched)
         sent = await _send_email(user.email, subject, body)
         if sent:
-            log.info("Alert email sent to %s: %d jobs for search '%s'", user.email, len(matched), search.name)
+            log.info("Alert email sent: %d jobs for saved search %d", len(matched), search.id)
 
         search.last_alerted_at = now
 
