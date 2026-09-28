@@ -51,7 +51,7 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 ## Features
 
 - **Live registry** of 600+ verified company boards (470+ actively hiring, ~26k distinct
-  open roles), auto-refreshed every 24-48h with per-company fault isolation (one broken
+  open roles), refreshed twice a day, stalest boards first, with per-company fault isolation (one broken
   board never blocks the run). The
   refresh is incremental and idempotent: it upserts changed roles, soft-closes roles that
   vanished from a board (only for boards it actually reached that run), re-embeds only
@@ -194,10 +194,12 @@ GitHub scheduled crons drop fires on low-activity repos. To set it up: create a 
 job, method GET, URL `https://<api-host>/health`, every 5 minutes. The frontend also shows
 skeletons and retries once on timeout, so a cold start never renders a blank screen.
 
-**Auto-refresh (every 24-48h).** `POST /admin/ingest` triggers an incremental, idempotent
+**Auto-refresh (twice a day, stalest boards first).** Each run has a 10-minute budget, so a
+full pass over every board currently takes about two weeks; the site shows how recently
+boards were checked (`/meta` → `freshness`). `POST /admin/ingest` triggers an incremental, idempotent
 refresh in the background (returns `202` immediately; a DB run-lock prevents overlap). It is
 guarded by a dedicated `INGEST_SECRET` (header `X-Ingest-Secret`; 401 without it). The
-`.github/workflows/ingest.yml` scheduled workflow calls it daily with the repo secret
+`.github/workflows/ingest.yml` scheduled workflow calls it twice a day with the repo secret
 `INGEST_SECRET` (also set as a Render env var). Because GitHub crons are unreliable, a second
 daily cron-job.org trigger to the same endpoint is a safe backup; the run-lock + idempotent
 upsert make a double-fire harmless. A `budget_seconds` query param bounds wall-clock time so a

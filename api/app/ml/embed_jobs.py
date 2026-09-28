@@ -56,7 +56,9 @@ def embed_missing_jobs(
                 Company.name.label("company_name"),
             )
             .join(Company, Job.company_id == Company.id)
-            .where(Job.embedding.is_(None))
+            # Listing-only roles (senior / management) store no description and are
+            # never embedded; a row without one would only embed its title.
+            .where(Job.embedding.is_(None), Job.description_text.isnot(None))
             .order_by(Job.id)
             .limit(_PAGE_SIZE)
         )
