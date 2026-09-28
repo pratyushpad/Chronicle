@@ -24,13 +24,13 @@ replica is the 119 committed real intern postings (`tools/upgrade/build_fixture_
 | LCP goal (plan: ≤ 2.5 s) | not met | **not met yet**: CI enforces ≤ 3.5 s as a regression guard and reports the gap | [`UPGRADE_PLAN.md`](UPGRADE_PLAN.md) PR 6 note |
 | Student filters shipped (held-out precision ≥ 0.9) | none | term 0.98, degree levels 0.98, country 1.00; citizenship, clearance, MS/PhD-only and workplace not yet | [`extraction_eval.md`](extraction_eval.md) (PR 4) |
 | Stored description size (compressed), fixture replica | 388,624 bytes (plain text) | 415,984 bytes (sanitized HTML subset, +7.0%) | PR 2 description |
-| Description TOAST growth over 3 unchanged re-ingest passes | 464 KB → 1,808 KB (3.9×) | 464 KB → 464 KB (0%) | PR 7 description, `api/tests/test_run_lock_db.py` |
-| Full-refresh cycle | about two weeks (twice-daily 10-minute runs on Render; README) | **not measured yet**: needs the Actions ingest scheduled (PR 7 stop point) | `.github/workflows/ingest.yml`, `/status` |
+| Description TOAST growth over 3 unchanged re-ingest passes | 464 KB → 1,808 KB (3.9×) | 464 KB → 464 KB (0%) | `api/tests/test_description_toast_db.py` (the upsert keeps a description that IS NOT DISTINCT FROM the new text) |
+| Full-refresh cycle | about two weeks (twice-daily 10-minute runs on Render; README) | target: every board twice a day on GitHub Actions (#12); **not measured yet**, needs the `NEON_DATABASE_URL` secret | `.github/workflows/ingest-actions.yml`, `/status` |
 
 ## Other measured claims
 
 | Claim | Source |
 |---|---|
 | For You ranking: hybrid recall@50 0.71 → 0.96, MRR 0.80 → 0.98, NDCG@10 0.58 → 0.81 over the rule baseline (24 synthetic personas, bootstrap 95% CIs) | [`eval_results.md`](eval_results.md) |
-| Search latency p95 19 ms (20.5k real rows) and 28 ms (50k synthetic), local hardware | [`bench_results.md`](bench_results.md); for production, run `POST /admin/bench` on the Render box (PR 7) |
+| Search latency p95 19 ms (20.5k real rows) and 28 ms (50k synthetic), local hardware | [`bench_results.md`](bench_results.md); for production, run `POST /admin/bench` on the Render box |
 | Registry size: 605 boards in the seed (596 active) | `api/companies.seed.json` |

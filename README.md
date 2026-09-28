@@ -70,14 +70,20 @@ departments. Filtering happens at read time in the API/UI, so the company regist
   distinct openings.
 - **Accounts & tracking.** Google OAuth, saved jobs, an application tracker (kanban-style
   statuses), and saved-search alerts for new matching roles: in-app always, plus email
-  digests when the API has `RESEND_API_KEY`, `RESEND_FROM` and `APP_URL` set (the site says
-  "email" only then, via `/meta.email_alerts`).
+  digests when the host running ingest has `RESEND_API_KEY` set (`RESEND_FROM` and `APP_URL`
+  fall back to defaults when empty; the site says "email" only then, via `/meta.email_alerts`).
 - **Facts students need, only when stated.** Pay as posted ("$30 to 45/hr", structured ATS
-  pay first, then the text), the internship term, the degree levels a posting mentions, and
+  pay first, then the text; company money such as "$116M raised" or "saves $2M in contract
+  value" is never read as pay, and an explicit pay label wins), the internship term, the degree levels a posting mentions, and
   the country. Unknown stays unknown. Extraction precision is measured on a labeled set of
   real postings, and a field reaches the site only at ≥ 0.9 held-out precision
   ([pay](docs/pay_eval.md), [student fields](docs/extraction_eval.md)); citizenship,
   clearance and MS/PhD-only filters are built but stay off until they clear that bar.
+- **Early-career scope.** Senior and management roles whose title has no early-career
+  marker (intern, new grad, associate, entry level and similar) are **listing-only**: they
+  stay in the feed with their title, pay and location and link to the company's posting,
+  but Chronicle stores no description and no embedding for them, so they don't appear in
+  semantic search, For You or similar roles (`normalize.is_out_of_scope`).
 - **Readable job pages.** Descriptions keep their structure (headings, lists, links) as a
   sanitized HTML subset rendered as React elements; an at-a-glance panel, sticky Apply,
   similar roles from pgvector, and closed roles marked and not indexed. Metadata, social
@@ -127,7 +133,7 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 | Embeddings | all-MiniLM-L6-v2 (int8 ONNX via onnxruntime + tokenizers, no torch, ~150 MB RSS) |
 | Database | PostgreSQL + pgvector (HNSW) + SQLAlchemy 2.0 + Alembic |
 | Auth (web→API) | HMAC-signed short-lived internal tokens (`api/app/internal_auth.py`) |
-| Scheduler | External cron (GitHub Actions + cron-job.org) → secured `POST /admin/ingest`; `python -m app.ingest.schedule --once` runs one ingest (used by the dispatch-only `ingest-actions` workflow) |
+| Scheduler | GitHub Actions `ingest-actions` twice a day: `python -m app.ingest.schedule --once --budget 4200` (a full refresh, then embeddings); fallback until its secret exists: `ingest.yml` → secured `POST /admin/ingest` on Render |
 | Frontend | Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui; Playfair Display, Inter, Source Serif |
 | CI | pytest (with a pgvector service), tsc, ESLint, Vitest, build, Playwright + axe, Lighthouse budget |
 | Auth | NextAuth v5 (Google OAuth) |
