@@ -22,6 +22,7 @@ from .normalize import (
     infer_experience_level,
     infer_remote,
     infer_sponsorship,
+    is_out_of_scope,
     keying_title,
     normalize_department,
     normalize_location,
@@ -132,6 +133,12 @@ async def _ingest_company(
                     freshness = parse_posted_at(raw.updated_at) or posted
                     if freshness is not None and freshness < _CUTOFF:
                         continue  # skip stale pre-2026 postings
+                    exp_level = infer_experience_level(raw.title)
+                    # Senior / management roles are listings only: no stored description
+                    # and no embedding (normalize.is_out_of_scope; embed_jobs skips rows
+                    # without a description). Pay, tags and sponsorship still come from
+                    # the full posting below.
+                    listing_only = is_out_of_scope(raw.title, exp_level)
 
                     result["jobs_seen"] += 1
                     t_norm = normalize_title(raw.title)
@@ -153,11 +160,14 @@ async def _ingest_company(
                         raw.title, raw.location, desc_plain,
                         {"workplace_type": raw.workplace_type, "is_remote": raw.remote, "country": raw.country},
                     ).as_columns()
-                    exp_level = infer_experience_level(raw.title)
                     # Stored for display only: the sanitized HTML subset (see
                     # ingest/description.py), capped at whole blocks. None when the
-                    # posting has no description at all (common on Lever).
-                    desc_text = sanitize_description(raw.description_html, _MAX_DESC_CHARS)
+                    # posting has no description at all (common on Lever), and for
+                    # listing-only roles (normalize.is_out_of_scope).
+                    desc_text = (
+                        None if listing_only
+                        else sanitize_description(raw.description_html, _MAX_DESC_CHARS)
+                    )
                     # Hash v2 covers source fields only (see make_content_hash), so an
                     # unchanged posting hashes identically every run and never re-embeds,
                     # whatever the normalizers or the storage format do.
@@ -222,7 +232,24 @@ async def _ingest_company(
                             "department": dept,
                             "department_raw": raw.department,
                             "employment_type": raw.employment_type,
-                            "description_text": desc_text,
+                            # An unchanged description is kept as stored: SET col = col
+                            # reuses the TOAST pointer, so a refresh stops rewriting ~5 KB
+                            # per role per run, the main source of growth against Neon's
+                            # 512 MB cap. Compared by value, not by content hash: the hash
+                            # ignores Chronicle's own choices (listing-only, the length cap,
+                            # the stored format), and those must still update the text.
+                            "description_text": (
+                                None if listing_only
+                                else case(
+                                    (
+                                        Job.description_text.is_not_distinct_from(
+                                            ins.excluded.description_text
+                                        ),
+                                        Job.description_text,
+                                    ),
+                                    else_=ins.excluded.description_text,
+                                )
+                            ),
                             "apply_url": raw.apply_url,
                             "posted_at": posted,
                             "experience_level": exp_level,
@@ -237,7 +264,10 @@ async def _ingest_company(
                             "sponsorship_flag": sponsor,
                             **{k: getattr(ins.excluded, k) for k in elig},
                             "content_hash": chash,
-                            "embedding": case((content_changed, None), else_=Job.embedding),
+                            "embedding": (
+                                None if listing_only
+                                else case((content_changed, None), else_=Job.embedding)
+                            ),
                         },
                     )
                     # xmax = 0 iff the row was freshly inserted (an upsert-update stamps xmax).
