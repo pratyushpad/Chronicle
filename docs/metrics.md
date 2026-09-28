@@ -25,7 +25,7 @@ replica is the 119 committed real intern postings (`tools/upgrade/build_fixture_
 | Student filters shipped (held-out precision ≥ 0.9) | none | term 0.98, degree levels 0.98, country 1.00; citizenship, clearance, MS/PhD-only and workplace not yet | [`extraction_eval.md`](extraction_eval.md) (PR 4) |
 | Stored description size (compressed), fixture replica | 388,624 bytes (plain text) | 415,984 bytes (sanitized HTML subset, +7.0%) | PR 2 description |
 | Description TOAST growth over 3 unchanged re-ingest passes | 464 KB → 1,808 KB (3.9×) | 464 KB → 464 KB (0%) | PR 7 description, `api/tests/test_run_lock_db.py` |
-| Full-refresh cycle | about 4–5 days (600 s runs on Render, about 65 boards each) | **not measured yet**: needs the Actions ingest scheduled (PR 7 stop point) | `.github/workflows/ingest.yml`, `/status` |
+| Full-refresh cycle | about two weeks (twice-daily 10-minute runs on Render; README) | **not measured yet**: needs the Actions ingest scheduled (PR 7 stop point) | `.github/workflows/ingest.yml`, `/status` |
 
 ## Other measured claims
 

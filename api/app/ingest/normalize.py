@@ -16,7 +16,10 @@ _REMOTE_PREFIX_RE = re.compile(r"^remote\s*[-–—:]\s*", re.IGNORECASE)
 _REMOTE_WORD_RE = re.compile(r"\bremote\b", re.IGNORECASE)
 
 _INTERN_RE = re.compile(r"\bintern(ship)?\b", re.IGNORECASE)
-_NEW_GRAD_RE = re.compile(r"\b(new\s*grad|entry[\s\-]?level|university\s*grad|campus\s*hire|recent\s*grad)\b", re.IGNORECASE)
+_NEW_GRAD_RE = re.compile(
+    r"\b(new\s*grad(uate)?s?|entry[\s\-]?level|(university|college)\s*grad(uate)?s?|campus\s*hire|recent\s*grad(uate)?s?)\b",
+    re.IGNORECASE,
+)
 _SENIOR_RE = re.compile(r"\b(senior|sr\.?\s|lead\s|principal|staff\s|distinguished|architect)\b", re.IGNORECASE)
 _MANAGER_RE = re.compile(r"\b(manager|director|vp\s|vice\s*president|head\s+of|chief)\b", re.IGNORECASE)
 _MID_RE = re.compile(r"\b(mid[\s\-]?level|intermediate|associate\s)\b", re.IGNORECASE)
@@ -184,6 +187,37 @@ def infer_experience_level(title: str) -> str | None:
     return None
 
 
+# Chronicle is an internship and early-career board. Senior and management roles are most
+# of what company boards post (about 98% of stored rows in Sept 2026), and their full text
+# and embeddings don't fit the free 512 MB database, so ingest keeps them as listings only:
+# title, company, location, pay and apply link, with no stored description or embedding.
+# An early-career marker keeps a role in full ("Associate Solutions Architect", "Assistant
+# Brand Manager", "Staff Accountant") unless the title also carries real seniority
+# ("Senior Associate") or an executive title ("Associate Director").
+_SENIORITY_RE = re.compile(r"\b(senior|sr\.?|principal|distinguished)\b", re.IGNORECASE)
+_EXECUTIVE_RE = re.compile(r"\b(director|head\s+of|vp|vice\s*president|chief)\b", re.IGNORECASE)
+_EARLY_CAREER_RE = re.compile(
+    r"\b(associate|assistant|junior|jr\.?|graduate|apprentice|rotational"
+    r"|early[\s\-]?(career|talent)s?|emerging\s+talent)\b",
+    re.IGNORECASE,
+)
+# Entry-level titles that _SENIOR_RE reads as senior: "staff" and "lead" are also
+# accounting and sales-development words.
+_ENTRY_TITLE_RE = re.compile(
+    r"\b(staff\s+(accountant|auditor)|lead\s+(generation|development))\b", re.IGNORECASE
+)
+
+
+def is_out_of_scope(title: str, level: str | None) -> bool:
+    """True for roles Chronicle keeps as listings only (see above). `level` is
+    infer_experience_level(title)."""
+    if level not in ("Senior", "Management"):
+        return False
+    if _SENIORITY_RE.search(title) or _EXECUTIVE_RE.search(title):
+        return True
+    return not (_EARLY_CAREER_RE.search(title) or _ENTRY_TITLE_RE.search(title))
+
+
 # ── Department normalization (controlled vocabulary) ──────────────────────────
 
 # Leading numeric/req code block, e.g. "20213 ", "REQ-123 - ", "#45 ".
@@ -221,7 +255,7 @@ _DEPT_RULES = _rules(
     (r"marketing|\bbrand\b|communications|\bcontent\b|demand gen|\bseo\b|public relations|social media|^growth$", "Marketing"),
     (r"hardware|electrical|electronic|mechanical|firmware|embedded|silicon|\basic\b|\bfpga\b|\brf\b|avionics|power systems|propulsion|turbomachinery|combustion|\bfluids?\b|structures|aerodynamic|thermal|payload|antenna|launch vehicle", "Hardware"),
     (r"robot|autonom|perception|controls? (?:engineering|systems)|simulation|motion planning", "Robotics & Autonomy"),
-    (r"data cent(?:er|re)|site reliability|\bsre\b|devops|infrastructure|\binfra\b|cloud|platform|networking|\bnetwork\b", "Infrastructure"),
+    (r"data cent(?:er|re)|site reliability|\bsre\b|devops|infrastructure|\binfra\b|cloud|platform eng|networking|\bnetwork\b", "Infrastructure"),
     (r"machine learning|deep learning|artificial intelligence|\bml\b|\bai\b|computer vision|\bnlp\b|\bllm", "ML & AI"),
     (r"manufactur|assembly|production (?:operations|line|planning)|machining|fabrication", "Manufacturing"),
     (r"quality|\bqa\b|test engineering", "Quality"),

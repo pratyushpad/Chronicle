@@ -55,10 +55,10 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 ## Features
 
 - **Live registry** of 605 company boards (`api/companies.seed.json`; live counts of open
-  roles and re-checked boards are on the site and at `/status`), refreshed on a rolling,
-  stalest-first schedule with per-company fault isolation (one broken board never blocks
-  the run). Today each Render-triggered run covers about 65 boards, so a full cycle takes
-  about 4–5 days; a dispatch-only GitHub Actions ingest (PR 7) is ready to shorten that
+  roles and re-checked boards are on the site and at `/status`), refreshed twice a day,
+  stalest boards first, with per-company fault isolation (one broken board never blocks
+  the run). Each run has a 10-minute budget, so a full pass over every board takes about
+  two weeks today; a dispatch-only GitHub Actions ingest (PR 7) is ready to shorten that
   once enabled. The refresh is incremental and idempotent: it upserts changed roles, soft-closes roles that
   vanished from a board (only for boards it actually reached that run), re-embeds only
   content-changed roles, keeps unchanged descriptions in place (no storage churn), and
@@ -238,7 +238,9 @@ GitHub scheduled crons drop fires on low-activity repos. To set it up: create a 
 job, method GET, URL `https://<api-host>/health`, every 5 minutes. The frontend also shows
 skeletons and retries once on timeout, so a cold start never renders a blank screen.
 
-**Auto-refresh.** `POST /admin/ingest` triggers an incremental, idempotent
+**Auto-refresh (twice a day, stalest boards first).** Each run has a 10-minute budget, so a
+full pass over every board currently takes about two weeks; the site shows how recently
+boards were checked (`/meta` → `freshness`, and `/status`). `POST /admin/ingest` triggers an incremental, idempotent
 refresh in the background (returns `202` immediately; a DB run lock, a partial unique
 index on open `ingest_runs`, prevents overlap). It is
 guarded by a dedicated `INGEST_SECRET` (header `X-Ingest-Secret`; 401 without it). The
