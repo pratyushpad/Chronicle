@@ -24,7 +24,13 @@ jobs:
         env:
           API_URL: ${{ vars.API_URL }}
           INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
+          # True once the full refresh on GitHub Actions is configured (ingest-actions.yml).
+          ACTIONS_INGEST: ${{ secrets.NEON_DATABASE_URL != '' }}
         run: |
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ] && [ "$ACTIONS_INGEST" = "true" ]; then
+            echo "::notice::The scheduled refresh runs on GitHub Actions (ingest-actions.yml); skipping the Render slice. Dispatch this workflow by hand to force one."
+            exit 0
+          fi
           if [ -z "$INGEST_SECRET" ]; then
             echo "INGEST_SECRET repo secret is not set" >&2
             exit 1
