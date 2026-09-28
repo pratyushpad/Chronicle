@@ -23,8 +23,10 @@ log = logging.getLogger(__name__)
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 # Display name is Chronicle; the sending address stays on the Resend-verified
 # folioapp.dev domain until a Chronicle domain is verified there.
-RESEND_FROM = os.getenv("RESEND_FROM", "Chronicle <alerts@folioapp.dev>")
-APP_URL = os.getenv("APP_URL", "http://localhost:3001")
+# `or`, not a getenv default: an unset GitHub secret arrives as an empty string, and an
+# empty sender would make Resend reject every alert email.
+RESEND_FROM = os.getenv("RESEND_FROM") or "Chronicle <alerts@folioapp.dev>"
+APP_URL = os.getenv("APP_URL") or "http://localhost:3001"
 
 
 def _matches_query(job: Job, company_name: str, query: dict) -> bool:
