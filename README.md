@@ -51,7 +51,7 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 ## Features
 
 - **Live registry** of 600+ verified company boards (470+ actively hiring, ~26k distinct
-  open roles), refreshed twice a day, stalest boards first, with per-company fault isolation (one broken
+  open roles), refreshed twice a day (see Refresh & operations) with per-company fault isolation (one broken
   board never blocks the run). The
   refresh is incremental and idempotent: it upserts changed roles, soft-closes roles that
   vanished from a board (only for boards it actually reached that run), re-embeds only
@@ -194,16 +194,22 @@ GitHub scheduled crons drop fires on low-activity repos. To set it up: create a 
 job, method GET, URL `https://<api-host>/health`, every 5 minutes. The frontend also shows
 skeletons and retries once on timeout, so a cold start never renders a blank screen.
 
-**Auto-refresh (twice a day, stalest boards first).** Each run has a 10-minute budget, so a
-full pass over every board currently takes about two weeks; the site shows how recently
-boards were checked (`/meta` → `freshness`). `POST /admin/ingest` triggers an incremental, idempotent
-refresh in the background (returns `202` immediately; a DB run-lock prevents overlap). It is
-guarded by a dedicated `INGEST_SECRET` (header `X-Ingest-Secret`; 401 without it). The
-`.github/workflows/ingest.yml` scheduled workflow calls it twice a day with the repo secret
-`INGEST_SECRET` (also set as a Render env var). Because GitHub crons are unreliable, a second
-daily cron-job.org trigger to the same endpoint is a safe backup; the run-lock + idempotent
-upsert make a double-fire harmless. A `budget_seconds` query param bounds wall-clock time so a
-large run fits a Render window and continues (stalest-first) on the next invocation.
+**Auto-refresh (twice a day).** `.github/workflows/ingest-actions.yml` runs
+`python -m app.ingest.schedule --once` on a GitHub Actions runner at 04:17 and 16:17 UTC: it
+refreshes every active board (stalest first), then embeds new roles. It needs the repo secret
+`NEON_DATABASE_URL` (Neon, pooled off) and skips itself without it. Once the secret is set,
+`ingest.yml`'s schedule stands down, so exactly one scheduled refresh runs (GitHub may start
+scheduled runs a few hours late). Render's free 512 MB box is
+too small for a full pass: `.github/workflows/ingest.yml` asks the Render API for a 600-second
+slice, which reaches only a few dozen boards, so on its own a full pass takes about two weeks.
+The site shows how recently boards were checked (`/meta` → `freshness`).
+
+**Render trigger.** `POST /admin/ingest` triggers an incremental, idempotent refresh on
+Render in the background (returns `202` immediately). It is guarded by a dedicated
+`INGEST_SECRET` (header `X-Ingest-Secret`; 401 without it), which `ingest.yml` sends from the
+repo secret `INGEST_SECRET` (also set as a Render env var). A `budget_seconds` query param
+bounds wall-clock time. Both paths refuse to start while a run younger than two hours is still
+open, and the upsert is idempotent, so a double-fire is harmless.
 
 **Storage caveat.** Neon's free tier has a hard 512 MB project-size limit. Three policies
 keep the live corpus (600+ boards, ~40k roles + 384-dim embeddings) under it: ingest stores
