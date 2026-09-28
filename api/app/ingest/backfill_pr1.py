@@ -42,6 +42,7 @@ from sqlalchemy import and_, func, or_, select, update  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from app.db import get_session  # noqa: E402 — db reads DATABASE_URL at import
+from app.ingest.description import description_plain  # noqa: E402
 from app.models import ATSSource, Job  # noqa: E402
 from .normalize import normalize_department  # noqa: E402
 from .pay import annual_usd, parse_pay_text  # noqa: E402
@@ -127,7 +128,7 @@ def run(apply: bool, batch: int, session: Session | None = None) -> dict:
             updates = []
             for r in rows:
                 stats["pay_scanned"] += 1
-                vals = _pay_values(r.description_text)
+                vals = _pay_values(description_plain(r.description_text))
                 if vals is None:
                     continue
                 current = {f: getattr(r, f) for f in _PAY_FIELDS}

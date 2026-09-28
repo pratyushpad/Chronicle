@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from app.ingest.description import description_plain
 from app.models import Company, Job
 from app.ml.embedder import DEFAULT_BATCH_SIZE, get_embedder
 from app.ml.text import build_embedding_text
@@ -74,7 +75,7 @@ def embed_missing_jobs(
                 department=row.department,
                 location=row.location_normalized or row.location_raw,
                 tech_tags=row.tech_tags,
-                description_text=row.description_text,
+                description_text=description_plain(row.description_text),
             )
             for row in rows
         ]

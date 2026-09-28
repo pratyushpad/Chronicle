@@ -14,6 +14,7 @@ from .adapters.ashby import AshbyAdapter
 from .adapters.greenhouse import GreenhouseAdapter
 from .adapters.lever import LeverAdapter
 from .dedupe import make_content_hash, make_dedup_key
+from .description import sanitize_description
 from .normalize import (
     dedup_title,
     extract_tech_tags,
@@ -154,13 +155,13 @@ async def _ingest_company(
                     tags = extract_tech_tags(desc_plain)
                     sponsor = infer_sponsorship(desc_plain)
                     dept = normalize_department(raw.department, raw.title, raw.department_hints)
-                    # plain_text returns None for postings with no description at all
-                    # (common on Lever) — slicing None was the 'NoneType' subscript crash
-                    # that failed four Lever boards; None must flow through unchanged.
+                    # Stored for display only: the sanitized HTML subset (see
+                    # ingest/description.py), capped at whole blocks. None when the
+                    # posting has no description at all (common on Lever), and for
+                    # listing-only roles (normalize.is_out_of_scope).
                     desc_text = (
-                        desc_plain[:_MAX_DESC_CHARS]
-                        if desc_plain is not None and not listing_only
-                        else None
+                        None if listing_only
+                        else sanitize_description(raw.description_html, _MAX_DESC_CHARS)
                     )
                     # Hash v2 covers source fields only (see make_content_hash), so an
                     # unchanged posting hashes identically every run and never re-embeds,

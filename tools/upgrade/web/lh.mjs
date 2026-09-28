@@ -12,7 +12,7 @@ const med = (xs) => { const s = [...xs].sort((a, b) => a - b); return s[Math.flo
 const results = [];
 for (let i = 0; i < runs; i++) {
   const chrome = await chromeLauncher.launch({
-    chromePath: chromium.executablePath(),
+    chromePath: process.env.CHROMIUM_PATH || chromium.executablePath(),
     chromeFlags: ["--headless=new", "--no-sandbox", "--disable-gpu"],
   });
   try {

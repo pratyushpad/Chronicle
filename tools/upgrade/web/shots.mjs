@@ -10,7 +10,9 @@ const cfg = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const waitMs = cfg.waitMs ?? 1500;
 fs.mkdirSync(cfg.outDir, { recursive: true });
 
-const browser = await chromium.launch({ headless: true });
+// CHROMIUM_PATH: use a preinstalled browser when the pinned one is not downloaded
+// (e.g. a sandbox with /opt/pw-browsers/chromium).
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || undefined });
 const ctx = await browser.newContext({
   reducedMotion: cfg.reducedMotion ?? "no-preference",
   colorScheme: cfg.colorScheme ?? "light",

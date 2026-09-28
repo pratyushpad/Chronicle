@@ -82,7 +82,7 @@ def test_legacy_hash_is_adopted_without_re_embedding_then_v2_changes_re_embed(pg
             session.refresh(job)
             assert job.content_hash.startswith("v2")
             assert job.embedding is not None
-            assert job.description_text == "Build things with Python."  # legacy text rewritten once
+            assert job.description_text == "<p>Build things with Python.</p>"  # legacy text rewritten once
             first_v2 = job.content_hash
 
             # Identical re-ingest: stable hash, vector kept.
@@ -214,15 +214,15 @@ def test_description_is_rewritten_only_when_its_text_changes(pg_engine, monkeypa
             _ingest(session, co, raw, monkeypatch)
             job = session.execute(select(Job).where(Job.source_job_id == "hv-1")).scalar_one()
             session.refresh(job)
-            assert job.description_text == "Build things with Python."  # restored
+            assert job.description_text == "<p>Build things with Python.</p>"  # restored
             assert job.embedding is None  # so embed_jobs (description present) embeds it
 
             _ingest(session, co, raw, monkeypatch)
             session.refresh(job)
-            assert job.description_text == "Build things with Python."  # unchanged: kept
+            assert job.description_text == "<p>Build things with Python.</p>"  # unchanged: kept
 
             _ingest(session, co, _raw("Build different things with Rust."), monkeypatch)
             session.refresh(job)
-            assert job.description_text == "Build different things with Rust."
+            assert job.description_text == "<p>Build different things with Rust.</p>"
         finally:
             outer.rollback()
