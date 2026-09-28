@@ -197,7 +197,9 @@ skeletons and retries once on timeout, so a cold start never renders a blank scr
 **Auto-refresh (twice a day).** `.github/workflows/ingest-actions.yml` runs
 `python -m app.ingest.schedule --once` on a GitHub Actions runner at 04:17 and 16:17 UTC: it
 refreshes every active board (stalest first), then embeds new roles. It needs the repo secret
-`NEON_DATABASE_URL` (Neon, pooled off) and skips itself without it. Render's free 512 MB box is
+`NEON_DATABASE_URL` (Neon, pooled off) and skips itself without it. Once the secret is set,
+`ingest.yml`'s schedule stands down, so exactly one scheduled refresh runs (GitHub may start
+scheduled runs a few hours late). Render's free 512 MB box is
 too small for a full pass: `.github/workflows/ingest.yml` asks the Render API for a 600-second
 slice, which reaches only a few dozen boards, so on its own a full pass takes about two weeks.
 The site shows how recently boards were checked (`/meta` → `freshness`).

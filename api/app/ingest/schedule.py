@@ -1,7 +1,7 @@
 import asyncio
 import logging
+import os
 import sys
-from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
 
@@ -35,34 +35,27 @@ def _refresh_embeddings() -> None:
         release_embedder()
 
 
-# Same window as POST /admin/ingest: an unfinished run younger than this is in flight.
-_LOCK_STALE_AFTER = timedelta(hours=2)
+async def _once(budget_seconds: int | None = None) -> None:
+    """One refresh of every board (or as many as `budget_seconds` allows), then new
+    embeddings. Refuses to start while another run is in flight (runlock), the same rule
+    POST /admin/ingest applies, and stamps a crash on the run row instead of leaving it
+    open (an open row blocks the Render trigger for two hours)."""
+    from .runlock import close_crashed_run, open_run
 
-
-def _open_run_id(session) -> int | None:
-    """The id of an ingest run still in flight, if any. The scheduled refresh (GitHub
-    Actions) and the manual Render trigger share this rule, so they never overlap."""
-    from sqlalchemy import select
-
-    from app.models import IngestRun
-
-    cutoff = datetime.now(tz=timezone.utc) - _LOCK_STALE_AFTER
-    row = session.execute(
-        select(IngestRun.id)
-        .where(IngestRun.finished_at.is_(None), IngestRun.started_at >= cutoff)
-        .order_by(IngestRun.started_at.desc())
-    ).first()
-    return row[0] if row else None
-
-
-async def _once() -> None:
     session = get_session()
     try:
-        open_run = _open_run_id(session)
-        if open_run is not None:
-            log.warning("ingest run %d is still in progress; not starting another", open_run)
+        running = open_run(session)
+        if running is not None:
+            msg = f"ingest run {running.id} is still in progress; not starting another"
+            log.warning(msg)
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                print(f"::warning::{msg}")  # visible on the workflow run, not just the log
             return
-        run = await run_ingest(session)  # alerts fire inside run_ingest
+        try:
+            run = await run_ingest(session, budget_seconds=budget_seconds)  # alerts inside
+        except BaseException as exc:
+            close_crashed_run(exc)
+            raise
         log.info("Run id=%d finished_at=%s", run.id, run.finished_at)
     finally:
         session.close()
@@ -90,6 +83,7 @@ async def _loop() -> None:
 
 if __name__ == "__main__":
     if "--once" in sys.argv:
-        asyncio.run(_once())
+        budget = int(sys.argv[sys.argv.index("--budget") + 1]) if "--budget" in sys.argv else None
+        asyncio.run(_once(budget))
     else:
         asyncio.run(_loop())

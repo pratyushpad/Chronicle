@@ -99,7 +99,7 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
 
 async def _send_email(to: str, subject: str, html: str) -> bool:
     if not RESEND_API_KEY:
-        log.warning("RESEND_API_KEY not set — skipping email to %s", to)
+        log.warning("RESEND_API_KEY not set; skipping an alert email")  # never log addresses
         return False
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.post(
@@ -181,7 +181,7 @@ async def run_alerts(session: Session, run_start: datetime) -> None:
         subject, body = _build_email(user, search, matched)
         sent = await _send_email(user.email, subject, body)
         if sent:
-            log.info("Alert email sent to %s: %d jobs for search '%s'", user.email, len(matched), search.name)
+            log.info("Alert email sent: %d jobs for saved search %d", len(matched), search.id)
 
         search.last_alerted_at = now
 
