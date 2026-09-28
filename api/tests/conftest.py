@@ -21,10 +21,11 @@ def _test_pg_engine():
     url = os.environ.get("TEST_DATABASE_URL", "")
     if "postgres" not in url:
         return None
-    from app.dbguard import LOCAL_HOSTS, db_host
+    from app.dbguard import LOCAL_HOSTS, db_hosts
 
-    if db_host(url) not in LOCAL_HOSTS:
-        raise RuntimeError(f"TEST_DATABASE_URL must point at a local database, got host {db_host(url)!r}")
+    hosts = db_hosts(url)
+    if not hosts or not hosts <= LOCAL_HOSTS:
+        raise RuntimeError(f"TEST_DATABASE_URL must point at a local database, got hosts {sorted(hosts)!r}")
     from sqlalchemy import create_engine, text
 
     try:
