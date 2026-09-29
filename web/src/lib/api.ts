@@ -30,6 +30,17 @@ export interface JobListItem {
   pay_currency?: string | null;
   pay_period?: PayPeriod | null;
   pay_source?: "ats" | "text" | null;
+  /** Student filters as the posting states them (null = unstated). Absent before PR 4. */
+  term_season?: "summer" | "fall" | "spring" | "winter" | null;
+  term_year?: number | null;
+  degree_levels?: ("bachelor" | "master" | "phd")[] | null;
+  grad_year_min?: number | null;
+  grad_year_max?: number | null;
+  us_citizen_required?: boolean | null;
+  us_person_required?: boolean | null;
+  clearance_required?: boolean | null;
+  workplace_type?: "onsite" | "hybrid" | "remote" | null;
+  country?: string | null;
   posted_at: string | null;
   first_seen_at: string;
   /** Last time Chronicle saw the role live on the company's board. */
@@ -82,6 +93,8 @@ export interface CompanyVelocity {
   active_now: number;
   opened_last_30d: number;
   closed_last_30d: number;
+  /** Roles already open at the board's first ingest, left out of "opened". Absent on the pre-PR-3 API. */
+  first_ingest_excluded?: number;
 }
 
 export interface LastRunSummary {
@@ -121,6 +134,11 @@ export interface Meta {
   experience_counts: Record<string, number>;
   top_industries: IndustryCount[];
   freshness?: Freshness | null;
+  /** "summer-2027" terms and ISO country codes present among active roles (PR 4). */
+  terms?: string[];
+  countries?: string[];
+  /** Whether the server sends alert emails (PR 6). Absent on older APIs: treat as false. */
+  email_alerts?: boolean;
 }
 
 export interface JobListResponse {
@@ -148,6 +166,13 @@ export interface JobParams {
   page?: number;
   page_size?: number;
   sort?: string;
+  hide_citizen_required?: boolean;
+  hide_us_person_required?: boolean;
+  hide_clearance_required?: boolean;
+  hide_grad_only?: boolean;
+  term?: string;
+  workplace?: string;
+  country?: string;
 }
 
 /**
@@ -269,4 +294,39 @@ export async function getSitemapJobs(offset: number, limit: number): Promise<Sit
     timeoutMs: 30000,
     errMsg: "Failed to fetch sitemap jobs",
   });
+}
+
+export interface StatusRun {
+  id: number;
+  started_at: string;
+  finished_at: string | null;
+  seconds: number | null;
+  boards_total: number;
+  boards_ok: number;
+  boards_failed: number;
+  jobs_seen: number;
+  jobs_new: number;
+  jobs_closed: number;
+  open: boolean;
+  crashed: boolean;
+}
+
+export interface FailingBoard {
+  company: string | null;
+  ats: string | null;
+  slug: string | null;
+  failed_runs: number;
+  last_error: string | null;
+  last_success_at: string | null;
+}
+
+export interface StatusResponse {
+  runs: StatusRun[];
+  failing_boards: FailingBoard[];
+  freshness?: Freshness | null;
+}
+
+/** Ingest health for /status. Absent on APIs before PR 7 (the page says so). */
+export async function getStatus(): Promise<StatusResponse> {
+  return fetchJSON<StatusResponse>(`/status`, { revalidate: 120, errMsg: "Failed to fetch status" });
 }

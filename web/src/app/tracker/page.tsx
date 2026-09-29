@@ -53,7 +53,7 @@ const NEXT_STATUS: Partial<Record<AppStatus, AppStatus>> = {
 };
 
 const CTA_BUTTON =
-  "inline-flex min-h-[44px] items-center border-2 border-foreground bg-foreground px-8 font-mono text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]";
+  "inline-flex min-h-[44px] items-center border border-input bg-foreground px-8 font-sans text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px]";
 
 export default function TrackerPage() {
   const { data: session, status } = useSession();
@@ -150,7 +150,7 @@ export default function TrackerPage() {
     return (
       <main className="mx-auto max-w-2xl px-6 py-32 text-center">
         <p className="font-display text-3xl text-foreground mb-4">Sign in to track applications</p>
-        <p className="font-body text-muted-foreground mb-8">Your tracker syncs across devices when you&rsquo;re signed in.</p>
+        <p className="font-sans text-muted-foreground mb-8">Your tracker syncs across devices when you&rsquo;re signed in.</p>
         <button onClick={() => signIn("google")} className={CTA_BUTTON}>
           Sign in with Google
         </button>
@@ -171,28 +171,28 @@ export default function TrackerPage() {
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-display text-3xl text-foreground">Application Tracker</h1>
-          <Link href="/jobs" className="font-mono text-xs uppercase tracking-[0.12em] text-foreground underline-offset-4 hover:underline">+ Add roles →</Link>
+          <Link href="/jobs" className="font-sans text-xs uppercase tracking-[0.12em] text-foreground underline-offset-4 hover:underline">+ Add roles →</Link>
         </div>
 
         {funnel.total > 0 && (
           // 2×2 on phones (four columns can't fit "Interviewing" at 360px), one row from sm.
           // gap-px over a hairline background draws the dividers for either layout.
-          <div className="mb-10 grid grid-cols-2 gap-px border-y border-foreground bg-border-light sm:grid-cols-4">
+          <div className="mb-10 grid grid-cols-2 gap-px border-y border-border-light bg-border-light sm:grid-cols-4">
             {[{ label: "Total", v: funnel.total }, { label: "Applied", v: funnel.applied }, { label: "Interviewing", v: funnel.interviewing }, { label: "Offers", v: funnel.offers }].map(({ label, v }) => (
               <div key={label} className="bg-background px-4 py-5 text-center">
                 <CountUp value={v} className="justify-center font-display text-3xl text-foreground" />
-                <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div>
+                <div className="mt-1 font-sans text-[11px] uppercase tracking-[0.12em] text-muted-foreground">{label}</div>
               </div>
             ))}
           </div>
         )}
 
         {loading ? (
-          <div className="font-body text-muted-foreground">Loading…</div>
+          <div className="font-sans text-muted-foreground">Loading…</div>
         ) : apps.length === 0 ? (
-          <div className="border-y-2 border-foreground py-24 text-center">
+          <div className="border-y border-border-light py-24 text-center">
             <p className="font-display text-2xl text-foreground mb-2">No applications yet</p>
-            <p className="font-body text-muted-foreground mb-6">Bookmark any role to start tracking — it lands in your Saved column.</p>
+            <p className="font-sans text-muted-foreground mb-6">Bookmark any role to start tracking — it lands in your Saved column.</p>
             <Link href="/jobs" className={CTA_BUTTON}>Browse Open Roles</Link>
           </div>
         ) : (
@@ -242,9 +242,9 @@ function Column({ id, label, count, children }: { id: AppStatus; label: string; 
   const { setNodeRef, isOver } = useDroppable({ id });
   return (
     <div ref={setNodeRef}>
-      <div className="mb-3 flex items-center gap-2 border-b border-foreground pb-2">
-        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-foreground">{label}</span>
-        <span className="font-mono text-[9px] text-muted-foreground">({count})</span>
+      <div className="mb-3 flex items-center gap-2 border-b border-border-light pb-2">
+        <span className="font-sans text-[11px] uppercase tracking-[0.15em] text-foreground">{label}</span>
+        <span className="font-sans text-[11px] text-muted-foreground">({count})</span>
       </div>
       <div className={`min-h-[80px] transition-colors duration-100 ${isOver ? "bg-muted" : ""}`}>
         {children}
@@ -278,7 +278,7 @@ function SortableCard({ app, notes, setNotes, saveNotes, updateStatus, remove }:
       ref={setNodeRef}
       style={style}
       data-app-card={app.id}
-      className="border border-foreground border-t-2 bg-card p-4"
+      className="border border-border-light bg-card p-4"
     >
       {/* data-card-body is the post-drop settle target — scaling this inner node keeps
           GSAP off the root's transform, which dnd-kit owns. */}
@@ -292,9 +292,9 @@ function SortableCard({ app, notes, setNotes, saveNotes, updateStatus, remove }:
         aria-label={`Drag ${app.job.title} to another column`}
       >
         <p className="font-display text-sm leading-snug text-foreground line-clamp-2">{app.job.title}</p>
-        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">{app.job.company_name}</p>
+        <p className="mt-0.5 font-sans text-[11px] uppercase tracking-[0.08em] text-muted-foreground">{app.job.company_name}</p>
       </div>
-      <Link href={`/jobs/${app.job.id}`} className="mt-1 inline-block font-mono text-[9px] uppercase tracking-[0.1em] text-foreground underline-offset-4 hover:underline">
+      <Link href={`/jobs/${app.job.id}`} className="mt-1 inline-block font-sans text-[11px] uppercase tracking-[0.1em] text-foreground underline-offset-4 hover:underline">
         View role →
       </Link>
       <textarea
@@ -303,26 +303,26 @@ function SortableCard({ app, notes, setNotes, saveNotes, updateStatus, remove }:
         onChange={(e) => setNotes((p) => ({ ...p, [app.id]: e.target.value }))}
         onBlur={() => saveNotes(app.id)}
         rows={2}
-        className="mt-3 w-full resize-none border border-border-light bg-background px-2 py-1.5 font-body text-xs text-foreground placeholder:italic placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
+        className="mt-3 w-full resize-none border border-border-light bg-background px-2 py-1.5 font-sans text-xs text-foreground placeholder:italic placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
       />
       <div className="mt-2 flex items-center gap-1.5 flex-wrap">
         {/* Accessible fallback to drag: advance/reject by click or keyboard. */}
         {next && (
           <button onClick={() => updateStatus(app.id, next)}
-            className="font-mono text-[9px] uppercase tracking-[0.1em] px-2 py-1 border border-foreground text-foreground hover:bg-foreground hover:text-background transition-colors duration-100">
+            className="font-sans text-[11px] uppercase tracking-[0.1em] px-2 py-1 border border-input text-foreground hover:bg-foreground hover:text-background transition-colors duration-100">
             → {next}
           </button>
         )}
         {app.status !== "rejected" && (
           <button onClick={() => updateStatus(app.id, "rejected")}
-            className="font-mono text-[9px] uppercase tracking-[0.1em] px-2 py-1 border border-border-light text-muted-foreground hover:border-foreground hover:text-foreground transition-colors duration-100">
+            className="font-sans text-[11px] uppercase tracking-[0.1em] px-2 py-1 border border-border-light text-muted-foreground hover:border-foreground hover:text-foreground transition-colors duration-100">
             Reject
           </button>
         )}
         <a href={app.job.apply_url} target="_blank" rel="noopener noreferrer"
           onClick={() => { if (app.status === "saved") updateStatus(app.id, "applied"); }}
-          className="ml-auto font-mono text-[9px] uppercase tracking-[0.1em] text-foreground underline-offset-4 hover:underline">Apply →</a>
-        <button onClick={() => remove(app.id)} aria-label="Remove" className="font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors">✕</button>
+          className="ml-auto font-sans text-[11px] uppercase tracking-[0.1em] text-foreground underline-offset-4 hover:underline">Apply →</a>
+        <button onClick={() => remove(app.id)} aria-label="Remove" className="font-sans text-[11px] text-muted-foreground hover:text-foreground transition-colors">✕</button>
       </div>
       </div>
     </div>
@@ -332,9 +332,9 @@ function SortableCard({ app, notes, setNotes, saveNotes, updateStatus, remove }:
 // Static card used inside DragOverlay (no interactive controls needed).
 function CardShell({ app, dragging }: { app: TrackedApp; dragging?: boolean }) {
   return (
-    <div className={`bg-card p-4 ${dragging ? "cursor-grabbing border-2 border-foreground" : "border border-foreground border-t-2"}`}>
+    <div className={`bg-card p-4 ${dragging ? "cursor-grabbing border border-input" : "border border-border-light"}`}>
       <p className="font-display text-sm leading-snug text-foreground line-clamp-2">{app.job.title}</p>
-      <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">{app.job.company_name}</p>
+      <p className="mt-0.5 font-sans text-[11px] uppercase tracking-[0.08em] text-muted-foreground">{app.job.company_name}</p>
     </div>
   );
 }

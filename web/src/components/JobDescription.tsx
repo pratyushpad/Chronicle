@@ -19,7 +19,7 @@ function Block({ block }: { block: DescriptionBlock }) {
       const content = <Inlines nodes={block.content} />;
       // One step below the page's h1/h2 structure: posting sections read as h3/h4.
       if (block.level === 4) {
-        return <h4 className="mt-6 mb-2 font-body text-base font-semibold text-foreground">{content}</h4>;
+        return <h4 className="mt-6 mb-2 font-sans text-base font-semibold text-foreground">{content}</h4>;
       }
       return <h3 className="mt-8 mb-3 font-display text-xl leading-snug text-foreground">{content}</h3>;
     }

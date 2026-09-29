@@ -37,6 +37,9 @@ class CompanyVelocity(BaseModel):
     active_now: int
     opened_last_30d: int
     closed_last_30d: int
+    # Roles left out of "opened" because they were already open when Chronicle first
+    # read this board (no posting date, first seen in the board's first-ingest week).
+    first_ingest_excluded: int = 0
 
 
 class JobListItem(BaseModel):
@@ -63,6 +66,18 @@ class JobListItem(BaseModel):
     pay_currency: str | None = None
     pay_period: str | None = None   # hour | day | week | month | year
     pay_source: str | None = None   # ats | text
+    # Student filters (PR 4), as the posting states them; None = unstated. Absent from
+    # older APIs.
+    term_season: str | None = None
+    term_year: int | None = None
+    degree_levels: list[str] | None = None
+    grad_year_min: int | None = None
+    grad_year_max: int | None = None
+    us_citizen_required: bool | None = None
+    us_person_required: bool | None = None
+    clearance_required: bool | None = None
+    workplace_type: str | None = None
+    country: str | None = None
     posted_at: datetime | None      # first-published; None when the ATS doesn't say
     first_seen_at: datetime
     last_seen_at: datetime | None = None  # last time the role was seen live on its board
@@ -93,6 +108,18 @@ class JobDetail(BaseModel):
     pay_currency: str | None = None
     pay_period: str | None = None
     pay_source: str | None = None
+    # Student filters (PR 4), as the posting states them; None = unstated. Absent from
+    # older APIs.
+    term_season: str | None = None
+    term_year: int | None = None
+    degree_levels: list[str] | None = None
+    grad_year_min: int | None = None
+    grad_year_max: int | None = None
+    us_citizen_required: bool | None = None
+    us_person_required: bool | None = None
+    clearance_required: bool | None = None
+    workplace_type: str | None = None
+    country: str | None = None
     # Readable plain text of the description (kept for older clients).
     description_text: str | None
     # The description as typed blocks (see app/ingest/description.py): paragraph,
@@ -157,6 +184,13 @@ class MetaResponse(BaseModel):
     experience_counts: dict[str, int] = {}
     top_industries: list[IndustryCount] = []
     freshness: Freshness | None = None
+    # Student-filter options present among active roles (PR 4): "summer-2027" style terms,
+    # soonest first, and ISO country codes, most roles first.
+    terms: list[str] = []
+    countries: list[str] = []
+    # True only when the server can send alert emails (RESEND_API_KEY, RESEND_FROM and
+    # APP_URL all set). The site promises email digests only when this is true.
+    email_alerts: bool = False
 
 
 class JobListResponse(BaseModel):
@@ -317,3 +351,33 @@ class InteractionIn(BaseModel):
 
 class InteractionBatchIn(BaseModel):
     events: list[InteractionIn] = Field(..., max_length=100)
+
+
+class StatusRun(BaseModel):
+    id: int
+    started_at: datetime
+    finished_at: datetime | None
+    seconds: int | None
+    boards_total: int
+    boards_ok: int
+    boards_failed: int
+    jobs_seen: int
+    jobs_new: int
+    jobs_closed: int
+    open: bool          # still running (or crashed within the stale window)
+    crashed: bool       # a crash note, or left open past the two-hour stale window
+
+
+class FailingBoard(BaseModel):
+    company: str | None
+    ats: str | None
+    slug: str | None
+    failed_runs: int                # among the runs listed on the page
+    last_error: str | None
+    last_success_at: datetime | None  # companies.last_ingested_at; None = never
+
+
+class StatusResponse(BaseModel):
+    runs: list[StatusRun]
+    failing_boards: list[FailingBoard]
+    freshness: Freshness | None = None

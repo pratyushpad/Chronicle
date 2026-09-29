@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { m, useReducedMotion } from "motion/react";
 import { cn, formatLocation, formatDepartment } from "@/lib/utils";
 import { formatPay, jobAge } from "@/lib/format";
+import { eligibilityFacts, jobTerm } from "@/lib/eligibility";
 import type { JobListItem } from "@/lib/api";
 import { duration, ease } from "@/lib/motion";
 import { logInteraction, type InteractionSurface } from "@/lib/interactions";
@@ -23,9 +24,12 @@ interface Props {
    * lists (for-you, saved) may omit it.
    */
   now?: number;
+  /** "compact": one dense row per role (title, company, place, pay, age) for scanning. */
+  density?: "comfortable" | "compact";
 }
 
-export function JobCard({ job, initialSaved = false, why, surface, onDismiss, now }: Props) {
+export function JobCard({ job, initialSaved = false, why, surface, onDismiss, now, density = "comfortable" }: Props) {
+  const compact = density === "compact";
   const { data: session } = useSession();
   const isAuthed = !!session?.user?.email;
   const reduce = useReducedMotion();
@@ -79,10 +83,20 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss, no
   const department = formatDepartment(job.department); // "" for the "Other" catch-all
   const pay = formatPay(job);
   const age = jobAge(job, now ?? Date.now());
+  const term = jobTerm(job);
+  const restrictions = eligibilityFacts(job).filter((f) => f.restrictive);
 
   return (
     <m.article
-      className="group relative border border-foreground border-l-4 bg-card transition-colors duration-100 hover:bg-muted"
+      className={cn(
+        "group relative border border-border-light bg-card transition-colors duration-100 hover:bg-muted",
+        // The heavy left bar marks state only: new since the last run, or closed.
+        job.is_active === false
+          ? "border-l-4 border-l-negative"
+          : job.is_new
+            ? "border-l-4 border-l-positive"
+            : null,
+      )}
       whileHover={reduce ? undefined : { y: -2 }}
       whileTap={reduce ? undefined : { y: 0 }}
       transition={{ duration: duration.fast, ease }}
@@ -93,12 +107,12 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss, no
         aria-label={`${job.title} at ${job.company_name}`}
         onClick={() => surface && isAuthed && logInteraction(job.id, "click", surface)}
       />
-      <div className="relative z-10 p-5 pointer-events-none">
+      <div className={cn("relative z-10 pointer-events-none", compact ? "px-4 py-3" : "p-5")}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             {/* Company logo — monochrome tile, initials always render behind the favicon */}
-            <div className="relative shrink-0 h-10 w-10 border border-foreground bg-background flex items-center justify-center overflow-hidden">
-              <span className="font-mono text-[11px] font-semibold text-foreground">{initials}</span>
+            <div className={cn("relative shrink-0 h-10 w-10 border border-border-light bg-background items-center justify-center overflow-hidden", compact ? "hidden" : "flex")}>
+              <span className="font-sans text-[11px] font-semibold text-foreground">{initials}</span>
               {showLogo && (
                 // eslint-disable-next-line @next/next/no-img-element -- 40px third-party favicon; next/image would proxy every logo through the optimizer and the onLoad naturalWidth check needs the raw image.
                 <img
@@ -115,14 +129,24 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss, no
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-display text-lg leading-snug text-foreground line-clamp-2 underline-offset-4 group-hover:underline">
+              <h2 className={cn("font-display leading-snug text-foreground underline-offset-4 group-hover:underline", compact ? "text-base line-clamp-1" : "text-lg line-clamp-2")}>
                 {job.title}
-              </h3>
-              <p className="mt-1 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
+              </h2>
+              <p className="mt-1 font-sans text-xs uppercase tracking-[0.08em] text-muted-foreground">
                 {job.company_name}
                 {location && <span> · {location}</span>}
                 {extraLocations > 0 && <span> +{extraLocations} more</span>}
                 {job.remote && <span> · Remote</span>}
+                {compact && job.is_active === false && (
+                  <span className="font-medium text-negative"> · Closed</span>
+                )}
+                {compact && job.is_active !== false && job.is_new && (
+                  <span className="font-medium text-positive"> · New</span>
+                )}
+                {compact && pay && <span className="normal-case tracking-normal text-foreground"> · {pay}</span>}
+                {compact && age && (
+                  <span className="normal-case tracking-normal" suppressHydrationWarning> · {age.relative ?? age.absolute}</span>
+                )}
               </p>
             </div>
           </div>
@@ -160,7 +184,7 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss, no
 
         {why && (
           <div className="mt-2">
-            <span className="inline-block bg-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-background">
+            <span className="inline-block bg-foreground px-2 py-0.5 font-sans text-[11px] uppercase tracking-[0.15em] text-background">
               For You
             </span>
             {/* Ink-draw: a black rule strokes in beneath the match badge, a small
@@ -172,43 +196,59 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss, no
               animate={{ scaleX: 1 }}
               transition={{ duration: duration.slow, ease, delay: duration.fast }}
             />
-            <p className="mt-2 font-body text-sm italic text-muted-foreground">{why}</p>
+            <p className="mt-2 font-sans text-sm italic text-muted-foreground">{why}</p>
           </div>
         )}
 
+        {!compact && (<>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {job.is_new && (
-            <span className="bg-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-background">
+          {job.is_active === false && (
+            <span className="bg-negative-bg px-2 py-0.5 font-sans text-[11px] font-medium uppercase tracking-[0.15em] text-negative">
+              Closed
+            </span>
+          )}
+          {job.is_active !== false && job.is_new && (
+            <span className="bg-positive-bg px-2 py-0.5 font-sans text-[11px] font-medium uppercase tracking-[0.15em] text-positive">
               New
             </span>
           )}
+          {term && (
+            <span className="border border-input px-2 py-0.5 font-sans text-[11px] uppercase tracking-[0.12em] text-foreground">
+              {term}
+            </span>
+          )}
+          {restrictions.map((r) => (
+            <span key={r.value} className="bg-warning-bg px-2 py-0.5 font-sans text-[11px] font-medium text-warning">
+              {r.value}
+            </span>
+          ))}
           {job.experience_level && (
-            <span className="border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-foreground">
+            <span className="border border-input px-2 py-0.5 font-sans text-[11px] uppercase tracking-[0.12em] text-foreground">
               {job.experience_level}
             </span>
           )}
           {job.sponsorship_flag === "likely_no" && (
-            <span className="border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-foreground">
+            <span className="border border-input px-2 py-0.5 font-sans text-[11px] uppercase tracking-[0.12em] text-foreground">
               No Sponsorship
             </span>
           )}
           {job.sponsorship_flag === "likely_yes" && (
-            <span className="bg-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-background">
+            <span className="bg-foreground px-2 py-0.5 font-sans text-[11px] uppercase tracking-[0.12em] text-background">
               Sponsors Visa
             </span>
           )}
           {pay && (
-            <span className="font-mono text-[10px] tracking-[0.05em] text-muted-foreground">
+            <span className="font-sans text-xs font-medium text-foreground">
               {pay}
             </span>
           )}
           {job.employment_type && (
-            <span className="border border-border-light px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="border border-border-light px-2 py-0.5 font-sans text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
               {job.employment_type}
             </span>
           )}
           {department && (
-            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground truncate max-w-[180px]">{department}</span>
+            <span className="font-sans text-[11px] uppercase tracking-[0.08em] text-muted-foreground truncate max-w-[180px]">{department}</span>
           )}
         </div>
 
@@ -219,7 +259,7 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss, no
             <time
               dateTime={age.iso}
               title={age.label}
-              className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground"
+              className="font-sans text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
             >
               {/* Only this text depends on the clock; if a caller omitted `now`, let the
                   client's value win instead of throwing a hydration error. */}
@@ -232,10 +272,11 @@ export function JobCard({ job, initialSaved = false, why, surface, onDismiss, no
             <span />
           )}
           <a href={job.apply_url} target="_blank" rel="noopener noreferrer"
-            className="pointer-events-auto font-mono text-[10px] uppercase tracking-[0.15em] text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2">
+            className="pointer-events-auto inline-flex min-h-[24px] items-center font-sans text-[11px] uppercase tracking-[0.15em] text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2">
             Apply →
           </a>
         </div>
+        </>)}
       </div>
     </m.article>
   );

@@ -1,0 +1,37 @@
+{
+ "baseURL": "http://localhost:3000",
+ "prefix": "after-signedin",
+ "routes": {
+  "saved": {
+   "path": "/saved",
+   "shots": [
+    "after-signedin-saved-1440.jpg",
+    "after-signedin-saved-390.jpg"
+   ],
+   "overflow": {
+    "360": {
+     "viewport": 360,
+     "scrollWidth": 360,
+     "overflows": false,
+     "offenders": []
+    },
+    "390": {
+     "viewport": 390,
+     "scrollWidth": 390,
+     "overflows": false,
+     "offenders": []
+    },
+    "414": {
+     "viewport": 414,
+     "scrollWidth": 414,
+     "overflows": false,
+     "offenders": []
+    }
+   },
+   "reducedMotion": {
+    "hiddenBlocks": 0,
+    "samples": []
+   }
+  }
+ }
+}

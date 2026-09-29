@@ -4,13 +4,15 @@ from math import ceil
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, or_, select, text
+from sqlalchemy import and_, any_, func, literal, or_, select, text, true
 from sqlalchemy.orm import Session, defer
 
 from app.db import get_session
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
+from app.ingest.alerts import email_configured
+from app.industries import canonical_industry, fold_counts, raw_labels
 from app.ingest.description import description_blocks, description_plain, description_summary
-from app.job_items import job_list_item
+from app.job_items import ELIGIBILITY_FIELDS, job_list_item
 from app.schemas import (
     CompanyDetail,
     CompanyItem,
@@ -24,6 +26,9 @@ from app.schemas import (
     MetaResponse,
     SitemapJob,
     SitemapJobsResponse,
+    FailingBoard,
+    StatusResponse,
+    StatusRun,
     VelocityPoint,
 )
 
@@ -103,13 +108,31 @@ def list_jobs(
     industry: Optional[str] = Query(None),
     posted_after: Optional[date] = Query(None),
     since_last_run: bool = Query(False),
-    sort: str = Query("posted_at"),
+    # Student filters (PR 4). "hide_*" drop roles whose posting STATES the requirement;
+    # roles that don't say stay in (unknown is never treated as a yes).
+    hide_citizen_required: bool = Query(False),
+    hide_us_person_required: bool = Query(False),
+    hide_clearance_required: bool = Query(False),
+    hide_grad_only: bool = Query(False),  # open only to master's/PhD students
+    term: Optional[str] = Query(None, pattern=r"^(summer|fall|spring|winter)(-20\d\d)?$"),
+    workplace: Optional[str] = Query(None, pattern="^(onsite|hybrid|remote)$"),
+    country: Optional[str] = Query(None, pattern="^[A-Za-z]{2}$"),
+    # newest (alias posted_at, the default) | relevance (default when q is set) | pay |
+    # first_seen. Anything unrecognized keeps the old behaviour (first_seen).
+    sort: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     session: Session = Depends(_db),
 ):
     last_start = _last_run_start(session)
-    order_col = JOB_AGE if sort == "posted_at" else Job.first_seen_at
+    sort_key = (sort or ("relevance" if q else "newest")).lower()
+    if sort_key in ("newest", "posted_at", "relevance"):
+        order_col = JOB_AGE
+    elif sort_key == "pay":
+        # Annualized pay (sort-only column); roles that don't state pay go last.
+        order_col = func.coalesce(Job.salary_max, Job.salary_min)
+    else:
+        order_col = Job.first_seen_at
 
     # All filter statements join Company because several filters reference it.
     # include_q=False leaves out the free-text match — the semantic arm ranks by
@@ -154,12 +177,34 @@ def list_jobs(
             conds += [Job.title.ilike(pat) for pat in cfg.get("title_patterns", [])]
             s = s.where(or_(*conds))
         if industry:
-            s = s.where(Company.industry.ilike(f"%{industry}%"))
+            s = s.where(_industry_filter(industry))
         if posted_after:
             # JOB_AGE, not posted_at: an unknown publish date must not silently drop the role.
             s = s.where(JOB_AGE >= datetime(posted_after.year, posted_after.month, posted_after.day, tzinfo=timezone.utc))
         if since_last_run and last_start:
             s = s.where(Job.first_seen_at >= last_start)
+        if hide_citizen_required:
+            s = s.where(Job.us_citizen_required.is_not(True))
+        if hide_us_person_required:
+            s = s.where(Job.us_person_required.is_not(True))
+        if hide_clearance_required:
+            s = s.where(Job.clearance_required.is_not(True))
+        if hide_grad_only:
+            # Keep unknowns and anything open to bachelor's students.
+            s = s.where(or_(
+                Job.degree_levels.is_(None),
+                func.cardinality(Job.degree_levels) == 0,
+                literal("bachelor") == any_(Job.degree_levels),
+            ))
+        if term:
+            season, _, year = term.partition("-")
+            s = s.where(Job.term_season == season)
+            if year:
+                s = s.where(Job.term_year == int(year))
+        if workplace:
+            s = s.where(Job.workplace_type == workplace)
+        if country:
+            s = s.where(Job.country == country.upper())
         return s
 
     base = lambda *cols, **kw: _apply_filters(
@@ -192,7 +237,10 @@ def list_jobs(
     # migration has not been applied yet).
     if q:
         try:
-            return _fts_keyword_search(session, base, q, last_start, page, page_size)
+            if sort_key == "relevance":
+                return _fts_keyword_search(session, base, q, last_start, page, page_size)
+            # Full-text match, ordered by the chosen sort (newest, pay …) instead of rank.
+            return _keyword_search(session, base, order_col, last_start, page, page_size, use_fts=True)
         except Exception:
             session.rollback()
             logger.warning("FTS keyword search failed; falling back to ILIKE", exc_info=True)
@@ -225,13 +273,14 @@ def _keyword_search(
     rep_ids = (
         base(Job.id, Job.dedup_key, use_fts=use_fts)
         .distinct(Job.dedup_key)
-        .order_by(Job.dedup_key, order_col.desc().nullslast())
+        .order_by(Job.dedup_key, order_col.desc().nullslast(), JOB_AGE.desc().nullslast())
     ).subquery()
     page_stmt = (
         select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
         .join(Company)
         .where(Job.id.in_(select(rep_ids.c.id)))
-        .order_by(order_col.desc().nullslast(), Job.id.desc())
+        # Ties (e.g. equal pay) fall back to newest first.
+        .order_by(order_col.desc().nullslast(), JOB_AGE.desc().nullslast(), Job.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -409,7 +458,7 @@ def get_job(job_id: int, session: Session = Depends(_db)):
         title=job.title,
         company_name=row.company_name,
         company_id=job.company_id,
-        company_industry=row.company_industry,
+        company_industry=canonical_industry(row.company_industry),
         location_raw=job.location_raw,
         location_normalized=job.location_normalized,
         remote=job.remote,
@@ -427,6 +476,7 @@ def get_job(job_id: int, session: Session = Depends(_db)):
         pay_currency=job.pay_currency,
         pay_period=job.pay_period,
         pay_source=job.pay_source,
+        **{f: getattr(job, f) for f in ELIGIBILITY_FIELDS},
         description_text=description_plain(job.description_text),
         description_blocks=description_blocks(job.description_text),
         description_summary=description_summary(job.description_text),
@@ -436,6 +486,16 @@ def get_job(job_id: int, session: Session = Depends(_db)):
         last_seen_at=job.last_seen_at,
         is_active=bool(job.is_active),
     )
+
+
+def _industry_filter(industry: str):
+    """A canonical name, or any raw label that folds into one (older links send "AI/ML"),
+    matches every raw label in that group. Anything else keeps the old substring match."""
+    canon = canonical_industry(industry)
+    labels = raw_labels(canon) if canon else None
+    if labels is not None:
+        return func.lower(func.trim(Company.industry)).in_([label.lower() for label in labels])
+    return Company.industry.ilike(f"%{industry}%")
 
 
 # Similar roles: nearest active neighbours of the job's embedding. A few extra rows are
@@ -522,7 +582,7 @@ def list_companies(
         .order_by(Company.name)
     )
     if industry:
-        stmt = stmt.where(Company.industry.ilike(f"%{industry}%"))
+        stmt = stmt.where(_industry_filter(industry))
     rows = session.execute(stmt).all()
     return [
         CompanyItem(
@@ -530,7 +590,7 @@ def list_companies(
             name=row.Company.name,
             ats=row.Company.ats.value,
             careers_url=row.Company.careers_url,
-            industry=row.Company.industry,
+            industry=canonical_industry(row.Company.industry),
             active_job_count=row.active_job_count,
         )
         for row in rows
@@ -552,7 +612,7 @@ def get_company(company_id: int, session: Session = Depends(_db)):
         name=row.Company.name,
         ats=row.Company.ats.value,
         careers_url=row.Company.careers_url,
-        industry=row.Company.industry,
+        industry=canonical_industry(row.Company.industry),
         active_job_count=row.active_job_count,
         last_ingested_at=row.Company.last_ingested_at,
     )
@@ -560,8 +620,14 @@ def get_company(company_id: int, session: Session = Depends(_db)):
 
 @router.get("/companies/{company_id}/velocity", response_model=CompanyVelocity)
 def company_velocity(company_id: int, weeks: int = 8, session: Session = Depends(_db)):
-    """Hiring velocity from the first_seen_at/last_seen_at the ingester already stores:
-    roles opened (first seen) and closed (marked inactive) per recent week. No new data."""
+    """Hiring velocity: roles opened and closed per recent ISO week.
+
+    "Opened" dates a role by its age (LEAST(posted_at, first_seen_at)): the board's own
+    publish date when it gives one, else when Chronicle first saw it. A role with no
+    publish date that was first seen in the week Chronicle first read this board is left
+    out: it was already open then, and counting it made the first ingest look like a
+    hiring spike (Anduril: 853 "opened" in its first week). "Closed" is the week a role
+    was last seen live before it left the board. No new data is stored."""
     weeks = max(1, min(weeks, 26))
     company = session.get(Company, company_id)
     if not company or not company.active:
@@ -573,8 +639,24 @@ def company_velocity(company_id: int, weeks: int = 8, session: Session = Depends
     window = [(this_monday - timedelta(weeks=i)).date() for i in range(weeks - 1, -1, -1)]
     since = this_monday - timedelta(weeks=weeks - 1)
 
+    first_seen_any = session.execute(
+        select(func.min(Job.first_seen_at)).where(Job.company_id == company_id)
+    ).scalar_one()
+    if first_seen_any is not None:
+        first_seen_any = first_seen_any.astimezone(timezone.utc)
+        first_week_start = first_seen_any - timedelta(days=first_seen_any.weekday())
+        first_week_start = first_week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+        first_ingest_artifact = and_(
+            Job.posted_at.is_(None),
+            Job.first_seen_at < first_week_start + timedelta(weeks=1),
+        )
+        counts_as_opened = ~first_ingest_artifact
+    else:
+        first_ingest_artifact = counts_as_opened = true()
+
     def _bucket(when_col, count_col, *conds) -> dict[date, int]:
-        wk = func.date_trunc("week", when_col)
+        # Weeks in UTC whatever the session time zone, to match `window` above.
+        wk = func.date_trunc("week", func.timezone("UTC", when_col))
         rows = session.execute(
             select(wk.label("wk"), count_col)
             .where(Job.company_id == company_id, when_col >= since, *conds)
@@ -582,7 +664,7 @@ def company_velocity(company_id: int, weeks: int = 8, session: Session = Depends
         ).all()
         return {r[0].date(): r[1] for r in rows}
 
-    opened = _bucket(Job.first_seen_at, func.count(func.distinct(Job.dedup_key)))
+    opened = _bucket(JOB_AGE, func.count(func.distinct(Job.dedup_key)), counts_as_opened)
     closed = _bucket(Job.last_seen_at, func.count(Job.id), Job.is_active == False)
 
     points = [VelocityPoint(week=w, opened=opened.get(w, 0), closed=closed.get(w, 0)) for w in window]
@@ -594,12 +676,19 @@ def company_velocity(company_id: int, weeks: int = 8, session: Session = Depends
     d30 = now - timedelta(days=30)
     opened_30 = session.execute(
         select(func.count(func.distinct(Job.dedup_key)))
-        .where(Job.company_id == company_id, Job.first_seen_at >= d30)
+        .where(Job.company_id == company_id, JOB_AGE >= d30, counts_as_opened)
     ).scalar_one()
     closed_30 = session.execute(
         select(func.count(Job.id))
         .where(Job.company_id == company_id, Job.is_active == False, Job.last_seen_at >= d30)
     ).scalar_one()
+    excluded = 0
+    # Reported only when the first-ingest week is on the chart, where it explains a gap.
+    if first_seen_any is not None and first_week_start >= since:
+        excluded = session.execute(
+            select(func.count(func.distinct(Job.dedup_key)))
+            .where(Job.company_id == company_id, first_ingest_artifact)
+        ).scalar_one()
 
     return CompanyVelocity(
         company_id=company_id,
@@ -608,6 +697,7 @@ def company_velocity(company_id: int, weeks: int = 8, session: Session = Depends
         active_now=active_now,
         opened_last_30d=opened_30,
         closed_last_30d=closed_30,
+        first_ingest_excluded=excluded,
     )
 
 
@@ -622,6 +712,7 @@ def invalidate_meta_cache() -> None:
     """Drop the cached /meta payload. Called at the end of an ingest run so the freshness
     label and "NEW SINCE LAST RUN" counts reflect the new run immediately instead of
     waiting out the TTL."""
+    _STATUS_CACHE.clear()  # a finished run changes /status too
     _META_CACHE.pop("meta", None)
 
 
@@ -712,12 +803,13 @@ def _compute_meta(session: Session) -> MetaResponse:
             ).all()
         ]
 
-    industries = [
-        r[0]
-        for r in session.execute(
-            select(Company.industry).where(Company.active == True, Company.industry != None).distinct().order_by(Company.industry)
+    industries = sorted({
+        name
+        for (raw,) in session.execute(
+            select(Company.industry).where(Company.active == True, Company.industry != None).distinct()
         ).all()
-    ]
+        if (name := canonical_industry(raw))
+    })
 
     total_active = session.execute(
         select(func.count(func.distinct(Job.dedup_key))).select_from(Job).where(Job.is_active == True)
@@ -766,15 +858,17 @@ def _compute_meta(session: Session) -> MetaResponse:
         ),
     }
 
+    # Counted per raw label, then folded into canonical names (a role belongs to one
+    # company, so the per-label distinct counts add up exactly).
     top_industry_rows = session.execute(
         select(Company.industry, func.count(func.distinct(Job.dedup_key)))
         .join(Job, (Job.company_id == Company.id) & (Job.is_active == True))
         .where(Company.active == True, Company.industry != None)
         .group_by(Company.industry)
-        .order_by(func.count(func.distinct(Job.dedup_key)).desc())
-        .limit(8)
     ).all()
-    top_industries = [IndustryCount(industry=r[0], count=r[1]) for r in top_industry_rows]
+    top_industries = [IndustryCount(industry=n, count=c) for n, c in fold_counts(top_industry_rows)[:8]]
+
+    terms, countries = _student_filter_options(session)
 
     return MetaResponse(
         departments=distinct_col(Job.department),
@@ -790,4 +884,112 @@ def _compute_meta(session: Session) -> MetaResponse:
         experience_counts=experience_counts,
         top_industries=top_industries,
         freshness=_freshness(session),
+        terms=terms,
+        countries=countries,
+        email_alerts=email_configured(),
     )
+
+
+_SEASON_ORDER = {"winter": 0, "spring": 1, "summer": 2, "fall": 3}
+
+
+def _student_filter_options(session: Session) -> tuple[list[str], list[str]]:
+    """Terms ("summer-2027") and countries that active roles actually have. Terms with a
+    handful of roles are kept too: a student looking for Fall 2026 wants to find all two."""
+    term_rows = session.execute(
+        select(Job.term_season, Job.term_year)
+        .where(Job.is_active == True, Job.term_season != None, Job.term_year != None)  # noqa: E711,E712
+        .distinct()
+    ).all()
+    terms = [
+        f"{season}-{year}"
+        for season, year in sorted(term_rows, key=lambda r: (r[1], _SEASON_ORDER.get(r[0], 9)))
+    ]
+    country_rows = session.execute(
+        select(Job.country, func.count(func.distinct(Job.dedup_key)))
+        .where(Job.is_active == True, Job.country != None)  # noqa: E711,E712
+        .group_by(Job.country)
+        .order_by(func.count(func.distinct(Job.dedup_key)).desc(), Job.country)
+    ).all()
+    return terms, [r[0] for r in country_rows]
+
+
+_STATUS_RUNS = 20
+# Public and unauthenticated: cached in-process so crawlers or a refresh loop can't keep
+# Neon awake (every uncached call reads 20 runs' failure lists and scans companies).
+_STATUS_CACHE: dict[str, tuple[float, StatusResponse]] = {}
+_STATUS_TTL_SECONDS = 120
+# Error classes whose message is safe to publish (HTTP/network failures name the board's
+# public URL). Anything else, e.g. a database error that names the host and the SQL,
+# is published as its class name only.
+_PUBLIC_ERROR_CLASSES = {
+    "HTTPStatusError", "ConnectError", "ConnectTimeout", "ReadTimeout", "ReadError",
+    "RemoteProtocolError", "PoolTimeout", "TimeoutException", "TimeoutError", "BoardTooLarge",
+}
+
+
+def _public_error(raw: str) -> str | None:
+    text = raw.split(" @ ")[0]  # the run log's crash site stays internal
+    cls = text.split(":", 1)[0].strip()
+    if cls not in _PUBLIC_ERROR_CLASSES:
+        return cls[:80] or None
+    return text.split(" For more information")[0][:300]
+
+
+@router.get("/status", response_model=StatusResponse)
+def status(session: Session = Depends(_db)):
+    """Public ingest health: the last runs, boards failing across them, and freshness.
+    Everything comes from ingest_runs and companies; nothing is estimated."""
+    import time
+
+    cached = _STATUS_CACHE.get("status")
+    if cached is not None and time.monotonic() - cached[0] < _STATUS_TTL_SECONDS:
+        return cached[1]
+    stale_before = datetime.now(timezone.utc) - timedelta(hours=2)
+    runs = session.execute(
+        select(IngestRun).order_by(IngestRun.started_at.desc()).limit(_STATUS_RUNS)
+    ).scalars().all()
+    out_runs = []
+    fails: dict[tuple, dict] = {}
+    for r in runs:
+        errors = [f for f in (r.failures or []) if isinstance(f, dict)]
+        # Crashed: a crash note (runlock.close_crashed_run), a run closed at its own start
+        # (older rows closed by hand that way), or a run
+        # still open past the stale window (a hard kill that ran no handler).
+        crashed = (
+            any(f.get("slug") is None and "crash" in str(f.get("error", "")) for f in errors)
+            or (r.finished_at is not None and r.finished_at == r.started_at)
+            or (r.finished_at is None and r.started_at < stale_before)
+        )
+        out_runs.append(StatusRun(
+            id=r.id, started_at=r.started_at, finished_at=r.finished_at,
+            seconds=round((r.finished_at - r.started_at).total_seconds()) if r.finished_at else None,
+            boards_total=r.companies_total or 0, boards_ok=r.companies_ok or 0,
+            boards_failed=r.companies_failed or 0, jobs_seen=r.jobs_seen or 0,
+            jobs_new=r.jobs_new or 0, jobs_closed=r.jobs_closed or 0,
+            open=r.finished_at is None and not crashed, crashed=crashed,
+        ))
+        for f in errors:
+            if f.get("slug") is None:
+                continue  # run-level crash notes, not a board
+            key = (f.get("ats"), f.get("slug"))
+            entry = fails.setdefault(key, {"company": f.get("company"), "count": 0, "last_error": None})
+            entry["count"] += 1
+            if entry["last_error"] is None:  # runs are newest first
+                entry["last_error"] = _public_error(str(f.get("error", "")))
+    last_ok = {}
+    if fails:
+        slugs = [slug for _, slug in fails]
+        for c in session.execute(select(Company).where(Company.slug.in_(slugs))).scalars():
+            last_ok[(c.ats.value, c.slug)] = c.last_ingested_at
+    boards = sorted(
+        (
+            FailingBoard(company=v["company"], ats=ats, slug=slug, failed_runs=v["count"],
+                         last_error=v["last_error"], last_success_at=last_ok.get((ats, slug)))
+            for (ats, slug), v in fails.items()
+        ),
+        key=lambda b: (-b.failed_runs, b.company or ""),
+    )
+    result = StatusResponse(runs=out_runs, failing_boards=boards, freshness=_freshness(session))
+    _STATUS_CACHE["status"] = (time.monotonic(), result)
+    return result

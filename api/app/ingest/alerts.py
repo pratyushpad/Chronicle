@@ -26,7 +26,33 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 # `or`, not a getenv default: an unset GitHub secret arrives as an empty string, and an
 # empty sender would make Resend reject every alert email.
 RESEND_FROM = os.getenv("RESEND_FROM") or "Chronicle <alerts@folioapp.dev>"
-APP_URL = os.getenv("APP_URL") or "http://localhost:3001"
+APP_URL = (os.getenv("APP_URL") or "http://localhost:3001").rstrip("/")
+
+
+def email_configured() -> bool:
+    """True when this process can send digests (RESEND_FROM and APP_URL fall back to the
+    defaults above). /meta.email_alerts reports it for the API host, so RESEND_API_KEY
+    must be set on Render as well as in the Actions secrets the scheduled ingest reads."""
+    return bool(RESEND_API_KEY and RESEND_FROM and APP_URL)
+
+
+def _esc(value) -> str:
+    return html.escape(str(value), quote=True)
+
+
+def _safe_url(url: str | None) -> str | None:
+    """Only http(s) links go into an email; everything is attribute-escaped."""
+    u = (url or "").strip()
+    return _esc(u) if u.lower().startswith(("https://", "http://")) else None
+
+
+# Only what the digest reads: never the 20 KB description or the embedding. Every row
+# since the oldest due cutoff is loaded, so this keeps the pass small on Render's 512 MB.
+_ALERT_COLUMNS = (
+    Job.id, Job.title, Job.department, Job.remote, Job.experience_level,
+    Job.location_normalized, Job.apply_url, Job.first_seen_at,
+    Job.pay_min, Job.pay_max, Job.pay_currency, Job.pay_period,
+)
 
 
 def _matches_query(job: Job, company_name: str, query: dict) -> bool:
@@ -50,7 +76,9 @@ def _matches_query(job: Job, company_name: str, query: dict) -> bool:
 
 
 def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -> tuple[str, str]:
-    subject = f"Chronicle: {len(jobs)} new role{'s' if len(jobs) != 1 else ''} matching \"{search.name}\""
+    # A header can't carry a line break (header injection); names are free text.
+    name = " ".join(str(search.name).split())[:80]
+    subject = f"Chronicle: {len(jobs)} new role{'s' if len(jobs) != 1 else ''} matching \"{name}\""
     rows = ""
     for job, company_name in jobs[:20]:
         # Pay as posted ("$45 to 55/hr") — salary_min/max are annualized sort keys, and
@@ -59,18 +87,26 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
         salary = ""
         if pay_label:
             salary = f"<span style='color:#6b6b6b;font-size:12px;margin-left:8px'>{html.escape(pay_label)}</span>"
+        # Every value from a posting or a user is escaped: titles and search names are
+        # free text, and an apply URL is only linked when it's http(s).
+        place = f" · {_esc(job.location_normalized)}" if job.location_normalized else ""
+        apply_url = _safe_url(job.apply_url)
+        apply_cell = (
+            f"<a href='{apply_url}' style='font-family:system-ui,sans-serif;font-size:12px;color:#b8860b;text-decoration:none'>Apply →</a>"
+            if apply_url else ""
+        )
         rows += f"""
         <tr>
           <td style='padding:12px 0;border-bottom:1px solid #e8e4df'>
-            <a href='{APP_URL}/jobs/{job.id}' style='font-family:Georgia,serif;font-size:16px;color:#1a1a1a;text-decoration:none;font-weight:600'>
-              {job.title}
+            <a href='{_esc(APP_URL)}/jobs/{int(job.id)}' style='font-family:Georgia,serif;font-size:16px;color:#1a1a1a;text-decoration:none;font-weight:600'>
+              {_esc(job.title)}
             </a>{salary}<br>
             <span style='font-family:system-ui,sans-serif;font-size:13px;color:#6b6b6b'>
-              {company_name}{f" · {job.location_normalized}" if job.location_normalized else ""}{" · Remote" if job.remote else ""}
+              {_esc(company_name)}{place}{" · Remote" if job.remote else ""}
             </span>
           </td>
           <td style='padding:12px 0;border-bottom:1px solid #e8e4df;text-align:right;vertical-align:top'>
-            <a href='{job.apply_url}' style='font-family:system-ui,sans-serif;font-size:12px;color:#b8860b;text-decoration:none'>Apply →</a>
+            {apply_cell}
           </td>
         </tr>"""
 
@@ -79,7 +115,7 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
     body = f"""
     <div style='max-width:560px;margin:0 auto;font-family:system-ui,sans-serif;background:#fafaf8;padding:32px 24px'>
       <p style='font-family:Georgia,serif;font-size:28px;color:#1a1a1a;margin:0 0 4px'>Chronicle</p>
-      <p style='font-size:13px;color:#b8860b;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 32px'>JOB ALERT · {search.name}</p>
+      <p style='font-size:13px;color:#b8860b;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 32px'>JOB ALERT · {_esc(name)}</p>
       <p style='font-size:15px;color:#6b6b6b;margin:0 0 24px'>
         {len(jobs)} new role{'s' if len(jobs) != 1 else ''} since your last alert:
       </p>
@@ -87,21 +123,21 @@ def _build_email(user: User, search: SavedSearch, jobs: list[tuple[Job, str]]) -
         {rows}
       </table>
       <p style='margin-top:32px'>
-        <a href='{APP_URL}/jobs' style='background:#b8860b;color:#fff;padding:12px 24px;border-radius:6px;font-size:14px;text-decoration:none;font-family:system-ui,sans-serif'>
+        <a href='{_esc(APP_URL)}/jobs' style='background:#b8860b;color:#fff;padding:12px 24px;border-radius:6px;font-size:14px;text-decoration:none;font-family:system-ui,sans-serif'>
           View all roles →
         </a>
       </p>
       <p style='font-size:11px;color:#b0a898;margin-top:32px'>
         You're receiving this because you saved a search on Chronicle.
-        <a href='{APP_URL}/saved' style='color:#b0a898'>Manage alerts</a>
+        <a href='{_esc(APP_URL)}/saved' style='color:#b0a898'>Manage alerts</a>
       </p>
     </div>"""
     return subject, body
 
 
 async def _send_email(to: str, subject: str, html: str) -> bool:
-    if not RESEND_API_KEY:
-        log.warning("RESEND_API_KEY not set; skipping an alert email")  # never log addresses
+    if not email_configured():
+        log.info("RESEND_API_KEY not set; skipping an alert email")  # never log addresses
         return False
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.post(
@@ -144,7 +180,7 @@ async def run_alerts(session: Session, run_start: datetime) -> None:
         default=run_start,
     )
     new_job_rows = session.execute(
-        select(Job, Company.name.label("company_name"))
+        select(*_ALERT_COLUMNS, Company.name.label("company_name"))
         .join(Company, Job.company_id == Company.id)
         .where(Job.is_active == True, Job.first_seen_at >= pool_since)
     ).all()
@@ -156,9 +192,9 @@ async def run_alerts(session: Session, run_start: datetime) -> None:
             continue
 
         matched = [
-            (row.Job, row.company_name)
+            (row, row.company_name)
             for row in new_job_rows
-            if row.Job.first_seen_at >= cutoff and _matches_query(row.Job, row.company_name, search.query_json)
+            if row.first_seen_at >= cutoff and _matches_query(row, row.company_name, search.query_json)
         ]
 
         if not matched:

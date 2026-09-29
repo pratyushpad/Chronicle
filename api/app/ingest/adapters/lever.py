@@ -62,4 +62,6 @@ class LeverAdapter:
             updated_at=created,
             department_hints=[dept_hint] if isinstance(dept_hint, str) and dept_hint else [],
             pay=pay_from_lever(item.get("salaryRange")),
+            workplace_type=item.get("workplaceType"),
+            country=item.get("country"),
         )

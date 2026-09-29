@@ -77,7 +77,7 @@ This file is the plan of record: what each PR touches, its risk, and how it is v
 | 4 Student filters | `upgrade/pr4-student-filters` | term/year, degree, citizenship vs US-person (ITAR) vs clearance, workplace, country; labeled eval set; filters + defaults | medium | migration |
 | 5 Coverage | `upgrade/pr5-coverage` | Workday adapter (built, disabled by default), Workable adapter, source evaluation | medium | migration |
 | 6 Quality gates | `upgrade/pr6-quality-gates` | web CI (Playwright, axe, Lighthouse), typed API fields, alert gating + fixes | low | none |
-| 7 Refresh | `upgrade/pr7-refresh` | cheaper upsert, ingest on GitHub Actions (dispatch-only), atomic run lock, status page, prod benchmark | medium (touches prod ingest) | migration |
+| 7 Refresh | `upgrade/pr7-refresh` | cheaper upsert, ingest on GitHub Actions (dispatch-only), atomic run lock, status page, prod benchmark (shipped: status page and benchmark; the upsert, the Actions ingest and the run lock landed in main via #10-#12 instead, with no migration) | medium (touches prod ingest) | none (as shipped) |
 | 8 Docs | `upgrade/pr8-docs` | README and handoff notes match the code; every metric traces to `docs/` | low | none |
 
 ### PR 1 — Correctness the user can see
@@ -142,7 +142,9 @@ gate, with a takedown contact published. Details in `docs/sources.md`.
 
 Web CI job: type check, lint, build, unit tests, Playwright smoke (home, feed, job detail,
 companies, company detail, mobile nav at 390 px), axe, and a Lighthouse budget on the feed
-(LCP ≤ 2.5 s, CLS ≤ 0.1). The remaining `as any` casts go. Email alert controls and claims are
+(LCP ≤ 2.5 s, CLS ≤ 0.1). *As built (PR 6): CI enforces CLS ≤ 0.1 and LCP ≤ 3.5 s as a
+regression guard and reports the 2.5 s goal, which the feed does not meet yet (2.74–3.02 s
+locally, median of 3, simulated mobile throttling).* The remaining `as any` casts go. Email alert controls and claims are
 hidden until `RESEND_API_KEY` is configured; alert emails get escaping and a lighter query.
 
 ### PR 7 — Faster, honest refresh
@@ -152,7 +154,11 @@ run ingest on GitHub Actions (free for public repos) with a dispatch-only workfl
 lock, and a budget report against Neon's free limits (100 CU-hours a month; running out suspends
 the database). The schedule is enabled only with the maintainer's go-ahead. A public `/status`
 page shows recent runs, failing boards and freshness. The production search benchmark runs on
-the Render box through a protected endpoint.
+the Render box through a protected endpoint. *As built: the status page and the benchmark shipped
+in the combined PR 3-8. The cheaper upsert, the Actions ingest (scheduled twice a day, on
+once the `NEON_DATABASE_URL` secret exists) and the run lock (an open run younger than two
+hours blocks a new one, `app/ingest/runlock.py`) landed in main through #10-#12, with no
+migration, so PR 7's versions were dropped.*
 
 ### PR 8 — Docs
 

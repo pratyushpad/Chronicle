@@ -45,3 +45,114 @@ jobs:
         run: DATABASE_URL="$TEST_DATABASE_URL" python -m alembic upgrade head
       - name: Run tests
         run: python -m pytest tests/ -q
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  # The real site end to end: Postgres seeded from the committed real postings (no
+  # network), the API, and a production web build. Then Playwright smoke tests with axe
+  # (serious/critical WCAG A/AA violations fail) at 1440 and 390 px, and a Lighthouse
+  # budget on the internship feed (see tools/upgrade/web/lh-budget.mjs).
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: chronicle
+          POSTGRES_PASSWORD: chronicle
+          POSTGRES_DB: chronicle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chronicle"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg2://chronicle:chronicle@localhost:5432/chronicle
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      # Throwaway values for a local CI build; not credentials for anything.
+      AUTH_SECRET: local-ci-only-not-a-secret
+      AUTH_TRUST_HOST: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: api/pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install API
+        working-directory: api
+        run: pip install -e ".[dev]"
+      - name: Migrate and seed from committed fixtures
+        working-directory: api
+        run: |
+          python -m alembic upgrade head
+          ONLY=$(python ../tools/upgrade/build_fixture_replay.py "$RUNNER_TEMP/replay")
+          python ../tools/upgrade/replay_ingest.py "$RUNNER_TEMP/replay" --seed --no-embed --only "$ONLY" | tee "$RUNNER_TEMP/seed.json"
+          # A seed that loaded nothing would only surface later as confusing "no cards" failures.
+          python -c "import json,sys; r=json.loads(open(sys.argv[1]).read().strip().splitlines()[-1]); sys.exit(0 if r['jobs_seen'] > 0 else 'seed loaded 0 jobs')" "$RUNNER_TEMP/seed.json"
+      - name: Start the API
+        working-directory: api
+        run: |
+          nohup python -m uvicorn app.main:app --port 8000 > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/meta > /dev/null && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/api.log"; exit 1
+      - name: Build and start the web
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+          nohup npx next start -p 3000 > "$RUNNER_TEMP/web.log" 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/ > /dev/null && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/web.log"; exit 1
+      - name: Playwright smoke + axe
+        working-directory: web
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test
+      - name: Lighthouse budget (feed, mobile)
+        working-directory: tools/upgrade/web
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install chromium
+          node lh-budget.mjs "http://localhost:3000/jobs?level=intern" 5
+      - name: Server logs on failure
+        if: failure()
+        run: tail -n 100 "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/web.log" || true
+      - name: Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: web/test-results
+          if-no-files-found: ignore

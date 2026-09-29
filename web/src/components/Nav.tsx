@@ -5,6 +5,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn, formatNumber } from "@/lib/utils";
 import { Magnetic } from "@/components/gsap/Magnetic";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 interface Notif {
@@ -68,7 +69,7 @@ type Notifications = ReturnType<typeof useNotifications>;
 function NotificationItems({ notifications, onNavigate }: { notifications: Notifications; onNavigate?: () => void }) {
   const { items, markRead } = notifications;
   if (items.length === 0) {
-    return <p className="px-4 py-6 text-center font-body text-sm text-muted-foreground">No notifications yet.</p>;
+    return <p className="px-4 py-6 text-center font-sans text-sm text-muted-foreground">No notifications yet.</p>;
   }
   return (
     <>
@@ -78,9 +79,9 @@ function NotificationItems({ notifications, onNavigate }: { notifications: Notif
           <div className="flex items-start gap-2">
             {!n.read && <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-foreground" aria-hidden />}
             <div className={n.read ? "pl-3.5" : ""}>
-              <p className="font-body text-sm text-foreground">{title}</p>
-              {body && <p className="font-body text-xs text-muted-foreground">{body}</p>}
-              <p className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground">{relativeTime(n.created_at)}</p>
+              <p className="font-sans text-sm text-foreground">{title}</p>
+              {body && <p className="font-sans text-xs text-muted-foreground">{body}</p>}
+              <p className="mt-0.5 font-sans text-[11px] uppercase tracking-[0.1em] text-muted-foreground">{relativeTime(n.created_at)}</p>
             </div>
           </div>
         );
@@ -125,7 +126,7 @@ function NotificationBell({ notifications }: { notifications: Notifications }) {
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center border border-foreground bg-foreground font-mono text-[8px] text-background" aria-hidden>
+          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center border border-input bg-foreground font-sans text-[11px] text-background" aria-hidden>
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -133,11 +134,11 @@ function NotificationBell({ notifications }: { notifications: Notifications }) {
 
       {open && (
         // Never wider than the viewport, whatever width the nav is rendered at.
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] border-2 border-foreground bg-background">
-          <div className="flex items-center justify-between border-b border-foreground px-4 py-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-foreground">Notifications</span>
+        <div className="absolute right-0 top-full z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] border border-input bg-background">
+          <div className="flex items-center justify-between border-b border-border-light px-4 py-2">
+            <span className="font-sans text-[11px] uppercase tracking-[0.15em] text-foreground">Notifications</span>
             {unread > 0 && (
-              <button onClick={markAllRead} className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground">
+              <button onClick={markAllRead} className="font-sans text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground">
                 Mark all read
               </button>
             )}
@@ -202,7 +203,7 @@ function MobileMenu({
     >
       <SheetTrigger
         className={cn(
-          "relative inline-flex h-11 items-center gap-2 border border-foreground px-3 font-mono text-xs uppercase tracking-[0.12em] text-foreground",
+          "relative inline-flex h-11 items-center gap-2 border border-input px-3 font-sans text-xs uppercase tracking-[0.12em] text-foreground",
           "transition-[color,background-color,transform] duration-fast ease-house hover:bg-foreground hover:text-background motion-safe:active:scale-[0.97]",
           FOCUS_RING,
         )}
@@ -213,7 +214,7 @@ function MobileMenu({
         Menu
         {status === "authenticated" && unread > 0 && (
           <>
-            <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[1rem] items-center justify-center border border-background bg-foreground px-0.5 font-mono text-[8px] text-background" aria-hidden>
+            <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[1rem] items-center justify-center border border-background bg-foreground px-0.5 font-sans text-[11px] text-background" aria-hidden>
               {unread > 9 ? "9+" : unread}
             </span>
             <span className="sr-only">, {unread} unread notification{unread === 1 ? "" : "s"}</span>
@@ -221,9 +222,9 @@ function MobileMenu({
         )}
       </SheetTrigger>
 
-      <SheetContent side="right" className="gap-0 overflow-y-auto border-l-2 border-foreground bg-background">
-        <div className="flex h-16 shrink-0 items-center border-b-2 border-foreground px-6">
-          <SheetTitle className="font-mono text-xs font-medium uppercase tracking-[0.2em]">Menu</SheetTitle>
+      <SheetContent side="right" className="gap-0 overflow-y-auto border-l border-border-light bg-background">
+        <div className="flex h-16 shrink-0 items-center border-b border-border-light px-6">
+          <SheetTitle className="font-sans text-xs font-medium uppercase tracking-[0.2em]">Menu</SheetTitle>
         </div>
 
         <nav aria-label="Main">
@@ -237,7 +238,7 @@ function MobileMenu({
                     onClick={close}
                     aria-current={current ? "page" : undefined}
                     className={cn(
-                      "flex min-h-[52px] items-center justify-between gap-4 px-6 font-mono text-sm uppercase tracking-[0.12em] transition-colors duration-100 hover:bg-muted",
+                      "flex min-h-[52px] items-center justify-between gap-4 px-6 font-sans text-sm uppercase tracking-[0.12em] transition-colors duration-100 hover:bg-muted",
                       current ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                       FOCUS_RING,
                     )}
@@ -256,7 +257,7 @@ function MobileMenu({
         </nav>
 
         {status === "authenticated" && (
-          <section className="mt-2 border-t border-foreground" aria-label="Notifications">
+          <section className="mt-2 border-t border-border-light" aria-label="Notifications">
             <div className="flex items-center justify-between gap-2 px-6">
               <button
                 type="button"
@@ -264,13 +265,13 @@ function MobileMenu({
                 aria-controls="mobile-notifications"
                 onClick={() => setShowNotifs((v) => !v)}
                 className={cn(
-                  "flex min-h-[52px] flex-1 items-center gap-2 font-mono text-sm uppercase tracking-[0.12em] text-foreground",
+                  "flex min-h-[52px] flex-1 items-center gap-2 font-sans text-sm uppercase tracking-[0.12em] text-foreground",
                   FOCUS_RING,
                 )}
               >
                 Notifications
                 {unread > 0 && (
-                  <span className="bg-foreground px-1.5 py-0.5 font-mono text-[10px] text-background">
+                  <span className="bg-foreground px-1.5 py-0.5 font-sans text-[11px] text-background">
                     {unread > 9 ? "9+" : unread} new
                   </span>
                 )}
@@ -284,7 +285,7 @@ function MobileMenu({
                   <div className="flex justify-end px-6 pt-2">
                     <button
                       onClick={markAllRead}
-                      className={cn("min-h-[44px] font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground", FOCUS_RING)}
+                      className={cn("min-h-[44px] font-sans text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground", FOCUS_RING)}
                     >
                       Mark all read
                     </button>
@@ -295,12 +296,12 @@ function MobileMenu({
           </section>
         )}
 
-        <div className="mt-auto flex flex-col gap-4 border-t-2 border-foreground px-6 py-6">
+        <div className="mt-auto flex flex-col gap-4 border-t border-border-light px-6 py-6">
           {status === "authenticated" ? (
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               className={cn(
-                "flex min-h-[48px] w-full items-center justify-center gap-2 border border-foreground px-4 font-mono text-xs uppercase tracking-[0.15em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background",
+                "flex min-h-[48px] w-full items-center justify-center gap-2 border border-input px-4 font-sans text-xs uppercase tracking-[0.15em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background",
                 FOCUS_RING,
               )}
             >
@@ -314,15 +315,16 @@ function MobileMenu({
             <button
               onClick={() => signIn("google")}
               className={cn(
-                "flex min-h-[48px] w-full items-center justify-center bg-foreground px-4 font-mono text-xs font-medium uppercase tracking-[0.15em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)]",
+                "flex min-h-[48px] w-full items-center justify-center bg-foreground px-4 font-sans text-xs font-medium uppercase tracking-[0.15em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)]",
                 FOCUS_RING,
               )}
             >
               Sign in
             </button>
           ) : null}
+          <ThemeToggle className="justify-center" />
           {companyCount != null && (
-            <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+            <p className="font-sans text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
               {formatNumber(companyCount)} companies indexed
             </p>
           )}
@@ -344,7 +346,7 @@ export function Nav({ companyCount }: { companyCount?: number | null }) {
   }, [session?.user?.email]);
 
   const linkClass =
-    "px-2 py-1 font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground transition-colors duration-100 hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2";
+    "px-2 py-1 font-sans text-xs uppercase tracking-[0.12em] text-muted-foreground transition-colors duration-100 hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2";
 
   const links: NavLink[] = [
     { href: "/jobs", label: "Roles" },
@@ -362,7 +364,7 @@ export function Nav({ companyCount }: { companyCount?: number | null }) {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 border-b-2 border-foreground bg-background">
+    <nav className="sticky top-0 z-50 border-b border-border-light bg-background">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 md:px-8 lg:px-12">
         <Link
           href="/"
@@ -397,7 +399,7 @@ export function Nav({ companyCount }: { companyCount?: number | null }) {
               <NotificationBell notifications={notifications} />
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className="flex items-center gap-2 border border-foreground px-3 py-1.5 font-mono text-xs uppercase tracking-[0.12em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
+                className="flex items-center gap-2 border border-input px-3 py-1.5 font-sans text-xs uppercase tracking-[0.12em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
               >
                 {session.user?.image && (
                   // eslint-disable-next-line @next/next/no-img-element -- 16px Google avatar; next/image would route it through the optimizer for no gain.
@@ -414,7 +416,7 @@ export function Nav({ companyCount }: { companyCount?: number | null }) {
               <Magnetic>
                 <button
                   onClick={() => signIn("google")}
-                  className="inline-flex min-h-[36px] items-center justify-center bg-foreground px-5 font-mono text-xs font-medium uppercase tracking-[0.15em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
+                  className="inline-flex min-h-[36px] items-center justify-center bg-foreground px-5 font-sans text-xs font-medium uppercase tracking-[0.15em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground hover:shadow-[inset_0_0_0_2px_var(--foreground)] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
                 >
                   Sign in
                 </button>
@@ -425,18 +427,19 @@ export function Nav({ companyCount }: { companyCount?: number | null }) {
             // so Roles/Companies don't shift left when the auth controls arrive.
             <div aria-hidden className="invisible flex items-center gap-1 sm:gap-3">
               <span className={linkClass}>Tracker</span>
-              <span className="inline-flex min-h-[36px] items-center px-5 font-mono text-xs font-medium uppercase tracking-[0.15em]">
+              <span className="inline-flex min-h-[36px] items-center px-5 font-sans text-xs font-medium uppercase tracking-[0.15em]">
                 Sign in
               </span>
             </div>
           )}
 
+          <ThemeToggle />
           {companyCount != null && (
             // Signed in, the row needs xl to fit its six links + badge; the count is also
             // in the mobile menu.
             <span
               className={cn(
-                "ml-1 hidden font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground",
+                "ml-1 hidden font-sans text-xs uppercase tracking-[0.12em] text-muted-foreground",
                 status === "authenticated" ? "xl:inline" : "sm:inline",
               )}
             >

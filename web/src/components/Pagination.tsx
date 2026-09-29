@@ -44,12 +44,12 @@ export function Pagination({
       {page > 1 ? (
         <Link
           href={buildHref(basePath, page - 1, searchParams)}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border px-3 font-mono text-xs uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:border-accent hover:text-accent"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border px-3 font-sans text-xs uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:border-accent hover:text-accent"
         >
           ← Prev
         </Link>
       ) : (
-        <span className="flex min-h-[44px] min-w-[44px] cursor-not-allowed items-center justify-center rounded-md border border-border px-3 font-mono text-xs uppercase tracking-[0.1em] text-border">
+        <span className="flex min-h-[44px] min-w-[44px] cursor-not-allowed items-center justify-center rounded-md border border-border px-3 font-sans text-xs uppercase tracking-[0.1em] text-border">
           ← Prev
         </span>
       )}
@@ -61,16 +61,16 @@ export function Pagination({
           return (
             <span key={p} className="flex items-center gap-1">
               {prev && p - prev > 1 && (
-                <span className="font-mono text-xs text-muted-foreground px-1">…</span>
+                <span className="font-sans text-xs text-muted-foreground px-1">…</span>
               )}
               {p === page ? (
-                <span className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md font-mono text-xs font-medium text-accent">
+                <span className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md font-sans text-xs font-medium text-accent">
                   {p}
                 </span>
               ) : (
                 <Link
                   href={buildHref(basePath, p, searchParams)}
-                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md font-sans text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {p}
                 </Link>
@@ -81,7 +81,7 @@ export function Pagination({
       </div>
 
       {/* Mobile: just page count */}
-      <span className="sm:hidden font-mono text-xs text-muted-foreground px-3">
+      <span className="sm:hidden font-sans text-xs text-muted-foreground px-3">
         {page} / {totalPages}
       </span>
 
@@ -89,12 +89,12 @@ export function Pagination({
       {page < totalPages ? (
         <Link
           href={buildHref(basePath, page + 1, searchParams)}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border px-3 font-mono text-xs uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:border-accent hover:text-accent"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border px-3 font-sans text-xs uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:border-accent hover:text-accent"
         >
           Next →
         </Link>
       ) : (
-        <span className="flex min-h-[44px] min-w-[44px] cursor-not-allowed items-center justify-center rounded-md border border-border px-3 font-mono text-xs uppercase tracking-[0.1em] text-border">
+        <span className="flex min-h-[44px] min-w-[44px] cursor-not-allowed items-center justify-center rounded-md border border-border px-3 font-sans text-xs uppercase tracking-[0.1em] text-border">
           Next →
         </span>
       )}

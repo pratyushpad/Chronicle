@@ -196,3 +196,4 @@ def test_encode_tracks_the_in_flight_counter(monkeypatch):
     with pytest.raises(RuntimeError):
         inst.encode(["x"])
     assert embedder_mod._active_encodes == 0
+

@@ -1,5 +1,44 @@
 # Upgrade handoff: PR 2–8 in a cloud session
 
+## Status (2026-09-28)
+
+PR 1, PR 2 and #9-#12 are merged. #12 moved the scheduled refresh to GitHub Actions: a full
+refresh twice a day (04:17 and 16:17 UTC) once the `NEON_DATABASE_URL` repo secret exists,
+with its own run lock (`api/app/ingest/runlock.py`). PR 3-8 were combined into one PR
+(`upgrade/pr3-8-combined`) on top of that main:
+
+| Part | What shipped | Neon step |
+|---|---|---|
+| PR 3 Design | light/dark themes, feed and companies redesign, footer | none |
+| PR 4 Student filters | term, degree levels, country, workplace, eligibility columns | migration `b7c2e4f6a8d1` (10 nullable columns) **before merge** |
+| PR 5 Coverage | sources doc, empty states (Workday/Workable adapters not built) | none |
+| PR 6 Quality gates | web CI job, Playwright + axe e2e, Lighthouse budget, alert escaping | none |
+| PR 7 Refresh | `/status` page and API, `POST /admin/bench` | none (its run-lock migration and Actions workflow were dropped: #12 supersedes them) |
+| PR 8 Docs | README, `metrics.md`, `sources.md`, this file | none |
+
+Rules that main settled and the combined PR keeps: senior and management roles without an
+early-career marker are listing-only (no stored description, no embedding); an unchanged
+description is kept as stored; company money next to an amount is never pay.
+
+**What that session could not do, and why.** The sandbox's network policy blocked the job
+boards, huggingface.co and the Workable/Workday hosts. As a result:
+
+- the replica for PR 2–8 was built from the 119 committed real postings
+  (`tools/upgrade/build_fixture_replay.py`), not a fresh recording;
+- similar roles were checked locally with stand-in vectors;
+- the PR 4 labeled set is 135 postings, not about 200;
+- PR 5's adapters are not built.
+
+**Still open, in plan order:**
+
+- PR 4's default hides (citizenship, clearance, MS/PhD-only) wait on a larger labeled set.
+  Split it by company.
+- The LCP ≤ 2.5 s goal (feed measures about 3.0 s in CI).
+- Measure the full-refresh cycle from `/status` once the `NEON_DATABASE_URL` secret is set.
+- The Workday and Workable adapters.
+
+All numbers: [`metrics.md`](metrics.md).
+
 PR 1 was built and verified locally (`upgrade/pr1-correctness`, PR #1 — https://github.com/pratyushpad/Chronicle/pull/1). PR 2–8 of
 `docs/UPGRADE_PLAN.md` are meant to run in Claude Code on the web (claude.ai/code), so the
 maintainer's computer can be off. This file is the complete context for that session.
@@ -38,10 +77,10 @@ maintainer's computer can be off. This file is the complete context for that ses
 ## Stop and ask only for
 
 1. Anything that would touch Neon (migrations, backfills). Document it; never run it.
-2. Secrets: the PR 7 Actions secret `NEON_DATABASE_URL`, and `RESEND_API_KEY` / `RESEND_FROM` /
-   `APP_URL` on Render for PR 6. Tell the maintainer where to set them; never ask for the
+2. Secrets: the Actions secret `NEON_DATABASE_URL` (#12), and for email digests
+   `RESEND_API_KEY` both as an Actions secret (the sender) and on Render (`/meta.email_alerts`). Tell the maintainer where to set them; never ask for the
    values in chat.
-3. Enabling PR 7's ingest schedule.
+3. (Done in #12: the Actions refresh is scheduled and turns itself on with the secret.)
 
 ## Environment setup inside the cloud session
 
@@ -102,7 +141,7 @@ overflow audit and Lighthouse.
 | Mobile overflow (360/390/414 px) | every route 443 px wide (658 px signed in) | 0 (6 routes signed out, 3 signed in, at 360, 390 and 414 px) | tools/upgrade harness |
 | Reduced motion: hidden feed cards | 20 of 20 | 0 | harness |
 | Lighthouse, feed, mobile (production) | perf 88, LCP 3.75 s, CLS 0 | measured in PR 3 and PR 6 | `lh.mjs` |
-| Full-refresh cycle | about 4–5 days (the latest production run covered only 7 boards) | PR 7 | `ingest.yml`, `/status` |
+| Full-refresh cycle | about 4–5 days (the latest production run covered only 7 boards) | one Actions run per refresh, twice a day (#12), once its secret is set | `ingest-actions.yml`, `/status` |
 
 ## Known facts for later PRs
 

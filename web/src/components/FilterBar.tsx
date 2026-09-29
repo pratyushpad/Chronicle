@@ -1,138 +1,444 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
-import { m, useReducedMotion } from "motion/react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { SectionLabel } from "./SectionLabel";
 import { cn, formatLocation, formatDepartment } from "@/lib/utils";
-import { staggerStep, springPress } from "@/lib/motion";
-import { gsap, useGSAP } from "@/lib/gsapConfig";
+import { INTERN_DEFAULT_HIDES, RELEASED, countryName, isInternView, termLabel } from "@/lib/eligibility";
 
 interface FilterBarProps {
   departments: string[];
   locations: string[];
   employmentTypes: string[];
-  experienceLevels: string[];
   industries: string[];
-  companies: { id: number; name: string }[];
-  selectedCompanyName?: string;
+  terms: string[];
+  countries: string[];
 }
 
+// Level folds the two level params into one control: `level` (intern / new_grad, which
+// also match titles) and `experience_level` (the posting's own level).
+const LEVELS = [
+  { value: "", label: "Any level" },
+  { value: "level:intern", label: "Internship" },
+  { value: "level:new_grad", label: "New grad" },
+  { value: "exp:Mid Level", label: "Mid level" },
+  { value: "exp:Senior", label: "Senior" },
+  { value: "exp:Management", label: "Management" },
+] as const;
+
+const SORTS = [
+  { value: "newest", label: "Newest" },
+  { value: "relevance", label: "Best match" },
+  { value: "pay", label: "Highest pay" },
+] as const;
+
 const SEARCH_MODES = [
-  { value: "keyword", label: "Keyword", title: "Exact title matches" },
-  { value: "hybrid", label: "Hybrid", title: "Keyword + semantic matches, fused" },
+  { value: "keyword", label: "Keyword", title: "Matches words in the title, team and location" },
+  { value: "hybrid", label: "Hybrid", title: "Keyword and meaning-based matches, combined" },
   { value: "semantic", label: "Semantic", title: "Meaning-based matches via embeddings" },
 ] as const;
 
-const QUICK_PILLS = [
-  { label: "Internships", params: { level: "intern" } },
-  { label: "New Grad", params: { level: "new_grad" } },
-  { label: "Remote", params: { remote: "true" } },
-  { label: "Full-time", params: { employment_type: "Full-time" } },
-  { label: "Engineering", params: { department: "Engineering" } },
-  { label: "AI / ML", params: { industry: "AI/ML" } },
-  { label: "FinTech", params: { industry: "FinTech" } },
-  { label: "New since last run", params: { since_last_run: "true" } },
-] as const;
+// Params the drawer owns (its button shows how many are set).
+const DRAWER_KEYS = [
+  "company", "company_id", "industry", "employment_type", "since_last_run", "mode",
+  ...(RELEASED.term ? ["term"] : []),
+  ...(RELEASED.workplace ? ["workplace"] : []),
+  ...(RELEASED.country ? ["country"] : []),
+];
 
-function FilterIcon() {
+const control =
+  "h-11 w-full min-w-0 border border-input bg-background px-3 font-sans text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none";
+const selectClass = cn(control, "cursor-pointer");
+const labelClass = "mb-1.5 block font-sans text-xs text-muted-foreground";
+
+// Values older links and bookmarks carry for levels the Level control now covers.
+const LEGACY_EXPERIENCE: Record<string, string> = { Internship: "level:intern", "Entry Level": "level:new_grad" };
+
+function levelValue(p: URLSearchParams): string {
+  const level = p.get("level");
+  if (level) return `level:${level}`;
+  const exp = p.get("experience_level");
+  if (!exp) return "";
+  return LEGACY_EXPERIENCE[exp] ?? `exp:${exp}`;
+}
+
+/** Local input state that commits to the URL after a pause. It re-syncs from the URL
+ *  only on an outside change (Clear all, back button), never on the echo of its own
+ *  commit, so keystrokes typed while a commit is in flight aren't overwritten. */
+function useDebounced(initial: string, onCommit: (v: string) => void) {
+  const [value, setValue] = useState(initial);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const committed = useRef(initial);
+  // The latest onCommit, so a timer set several renders ago commits against current state.
+  const commitRef = useRef(onCommit);
+  commitRef.current = onCommit;
+  useEffect(() => {
+    if (initial !== committed.current) {
+      committed.current = initial;
+      setValue(initial);
+    }
+  }, [initial]);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
+  const change = (v: string) => {
+    setValue(v);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      committed.current = v.trim();
+      commitRef.current(v);
+    }, 350);
+  };
+  const cancel = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  };
+  return [value, change, cancel] as const;
+}
+
+export function FilterBar({ departments, locations, employmentTypes, industries, terms, countries }: FilterBarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [pending, startTransition] = useTransition();
+
+  const push = useCallback(
+    (mutate: (p: URLSearchParams) => void) => {
+      // Start from the live URL, not this render's searchParams: a debounced search that
+      // fires after another filter changed must not put the old filters back.
+      const params = new URLSearchParams(window.location.search);
+      mutate(params);
+      params.delete("page");
+      const qs = params.toString();
+      startTransition(() => router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false }));
+    },
+    [pathname, router],
+  );
+
+  const set = useCallback(
+    (key: string, value: string) =>
+      push((p) => {
+        if (value) p.set(key, value);
+        else p.delete(key);
+        if (key === "company") p.delete("company_id");
+      }),
+    [push],
+  );
+
+  const setLevel = (v: string) =>
+    push((p) => {
+      p.delete("level");
+      p.delete("experience_level");
+      if (v.startsWith("level:")) p.set("level", v.slice(6));
+      else if (v.startsWith("exp:")) p.set("experience_level", v.slice(4));
+    });
+
+  const [q, setQ, cancelQ] = useDebounced(searchParams.get("q") ?? "", (v) => set("q", v.trim()));
+  const hasQuery = !!searchParams.get("q");
+  const defaultSort = hasQuery ? "relevance" : "newest";
+  const sort = searchParams.get("sort") ?? defaultSort;
+  const fusedSearch = hasQuery && ["semantic", "hybrid"].includes(searchParams.get("mode") ?? "");
+  const compact = searchParams.get("density") === "compact";
+  const drawerCount = DRAWER_KEYS.filter((k) => searchParams.get(k)).length;
+  const anyFilter = Array.from(searchParams.keys()).some((k) => !["page", "density", "sort"].includes(k));
+
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
+    <div
+      className="border-b border-border-light bg-background pb-5 md:sticky md:top-16 md:z-30 md:pt-2"
+      aria-busy={pending || undefined}
+    >
+      <div className="flex flex-col gap-3 md:flex-row">
+        <div className="min-w-0 flex-1">
+          <label htmlFor="feed-search" className="sr-only">
+            Search roles
+          </label>
+          <input
+            id="feed-search"
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search roles, teams, places…"
+            className={cn(control, "h-12 text-base")}
+          />
+        </div>
+        <div className="flex gap-3">
+          <label className="min-w-0 flex-1 md:w-48 md:flex-none">
+            <span className="sr-only">Sort by</span>
+            <select
+              value={fusedSearch ? "relevance" : sort}
+              onChange={(e) => set("sort", e.target.value === defaultSort ? "" : e.target.value)}
+              className={cn(selectClass, "h-12 disabled:cursor-not-allowed disabled:opacity-60")}
+              // Semantic and hybrid search always rank by match; the sort doesn't apply.
+              disabled={fusedSearch}
+              title={fusedSearch ? "Semantic and hybrid search are ordered by best match" : undefined}
+            >
+              {SORTS.filter((s) => s.value !== "relevance" || hasQuery).map((s) => (
+                <option key={s.value} value={s.value}>
+                  Sort: {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            onClick={() => set("density", compact ? "" : "compact")}
+            aria-pressed={compact}
+            className="h-12 shrink-0 border border-input px-3 font-sans text-sm text-foreground transition-colors hover:bg-muted"
+            title="Show more roles per screen"
+          >
+            Compact view
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-[repeat(4,minmax(0,1fr))_auto]">
+        <label className="min-w-0">
+          <span className={labelClass}>Level</span>
+          <select value={levelValue(searchParams)} onChange={(e) => setLevel(e.target.value)} className={selectClass}>
+            {LEVELS.map((l) => (
+              <option key={l.value} value={l.value}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="min-w-0">
+          <span className={labelClass}>Location</span>
+          <select
+            value={searchParams.get("location") ?? ""}
+            onChange={(e) => set("location", e.target.value)}
+            className={selectClass}
+          >
+            <option value="">Anywhere</option>
+            {locations.map((l) => (
+              <option key={l} value={l}>
+                {formatLocation(l) || l}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="min-w-0">
+          <span className={labelClass}>Team</span>
+          <select
+            value={searchParams.get("department") ?? ""}
+            onChange={(e) => set("department", e.target.value)}
+            className={selectClass}
+          >
+            <option value="">Any team</option>
+            {departments
+              .filter((d) => formatDepartment(d))
+              .map((d) => (
+                <option key={d} value={d}>
+                  {formatDepartment(d)}
+                </option>
+              ))}
+          </select>
+        </label>
+        <div className="min-w-0">
+          <span className={labelClass} aria-hidden>
+            Workplace
+          </span>
+          <label className={cn(control, "flex cursor-pointer items-center gap-3 hover:bg-muted")}>
+            <input
+              type="checkbox"
+              checked={searchParams.get("remote") === "true"}
+              onChange={(e) => set("remote", e.target.checked ? "true" : "")}
+              className="h-4 w-4 accent-[var(--foreground)]"
+            />
+            Remote only
+          </label>
+        </div>
+
+        <div className="col-span-2 flex items-end gap-3 md:col-span-1">
+          <Sheet>
+            <SheetTrigger className="h-11 flex-1 whitespace-nowrap border border-input px-4 font-sans text-sm text-foreground transition-colors hover:bg-muted md:flex-none">
+              More filters{drawerCount > 0 && ` (${drawerCount})`}
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="w-full overflow-y-auto border-l border-border-light bg-background p-6 sm:max-w-md"
+            >
+              <SheetTitle className="font-display text-2xl text-foreground">More filters</SheetTitle>
+              <DrawerFilters
+                industries={industries}
+                employmentTypes={employmentTypes}
+                terms={terms}
+                countries={countries}
+                current={searchParams}
+                set={set}
+              />
+            </SheetContent>
+          </Sheet>
+          {anyFilter && (
+            <button
+              type="button"
+              onClick={() => {
+                setQ(""); // show the cleared box now…
+                cancelQ(); // …without committing it (the push below clears q anyway)
+                push((p) => {
+                  for (const k of Array.from(p.keys())) if (!["density", "sort"].includes(k)) p.delete(k);
+                });
+              }}
+              className="h-11 whitespace-nowrap px-2 font-sans text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+      </div>
+      <EligibilityToggles current={searchParams} set={set} />
+    </div>
   );
 }
 
-function Filters({
-  departments,
-  locations,
-  employmentTypes,
-  industries,
-  companies,
-  selectedCompanyName,
-  onChange,
-  current,
-}: FilterBarProps & {
-  onChange: (key: string, value: string) => void;
-  current: URLSearchParams;
-}) {
-  // Local, debounced search so typing stays smooth while the URL updates lazily.
-  const [search, setSearch] = useState(current.get("q") ?? "");
-  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Keep local search in sync when the URL is cleared/changed externally (e.g. Clear).
-  useEffect(() => {
-    setSearch(current.get("q") ?? "");
-  }, [current]);
-
-  const onSearch = (value: string) => {
-    setSearch(value);
-    if (debounce.current) clearTimeout(debounce.current);
-    debounce.current = setTimeout(() => onChange("q", value), 300);
-  };
-
-  const inputClass =
-    "h-11 w-full border border-foreground bg-background px-3 font-body text-sm text-foreground placeholder:italic placeholder:text-muted-foreground transition-all duration-100 focus:outline-none focus:border-2";
-  const selectClass = cn(inputClass, "cursor-pointer appearance-none");
-
-  const mode = current.get("mode") ?? "keyword";
-  const activeModeIndex = Math.max(0, SEARCH_MODES.findIndex((o) => o.value === mode));
-
-  // GSAP-owned segmented indicator: it slides to the active mode on transform only. A
-  // one-axis indicator slide is a tween, not a layout reflow, so gsap.to is the right
-  // primitive here (Flip is reserved for the tracker's post-drop column reflow). The
-  // first render and reduced-motion both snap into place with no animation.
-  const indicatorRef = useRef<HTMLSpanElement>(null);
-  const firstIndicator = useRef(true);
-  useGSAP(
-    () => {
-      const el = indicatorRef.current;
-      if (!el) return;
-      const xPercent = activeModeIndex * 100;
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (firstIndicator.current || reduceMotion) {
-        firstIndicator.current = false;
-        gsap.set(el, { xPercent });
-        return;
-      }
-      gsap.to(el, { xPercent, duration: 0.24, ease: "chronicle", overwrite: true });
-    },
-    { dependencies: [activeModeIndex] },
-  );
-
+/** Internship view: roles the posting restricts are hidden by default, and each rule is
+ *  a visible, labelled toggle (checked = those roles are included). */
+function EligibilityToggles({ current, set }: { current: URLSearchParams; set: (k: string, v: string) => void }) {
+  const toggles = INTERN_DEFAULT_HIDES.filter((h) => RELEASED[h.key]);
+  if (toggles.length === 0 || !isInternView(Object.fromEntries(current.entries()))) return null;
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      <div>
+    <fieldset className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+      <legend className="sr-only">Include restricted internships</legend>
+      <span className="font-sans text-xs text-muted-foreground">Hidden unless you include them:</span>
+      {toggles.map((h) => (
+        <label key={h.key} className="inline-flex min-h-[32px] cursor-pointer items-center gap-2 font-sans text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={current.get(h.include) === "1"}
+            onChange={(e) => set(h.include, e.target.checked ? "1" : "")}
+            className="h-4 w-4 accent-[var(--foreground)]"
+          />
+          {h.label}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
+function DrawerFilters({
+  industries,
+  employmentTypes,
+  terms,
+  countries,
+  current,
+  set,
+}: {
+  industries: string[];
+  employmentTypes: string[];
+  terms: string[];
+  countries: string[];
+  current: URLSearchParams;
+  set: (key: string, value: string) => void;
+}) {
+  const [company, setCompany] = useDebounced(current.get("company") ?? "", (v) => set("company", v.trim()));
+  const mode = current.get("mode") ?? "keyword";
+  return (
+    <div className="mt-6 flex flex-col gap-5">
+      <label>
+        <span className={labelClass}>Company</span>
         <input
           type="text"
-          placeholder="Search roles…"
-          value={search}
-          onChange={(e) => onSearch(e.target.value)}
-          className={inputClass}
-          aria-label="Search roles"
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+          placeholder={current.get("company_id") ? "Filtered to one company" : "Any company"}
+          className={control}
         />
-        <div className="relative mt-1.5 flex" role="group" aria-label="Search match mode">
-          {/* GSAP-driven sliding black indicator — transform-only. Always rendered and
-              positioned (instantly under reduced-motion), so the active fill is correct
-              without a per-button background. */}
-          <span
-            ref={indicatorRef}
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 bg-foreground"
-            style={{ width: `${100 / SEARCH_MODES.length}%` }}
-          />
+      </label>
+      <label>
+        <span className={labelClass}>Industry</span>
+        <select value={current.get("industry") ?? ""} onChange={(e) => set("industry", e.target.value)} className={selectClass}>
+          <option value="">Any industry</option>
+          {/* An older link's raw label (e.g. "AI/ML") still filters; show it rather than
+              pretending no industry is set. */}
+          {current.get("industry") && !industries.includes(current.get("industry")!) && (
+            <option value={current.get("industry")!}>{current.get("industry")}</option>
+          )}
+          {industries.map((i) => (
+            <option key={i} value={i}>
+              {i}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        <span className={labelClass}>Job type</span>
+        <select
+          value={current.get("employment_type") ?? ""}
+          onChange={(e) => set("employment_type", e.target.value)}
+          className={selectClass}
+        >
+          <option value="">Any type</option>
+          {employmentTypes.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      </label>
+      {RELEASED.term && terms.length > 0 && (
+        <label>
+          <span className={labelClass}>Term</span>
+          <select value={current.get("term") ?? ""} onChange={(e) => set("term", e.target.value)} className={selectClass}>
+            <option value="">Any term</option>
+            {terms.map((t) => (
+              <option key={t} value={t}>
+                {termLabel(t)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {RELEASED.workplace && (
+        <label>
+          <span className={labelClass}>Workplace</span>
+          <select value={current.get("workplace") ?? ""} onChange={(e) => set("workplace", e.target.value)} className={selectClass}>
+            <option value="">Any workplace</option>
+            <option value="onsite">On-site</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="remote">Remote</option>
+          </select>
+        </label>
+      )}
+      {RELEASED.country && countries.length > 0 && (
+        <label>
+          <span className={labelClass}>Country</span>
+          <select value={current.get("country") ?? ""} onChange={(e) => set("country", e.target.value)} className={selectClass}>
+            <option value="">Any country</option>
+            {countries.map((c) => (
+              <option key={c} value={c}>
+                {countryName(c)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <label className={cn(control, "flex cursor-pointer items-center gap-3 hover:bg-muted")}>
+        <input
+          type="checkbox"
+          checked={current.get("since_last_run") === "true"}
+          onChange={(e) => set("since_last_run", e.target.checked ? "true" : "")}
+          className="h-4 w-4 accent-[var(--foreground)]"
+        />
+        New since the last refresh
+      </label>
+      <fieldset>
+        <legend className={labelClass}>Search matching</legend>
+        <div className="flex">
           {SEARCH_MODES.map((opt) => {
             const active = mode === opt.value;
             return (
               <button
                 key={opt.value}
-                onClick={() => onChange("mode", opt.value === "keyword" ? "" : opt.value)}
+                type="button"
+                onClick={() => set("mode", opt.value === "keyword" ? "" : opt.value)}
                 aria-pressed={active}
                 title={opt.title}
                 className={cn(
-                  "relative z-10 flex-1 border border-foreground px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-100 -ml-px first:ml-0",
-                  active ? "text-background" : "text-muted-foreground hover:text-foreground",
+                  "-ml-px h-10 flex-1 border border-input font-sans text-sm transition-colors first:ml-0",
+                  active ? "bg-foreground text-background" : "text-foreground hover:bg-muted",
                 )}
               >
                 {opt.label}
@@ -140,203 +446,8 @@ function Filters({
             );
           })}
         </div>
-      </div>
-
-      <select
-        value={selectedCompanyName ?? current.get("company") ?? ""}
-        onChange={(e) => onChange("company", e.target.value)}
-        className={selectClass}
-        aria-label="Filter by company"
-      >
-        <option value="">All Companies</option>
-        {companies.map((c) => (
-          <option key={c.id} value={c.name}>{c.name}</option>
-        ))}
-      </select>
-
-      <select
-        value={current.get("industry") ?? ""}
-        onChange={(e) => onChange("industry", e.target.value)}
-        className={selectClass}
-        aria-label="Filter by industry"
-      >
-        <option value="">All Industries</option>
-        {industries.map((i) => (
-          <option key={i} value={i}>{i}</option>
-        ))}
-      </select>
-
-      <select
-        value={current.get("experience_level") ?? ""}
-        onChange={(e) => onChange("experience_level", e.target.value)}
-        className={selectClass}
-        aria-label="Filter by experience"
-      >
-        <option value="">All Experience Levels</option>
-        {["Internship", "Entry Level", "Mid Level", "Senior", "Management"].map((lvl) => (
-          <option key={lvl} value={lvl}>{lvl}</option>
-        ))}
-      </select>
-
-      <select
-        value={current.get("location") ?? ""}
-        onChange={(e) => onChange("location", e.target.value)}
-        className={selectClass}
-        aria-label="Filter by location"
-      >
-        <option value="">All Locations</option>
-        {locations.map((l) => (
-          <option key={l} value={l}>{formatLocation(l) || l}</option>
-        ))}
-      </select>
-
-      <select
-        value={current.get("department") ?? ""}
-        onChange={(e) => onChange("department", e.target.value)}
-        className={selectClass}
-        aria-label="Filter by department"
-      >
-        <option value="">All Departments</option>
-        {departments.map((d) => (
-          <option key={d} value={d}>{formatDepartment(d) || d}</option>
-        ))}
-      </select>
-
-      <select
-        value={current.get("employment_type") ?? ""}
-        onChange={(e) => onChange("employment_type", e.target.value)}
-        className={selectClass}
-        aria-label="Filter by type"
-      >
-        <option value="">All Job Types</option>
-        {employmentTypes.map((t) => (
-          <option key={t} value={t}>{t}</option>
-        ))}
-      </select>
-
-      <label className="flex h-11 cursor-pointer items-center gap-3 border border-foreground px-3 transition-colors hover:bg-muted">
-        <input
-          type="checkbox"
-          checked={current.get("remote") === "true"}
-          onChange={(e) => onChange("remote", e.target.checked ? "true" : "")}
-          className="h-4 w-4 accent-[var(--foreground)]"
-        />
-        <span className="font-mono text-xs uppercase tracking-[0.1em] text-foreground">Remote only</span>
-      </label>
-
-      <label className="flex h-11 cursor-pointer items-center gap-3 border border-foreground px-3 transition-colors hover:bg-muted">
-        <input
-          type="checkbox"
-          checked={current.get("since_last_run") === "true"}
-          onChange={(e) => onChange("since_last_run", e.target.checked ? "true" : "")}
-          className="h-4 w-4 accent-[var(--foreground)]"
-        />
-        <span className="font-mono text-xs uppercase tracking-[0.1em] text-foreground">New this run</span>
-      </label>
-    </div>
-  );
-}
-
-export function FilterBar(props: FilterBarProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
-  const reduce = useReducedMotion();
-
-  const handleChange = useCallback(
-    (key: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) { params.set(key, value); } else { params.delete(key); }
-      // company name and company_id are mutually exclusive
-      if (key === "company") params.delete("company_id");
-      if (key === "company_id") params.delete("company");
-      // experience_level (select) and level (intern/new-grad pills) are mutually exclusive
-      if (key === "experience_level" && value) params.delete("level");
-      params.delete("page");
-      startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
-    },
-    [pathname, router, searchParams]
-  );
-
-  const applyPill = useCallback(
-    (pillParams: Record<string, string>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      const isActive = Object.entries(pillParams).every(([k, v]) => params.get(k) === v);
-      if (isActive) {
-        for (const k of Object.keys(pillParams)) params.delete(k);
-      } else {
-        for (const [k, v] of Object.entries(pillParams)) params.set(k, v);
-        // selecting a level pill clears the experience_level select (mutually exclusive)
-        if ("level" in pillParams) params.delete("experience_level");
-      }
-      params.delete("page");
-      startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
-    },
-    [pathname, router, searchParams]
-  );
-
-  return (
-    <div className="sticky top-16 z-40 -mx-6 border-b-2 border-foreground bg-background px-6 py-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12">
-      {/* Quick filter pills — stagger in on mount so the bar feels alive. The entrance is
-          the CSS `motion-safe:animate-reveal` keyframe (not a Framer `initial`), so the
-          server-rendered pills are never parked at opacity 0: reduced-motion readers get
-          them static and visible. Framer keeps only the press spring. */}
-      <div className="flex flex-wrap gap-2">
-        {QUICK_PILLS.map((pill, i) => {
-          const isActive = Object.entries(pill.params).every(
-            ([k, v]) => searchParams.get(k) === v
-          );
-          return (
-            <m.button
-              key={pill.label}
-              whileTap={reduce ? undefined : { scale: 0.95 }}
-              transition={springPress}
-              onClick={() => applyPill(pill.params as Record<string, string>)}
-              style={{ "--reveal-delay": `${i * staggerStep}s` } as CSSProperties}
-              className={cn(
-                "min-h-[32px] border px-3 py-1.5 font-mono text-xs uppercase tracking-[0.08em] transition-colors duration-100 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2 motion-safe:animate-reveal",
-                isActive
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-foreground text-foreground hover:bg-foreground hover:text-background"
-              )}
-            >
-              {pill.label}
-            </m.button>
-          );
-        })}
-        {searchParams.toString() && (
-          <m.button
-            whileTap={reduce ? undefined : { scale: 0.95 }}
-            transition={springPress}
-            onClick={() => startTransition(() => router.push(pathname))}
-            style={{ "--reveal-delay": `${QUICK_PILLS.length * staggerStep}s` } as CSSProperties}
-            className="min-h-[32px] border border-foreground px-3 py-1.5 font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2 motion-safe:animate-reveal"
-          >
-            ✕ Clear
-          </m.button>
-        )}
-      </div>
-
-      {/* Desktop filters */}
-      <div className="mt-4 hidden md:block">
-        <Filters {...props} selectedCompanyName={props.selectedCompanyName} onChange={handleChange} current={searchParams} />
-      </div>
-
-      {/* Mobile Sheet */}
-      <div className="mt-4 md:hidden">
-        <Sheet>
-          <SheetTrigger className="flex h-11 w-full items-center justify-center gap-2 border border-foreground font-mono text-xs uppercase tracking-[0.1em] text-foreground transition-colors hover:bg-foreground hover:text-background">
-            <FilterIcon />
-            All Filters
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-[85vh] overflow-y-auto border-t-2 border-foreground bg-background p-6">
-            <SheetTitle className="sr-only">Filters</SheetTitle>
-            <SectionLabel className="mb-6">Filters</SectionLabel>
-            <Filters {...props} selectedCompanyName={props.selectedCompanyName} onChange={handleChange} current={searchParams} />
-          </SheetContent>
-        </Sheet>
-      </div>
+        <p className="mt-2 font-sans text-xs text-muted-foreground">Applies when you search.</p>
+      </fieldset>
     </div>
   );
 }

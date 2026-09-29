@@ -1,12 +1,8 @@
 import Link from "next/link";
 import { getMeta, getCompanies, type Meta, type CompanyItem } from "@/lib/api";
 import { formatNumber } from "@/lib/utils";
-import { HeroHeadline } from "@/components/landing/HeroHeadline";
 import { BarFill } from "@/components/landing/BarFill";
 import { Reveal } from "@/components/motion/Reveal";
-import { SmoothScrollStage } from "@/components/gsap/SmoothScrollStage";
-import { HeroRule } from "@/components/gsap/HeroRule";
-import { ScrubCounter } from "@/components/gsap/ScrubCounter";
 import { Marquee } from "@/components/gsap/Marquee";
 import { BatchReveal } from "@/components/gsap/BatchReveal";
 import { boardsRechecked } from "@/lib/format";
@@ -41,128 +37,98 @@ export default async function Home() {
   const rechecked = boardsRechecked(meta?.freshness);
 
   return (
-    <SmoothScrollStage>
     <main id="main" className="relative overflow-hidden">
-      {/* ─── Hero ─── */}
-      <section className="mx-auto max-w-6xl px-6 pb-24 pt-20 md:px-8 md:pb-32 md:pt-28 lg:px-12">
-        <div
-          data-speed="1.08"
-          className="flex items-center gap-4"
-        >
-          <span className="font-mono text-xs uppercase tracking-[0.25em] text-foreground">
-            Job Intelligence
-          </span>
-          <span className="h-px flex-1 bg-foreground" />
-          <span className="font-mono text-xs uppercase tracking-[0.25em] text-muted-foreground">
-            Est. 2026
-          </span>
-        </div>
+      {/* ─── Hero: search and live numbers in the first viewport ─── */}
+      <section className="mx-auto max-w-6xl px-6 pb-14 pt-8 md:px-8 md:pb-20 md:pt-14 lg:px-12">
+        <p className="font-sans text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          Internships and early-career roles, straight from company boards
+        </p>
+        <h1 className="mt-4 max-w-4xl font-display text-4xl leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+          Every open role. Every <span className="italic">company.</span>
+        </h1>
 
-        <HeroHeadline />
-
-        <HeroRule />
-
-        <div className="mt-12 grid gap-12 md:grid-cols-12 md:gap-8">
-          <p className="font-body text-xl leading-relaxed text-foreground md:col-span-7 lg:text-2xl">
-            Chronicle pulls every open role <span className="italic">directly</span>{" "}
-            from {meta ? formatNumber(meta.total_companies) : "hundreds of"} companies&rsquo;
-            own career pages — Stripe, Anthropic, OpenAI, Databricks, and more. Boards are
-            re-checked on a rolling cycle, and a role that disappears from its company&rsquo;s
-            board leaves Chronicle at the next check. No recruiters. No noise.
-          </p>
-
-          <div className="flex flex-col gap-4 md:col-span-5 md:items-end md:justify-end">
+        <form action="/jobs" method="get" role="search" className="mt-8 flex max-w-2xl flex-col gap-3 sm:flex-row">
+          <label htmlFor="home-search" className="sr-only">
+            Search roles
+          </label>
+          <input
+            id="home-search"
+            name="q"
+            type="search"
+            placeholder="Search roles, e.g. software engineer intern"
+            className="h-12 w-full min-w-0 border border-input bg-background px-4 sm:flex-1 font-sans text-base text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="h-12 shrink-0 bg-accent px-6 font-sans text-sm font-medium text-accent-foreground transition-colors hover:bg-accent-secondary focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
+          >
+            Search
+          </button>
+        </form>
+        <nav aria-label="Popular searches" className="mt-4 flex flex-wrap gap-2">
+          {[
+            { label: "Internships", href: "/jobs?level=intern" },
+            { label: "New grad", href: "/jobs?level=new_grad" },
+            { label: "Remote", href: "/jobs?remote=true" },
+            { label: "New since last run", href: "/jobs?since_last_run=true" },
+          ].map((l) => (
             <Link
-              href="/jobs"
-              className="group inline-flex h-14 w-full items-center justify-between gap-4 border-2 border-foreground bg-foreground px-8 font-mono text-xs font-medium uppercase tracking-[0.2em] text-background transition-colors duration-100 hover:bg-background hover:text-foreground focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px] md:w-auto"
+              key={l.href}
+              href={l.href}
+              className="inline-flex min-h-[36px] items-center border border-border-light px-3 font-sans text-sm text-foreground transition-colors hover:border-input hover:bg-muted"
             >
-              Browse Open Roles
-              <span aria-hidden>→</span>
+              {l.label}
             </Link>
-            <Link
-              href="/jobs?since_last_run=true"
-              className="group inline-flex h-14 w-full items-center justify-between gap-4 border-2 border-foreground bg-background px-8 font-mono text-xs font-medium uppercase tracking-[0.2em] text-foreground transition-colors duration-100 hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-[3px] md:w-auto"
-            >
-              New Since Last Sync
-              <span aria-hidden>→</span>
-            </Link>
-          </div>
-        </div>
+          ))}
+        </nav>
+
+        {meta && (
+          <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-border-light pt-6 sm:grid-cols-4">
+            {[
+              { value: formatNumber(meta.total_active_jobs), label: "Open roles" },
+              { value: formatNumber(exp.intern ?? 0), label: "Internships" },
+              { value: formatNumber(meta.total_companies), label: "Companies" },
+              meta.freshness && meta.freshness.boards_active > 0
+                ? {
+                    value: `${formatNumber(meta.freshness.boards_checked_7d)}`,
+                    label: `Boards re-checked in 7 days, of ${formatNumber(meta.freshness.boards_active)}`,
+                  }
+                : { value: `${remotePct}%`, label: "Remote roles" },
+            ].map(({ value, label }) => (
+              // dt first in the DOM (label, then value), shown number-first.
+              <div key={label} className="flex min-w-0 flex-col-reverse">
+                <dt className="mt-2 font-sans text-xs text-muted-foreground">{label}</dt>
+                <dd className="font-display text-3xl leading-none text-foreground md:text-4xl">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        <p className="mt-10 max-w-3xl font-body text-lg leading-relaxed text-foreground md:text-xl">
+          Chronicle pulls every open role <span className="italic">directly</span>{" "}
+          from {meta ? formatNumber(meta.total_companies) : "hundreds of"} companies&rsquo;
+          own career pages — Stripe, Anthropic, OpenAI, Databricks, and more. Boards are
+          re-checked on a rolling cycle, and a role that disappears from its company&rsquo;s
+          board leaves Chronicle at the next check. No recruiters. No noise.
+        </p>
       </section>
 
-      {/* ─── Inverted stats ─── */}
-      {meta && (
-        <section className="relative bg-foreground text-background">
-          <div
-            aria-hidden
-            className="texture-lines-inverted pointer-events-none absolute inset-0 opacity-[0.06]"
-          />
-          <div className="relative mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32 lg:px-12">
-            <div className="flex items-center gap-4">
-              <span className="font-mono text-xs uppercase tracking-[0.25em] text-background">
-                At a Glance
-              </span>
-              <span className="h-px flex-1 bg-background/40" />
-            </div>
-
-            <div className="mt-16 border-b border-background/20 pb-16">
-              <ScrubCounter
-                value={meta.total_active_jobs}
-                className="font-display text-6xl font-medium leading-none tracking-tight sm:text-7xl md:text-8xl lg:text-9xl"
-              />
-              <div className="mt-4 font-mono text-xs uppercase tracking-[0.2em] text-background/60">
-                Open roles indexed across {meta.total_companies} companies
-              </div>
-            </div>
-
-            <div className="mt-16 grid grid-cols-1 divide-y divide-background/20 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-              {[
-                { value: formatNumber(meta.fresh_since_last_run), label: "Fresh this sync" },
-                { value: `${remotePct}%`, label: "Remote roles" },
-                {
-                  // Per-sync health ("598/603") when the last run recorded a real tally;
-                  // otherwise fall back to the total verified-company count so this never
-                  // renders a confusing "0/0" (e.g. right after an interrupted run).
-                  value:
-                    meta.last_run &&
-                    meta.last_run.companies_ok + meta.last_run.companies_failed > 0
-                      ? `${meta.last_run.companies_ok}/${
-                          meta.last_run.companies_ok + meta.last_run.companies_failed
-                        }`
-                      : formatNumber(meta.total_companies),
-                  label: "Sources verified",
-                },
-              ].map(({ value, label }) => (
-                <div key={label} className="py-8 sm:px-8 sm:py-0 sm:first:pl-0">
-                  <div className="font-display text-5xl font-medium leading-none md:text-6xl">
-                    {value}
-                  </div>
-                  <div className="mt-3 font-mono text-xs uppercase tracking-[0.2em] text-background/60">
-                    {label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <div className="h-1 w-full bg-foreground" />
+      <div className="h-px w-full bg-border-light" />
 
       {/* ─── How it works — direct from source ─── */}
       <section className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32 lg:px-12">
         <div className="flex items-center gap-4">
-          <span className="font-mono text-xs uppercase tracking-[0.25em] text-foreground">
+          <span className="font-sans text-xs uppercase tracking-[0.25em] text-foreground">
             Sourced Direct
           </span>
-          <span className="h-px flex-1 bg-foreground" />
+          <span className="h-px flex-1 bg-border-light" />
         </div>
 
         <h2 className="mt-10 max-w-3xl font-display text-4xl font-medium leading-tight tracking-tight text-foreground md:text-6xl">
           We don&rsquo;t scrape job boards. We read the source.
         </h2>
 
-        <BatchReveal className="mt-16 grid grid-cols-1 gap-px border border-foreground bg-foreground md:grid-cols-3">
+        <BatchReveal className="mt-16 grid grid-cols-1 gap-px border border-input bg-foreground md:grid-cols-3">
           {[
             {
               n: "01",
@@ -187,13 +153,13 @@ export default async function Home() {
               data-batch
               className="group bg-background p-8 transition-colors duration-100 hover:bg-foreground hover:text-background"
             >
-              <div className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors duration-100 group-hover:text-background/60">
+              <div className="font-sans text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors duration-100 group-hover:text-background/60">
                 {step.n}
               </div>
               <h3 className="mt-6 font-display text-2xl font-medium leading-snug">
                 {step.t}
               </h3>
-              <p className="mt-4 font-body text-base leading-relaxed text-muted-foreground transition-colors duration-100 group-hover:text-background/80">
+              <p className="mt-4 font-sans text-base leading-relaxed text-muted-foreground transition-colors duration-100 group-hover:text-background/80">
                 {step.d}
               </p>
             </div>
@@ -201,16 +167,16 @@ export default async function Home() {
         </BatchReveal>
       </section>
 
-      <div className="h-1 w-full bg-foreground" />
+      <div className="h-px w-full bg-border-light" />
 
       {/* ─── Market intelligence ─── */}
       {topIndustries.length > 0 && (
         <section className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32 lg:px-12">
           <div className="flex items-center gap-4">
-            <span className="font-mono text-xs uppercase tracking-[0.25em] text-foreground">
+            <span className="font-sans text-xs uppercase tracking-[0.25em] text-foreground">
               Market Intelligence
             </span>
-            <span className="h-px flex-1 bg-foreground" />
+            <span className="h-px flex-1 bg-border-light" />
           </div>
 
           <h2 className="mt-10 font-display text-4xl font-medium leading-tight tracking-tight text-foreground md:text-6xl">
@@ -220,7 +186,7 @@ export default async function Home() {
           <div className="mt-16 grid gap-16 lg:grid-cols-12 lg:gap-12">
             {/* Industry bars */}
             <div className="lg:col-span-8">
-              <div className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <div className="font-sans text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 Open roles by industry
               </div>
               <ul className="mt-8 space-y-5">
@@ -230,7 +196,7 @@ export default async function Home() {
                       <span className="font-display text-lg text-foreground md:text-xl">
                         {ind.industry}
                       </span>
-                      <span className="font-mono text-xs text-muted-foreground">
+                      <span className="font-sans text-xs text-muted-foreground">
                         {formatNumber(ind.count)}
                       </span>
                     </div>
@@ -242,10 +208,10 @@ export default async function Home() {
 
             {/* Experience mix */}
             <div className="lg:col-span-4">
-              <div className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <div className="font-sans text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 By career stage
               </div>
-              <div className="mt-8 divide-y divide-border-light border-y border-foreground">
+              <div className="mt-8 divide-y divide-border-light border-y border-border-light">
                 {[
                   { label: "Internships", value: exp.intern ?? 0, href: "/jobs?level=intern" },
                   { label: "New Grad", value: exp.new_grad ?? 0, href: "/jobs?level=new_grad" },
@@ -257,7 +223,7 @@ export default async function Home() {
                     href={row.href}
                     className="group flex items-baseline justify-between py-5 transition-colors duration-100 hover:bg-muted focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
                   >
-                    <span className="font-mono text-xs uppercase tracking-[0.15em] text-foreground">
+                    <span className="font-sans text-xs uppercase tracking-[0.15em] text-foreground">
                       {row.label}
                     </span>
                     <span className="font-display text-3xl font-medium text-foreground group-hover:underline">
@@ -271,15 +237,15 @@ export default async function Home() {
         </section>
       )}
 
-      <div className="h-1 w-full bg-foreground" />
+      <div className="h-px w-full bg-border-light" />
 
       {/* ─── Transparency ─── */}
       <section className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32 lg:px-12">
         <div className="flex items-center gap-4">
-          <span className="font-mono text-xs uppercase tracking-[0.25em] text-foreground">
+          <span className="font-sans text-xs uppercase tracking-[0.25em] text-foreground">
             Radical Transparency
           </span>
-          <span className="h-px flex-1 bg-foreground" />
+          <span className="h-px flex-1 bg-border-light" />
         </div>
 
         <BatchReveal className="mt-16 grid grid-cols-1 gap-x-12 gap-y-12 md:grid-cols-3">
@@ -297,11 +263,11 @@ export default async function Home() {
               d: "When a company discloses a salary band, we surface it on the card. No guessing, no bait-and-switch.",
             },
           ].map((item) => (
-            <div key={item.t} data-batch className="border-t-2 border-foreground pt-6">
+            <div key={item.t} data-batch className="border-t border-border-light pt-6">
               <h3 className="font-display text-2xl font-medium leading-snug text-foreground">
                 {item.t}
               </h3>
-              <p className="mt-4 font-body text-base leading-relaxed text-muted-foreground">
+              <p className="mt-4 font-sans text-base leading-relaxed text-muted-foreground">
                 {item.d}
               </p>
             </div>
@@ -309,17 +275,17 @@ export default async function Home() {
         </BatchReveal>
       </section>
 
-      <div className="h-1 w-full bg-foreground" />
+      <div className="h-px w-full bg-border-light" />
 
       {/* ─── Curated companies wordmark wall ─── */}
       {marquee.length > 0 && (
         <section className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32 lg:px-12">
           <div className="flex items-center gap-4">
-            <span className="font-mono text-xs uppercase tracking-[0.25em] text-foreground">
+            <span className="font-sans text-xs uppercase tracking-[0.25em] text-foreground">
               The Index
             </span>
-            <span className="h-px flex-1 bg-foreground" />
-            <span className="font-mono text-xs uppercase tracking-[0.25em] text-muted-foreground">
+            <span className="h-px flex-1 bg-border-light" />
+            <span className="font-sans text-xs uppercase tracking-[0.25em] text-muted-foreground">
               {meta?.total_companies ? `${formatNumber(meta.total_companies)} companies, hand-picked` : "Hand-picked companies"}
             </span>
           </div>
@@ -329,7 +295,7 @@ export default async function Home() {
           <div className="mt-10">
             <Link
               href="/companies"
-              className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
+              className="inline-flex items-center gap-3 font-sans text-xs uppercase tracking-[0.2em] text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-foreground focus-visible:outline-offset-2"
             >
               View all companies
               <span aria-hidden>→</span>
@@ -345,7 +311,7 @@ export default async function Home() {
           className="pointer-events-none absolute inset-0 opacity-[0.07]"
           style={{
             backgroundImage:
-              "radial-gradient(circle at top center, #ffffff, transparent 70%)",
+              "radial-gradient(circle at top center, var(--background), transparent 70%)",
           }}
         />
         <div className="relative mx-auto max-w-6xl px-6 py-28 text-center md:px-8 md:py-40 lg:px-12">
@@ -358,7 +324,7 @@ export default async function Home() {
                 min-height instead of a fixed one so a longer count wraps inside the box. */}
             <Link
               href="/jobs"
-              className="group inline-flex min-h-[56px] w-full items-center justify-between gap-3 border-2 border-background bg-background px-5 py-3 text-left font-mono text-xs font-medium uppercase tracking-[0.2em] text-foreground transition-colors duration-100 hover:bg-transparent hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-background focus-visible:outline-offset-[3px] sm:w-auto sm:justify-center sm:gap-4 sm:px-10"
+              className="group inline-flex min-h-[56px] w-full items-center justify-between gap-3 border-2 border-background bg-background px-5 py-3 text-left font-sans text-xs font-medium uppercase tracking-[0.2em] text-foreground transition-colors duration-100 hover:bg-transparent hover:text-background focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-background focus-visible:outline-offset-[3px] sm:w-auto sm:justify-center sm:gap-4 sm:px-10"
             >
               Browse {meta ? formatNumber(meta.total_active_jobs) : "all"} open roles
               <span aria-hidden>→</span>
@@ -367,6 +333,5 @@ export default async function Home() {
         </div>
       </section>
     </main>
-    </SmoothScrollStage>
   );
 }

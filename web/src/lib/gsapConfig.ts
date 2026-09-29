@@ -16,10 +16,9 @@ import { Flip } from "gsap/Flip";
 import { Observer } from "gsap/Observer";
 import { CustomEase } from "gsap/CustomEase";
 
-// NOTE: the heavy, landing-only plugins (ScrollSmoother, SplitText) are deliberately NOT
-// registered here. They are imported and registered directly by their sole consumers
-// (SmoothScrollStage, HeroHeadline) so they stay out of every other route's bundle —
-// Nav/Magnetic pull this module app-wide, and /jobs must stay lean for its Lighthouse budget.
+// NOTE: heavy plugins (ScrollSmoother, SplitText) are deliberately NOT registered here:
+// Nav/Magnetic pull this module app-wide, and /jobs must stay lean for its Lighthouse
+// budget. (The landing no longer uses them: native scrolling, no split-text hero.)
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(useGSAP, ScrollTrigger, Flip, Observer, CustomEase);

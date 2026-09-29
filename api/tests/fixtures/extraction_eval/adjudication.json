@@ -1,0 +1,110 @@
+[
+ {
+  "id": "ashby:pr1:149f368c-52d5-408f-ba26-ad888f318a00",
+  "field": "grad_year_min",
+  "value": 2027,
+  "reason": "The title \"Software Engineer, Agent (New Grad 2027)\" states the graduating cohort, equivalent to \"graduating in 2027\" -> 2027, 2027 (the body says nothing more; borderline, since it is title-only)."
+ },
+ {
+  "id": "ashby:pr1:149f368c-52d5-408f-ba26-ad888f318a00",
+  "field": "grad_year_max",
+  "value": 2027,
+  "reason": "The title \"Software Engineer, Agent (New Grad 2027)\" states the graduating cohort, equivalent to \"graduating in 2027\" -> 2027, 2027 (the body says nothing more; borderline, since it is title-only)."
+ },
+ {
+  "id": "ashby:pr1:d9c445da-c7b4-43a3-8d71-d367681c3015",
+  "field": "grad_year_min",
+  "value": null,
+  "reason": "\"open to students graduating from undergraduate or Master's programs by June 2027\" sets only an upper bound, so no minimum graduation year is stated."
+ },
+ {
+  "id": "greenhouse:jumptrading:7974837",
+  "field": "us_citizen_required",
+  "value": false,
+  "reason": "\"INTERNATIONAL STUDENTS are encouraged to apply.\" explicitly welcomes non-citizens, which the guide labels false."
+ },
+ {
+  "id": "greenhouse:jumptrading:7974943",
+  "field": "us_citizen_required",
+  "value": false,
+  "reason": "\"INTERNATIONAL STUDENTS are encouraged to apply.\" explicitly welcomes non-citizens, which the guide labels false."
+ },
+ {
+  "id": "greenhouse:coreweave:4692243006",
+  "field": "us_person_required",
+  "value": true,
+  "reason": "The U.S.-person-or-export-authorization alternative is undercut by \"CoreWeave may, for legitimate business reasons, decline to pursue any export licensing process,\" so a non-U.S. person without a license can be excluded."
+ },
+ {
+  "id": "greenhouse:rocketlabcorporation:7980750003",
+  "field": "us_person_required",
+  "value": null,
+  "reason": "Posting accepts a U.S. person \"or be eligible to obtain the required authorizations from the U.S. Department of State and/or the U.S. Department of Commerce\" with no statement that Rocket Lab will or may decline to seek them, so U.S.-person status is not strictly required."
+ },
+ {
+  "id": "greenhouse:rocketlab:7990319003",
+  "field": "us_person_required",
+  "value": null,
+  "reason": "Posting accepts a U.S. person \"or be eligible to obtain the required authorizations from the U.S. Department of State and/or the U.S. Department of Commerce\" with no statement that Rocket Lab will or may decline to seek them, so U.S.-person status is not strictly required."
+ },
+ {
+  "id": "greenhouse:rocketlab:8000958003",
+  "field": "us_person_required",
+  "value": null,
+  "reason": "Posting accepts a U.S. person \"or be eligible to obtain the required authorizations from the U.S. Department of State and/or the U.S. Department of Commerce\" with no statement that Rocket Lab will or may decline to seek them, so U.S.-person status is not strictly required."
+ },
+ {
+  "id": "lever:hermeus:643fd7b7-9015-43a1-aa2b-a54f117b403c",
+  "field": "us_person_required",
+  "value": null,
+  "reason": "Posting accepts \"a \u201cU.S. person\u201d ... or otherwise eligible for deemed export licensing\" and never says the company will or may decline to pursue a license, so U.S.-person status is not strictly required."
+ },
+ {
+  "id": "lever:hermeus:9229aa88-f54d-4ecd-85ee-b31f53b4207d",
+  "field": "us_person_required",
+  "value": null,
+  "reason": "Posting accepts \"a \u201cU.S. person\u201d ... or otherwise eligible for deemed export licensing\" and never says the company will or may decline to pursue a license, so U.S.-person status is not strictly required."
+ },
+ {
+  "id": "lever:hermeus:d40446ee-40a9-4bb0-a3a8-a4a189b74630",
+  "field": "us_person_required",
+  "value": null,
+  "reason": "Posting accepts \"a \u201cU.S. person\u201d ... or otherwise eligible for deemed export licensing\" and never says the company will or may decline to pursue a license, so U.S.-person status is not strictly required."
+ },
+ {
+  "id": "lever:hermeus:d87ed913-affc-475e-b721-c5b5f11c3c7b",
+  "field": "us_person_required",
+  "value": null,
+  "reason": "Posting accepts \"a \u201cU.S. person\u201d ... or otherwise eligible for deemed export licensing\" and never says the company will or may decline to pursue a license, so U.S.-person status is not strictly required."
+ },
+ {
+  "id": "lever:pr1:1602c0e0-10fe-4fc9-ac0f-22ce2a2c0d18",
+  "field": "us_person_required",
+  "value": null,
+  "reason": "Posting accepts \"a \u201cU.S. person\u201d ... or otherwise eligible for deemed export licensing\" and never says the company will or may decline to pursue a license, so U.S.-person status is not strictly required."
+ },
+ {
+  "id": "lever:pr1:b7babdb5-64ee-49ad-a193-918d6a31c462",
+  "field": "us_person_required",
+  "value": null,
+  "reason": "Posting accepts \"a \u201cU.S. person\u201d ... or otherwise eligible for deemed export licensing\" and never says the company will or may decline to pursue a license, so U.S.-person status is not strictly required."
+ },
+ {
+  "id": "greenhouse:celonis:7767090003",
+  "field": "workplace_type",
+  "value": "hybrid",
+  "reason": "The posting offers \"a flexible hybrid work model that balances remote focus with vibrant office collaboration,\" and nothing in the text contradicts it."
+ },
+ {
+  "id": "greenhouse:celonis:7990967003",
+  "field": "workplace_type",
+  "value": "hybrid",
+  "reason": "The posting offers \"a flexible hybrid work model that balances remote focus with vibrant office collaboration,\" which is consistent with \"This internship can be done from our Madrid Office or Munich Office.\""
+ },
+ {
+  "id": "greenhouse:psiquantum:7695559003",
+  "field": "workplace_type",
+  "value": "remote",
+  "reason": "The location field \"Palo Alto, California, United States; Remote\" states the role may be done remotely, and the text says nothing that conflicts."
+ }
+]

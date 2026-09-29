@@ -1,6 +1,7 @@
 import hmac
 import logging
 import os
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -74,3 +75,64 @@ def trigger_ingest(
 
     background_tasks.add_task(_run_ingest_bg, budget_seconds)
     return {"status": "started", "budget_seconds": budget_seconds}
+
+
+# ── Production search benchmark ──────────────────────────────────────────────
+# Runs on the Render box against Neon: the number that matters for users (the local
+# docs/bench_results.md figures are from faster hardware). Protected by the ingest secret
+# and capped, so it can't be used to load the database.
+_BENCH_QUERIES = (
+    "software engineer intern", "machine learning", "data science internship",
+    "product manager new grad", "hardware engineer", "backend distributed systems",
+    "frontend react", "security", "robotics", "quantitative research",
+)
+
+
+@router.post("/bench")
+def bench_search(
+    n: int = Query(20, ge=5, le=100),
+    modes: str = Query("keyword,semantic,hybrid", pattern=r"^(keyword|semantic|hybrid)(,(keyword|semantic|hybrid))*$"),
+    _: None = Depends(require_ingest_secret),
+    session: Session = Depends(_db),
+):
+    """Time the real /jobs handler in-process (handler + database; no network) for each
+    search mode, n queries each, and return p50/p95/max in milliseconds."""
+    import inspect
+    import statistics
+    import time
+
+    from app.routers.jobs import list_jobs
+
+    # Call the handler as FastAPI would: every parameter at its declared default.
+    defaults = {
+        name: (p.default.default if hasattr(p.default, "default") else p.default)
+        for name, p in inspect.signature(list_jobs).parameters.items()
+        if name != "session"
+    }
+    out = {}
+    try:
+        for mode in modes.split(","):
+            # Warm-up: the first semantic call loads the model (~2 s); keep it out of timing.
+            list_jobs(**{**defaults, "q": _BENCH_QUERIES[0], "mode": mode}, session=session)
+            session.rollback()
+            times = []
+            for i in range(n):
+                q = _BENCH_QUERIES[i % len(_BENCH_QUERIES)]
+                t0 = time.perf_counter()
+                list_jobs(**{**defaults, "q": q, "mode": mode, "level": "intern"}, session=session)
+                times.append((time.perf_counter() - t0) * 1000)
+                session.rollback()  # never hold one read transaction open across the run
+            times.sort()
+            out[mode] = {
+                "n": n,
+                "p50_ms": round(statistics.median(times)),
+                "p95_ms": round(times[max(0, int(len(times) * 0.95) - 1)]),
+                "max_ms": round(times[-1]),
+            }
+    finally:
+        # Hand the embedding model back: the 512 MB box can't keep it resident.
+        from app.ml.embedder import release_embedder
+
+        release_embedder()
+    return {"measured_at": datetime.now(tz=timezone.utc).isoformat(), "results": out,
+            "note": "In-process /jobs handler time (database + app), excluding network."}
