@@ -15,7 +15,11 @@ dependencies = [
     "psycopg2-binary>=2.9",
     "rapidfuzz>=3.9",
     "apscheduler>=3.10",
-    "selectolax>=0.3",
+    # Capped below 1.0, which removed the Modest backend (`selectolax.parser`) that the
+    # ingest parses descriptions with. Lift it only together with a move to
+    # `selectolax.lexbor`, after a replay shows content hashes and stored descriptions
+    # are unchanged.
+    "selectolax>=0.3,<1",
     "python-dotenv>=1.0",
     "pydantic>=2.7",
     "pgvector>=0.2.5",
