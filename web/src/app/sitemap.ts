@@ -9,7 +9,7 @@ import { SITE_URL } from "@/lib/site";
 // chunk is a valid, empty sitemap.
 export const JOB_CHUNK_SIZE = 20_000;
 export const JOB_CHUNKS = 3;
-export const revalidate = 3600;
+export const revalidate = 86400; // a day; getSitemapJobs uses the same window
 
 export async function generateSitemaps() {
   return Array.from({ length: JOB_CHUNKS + 1 }, (_, id) => ({ id }));

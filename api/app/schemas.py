@@ -138,7 +138,7 @@ class JobDetail(BaseModel):
 
 class SitemapJob(BaseModel):
     id: int
-    last_seen_at: datetime
+    last_seen_at: datetime | None = None  # no longer fetched; kept so old clients parse
 
 
 class SitemapJobsResponse(BaseModel):

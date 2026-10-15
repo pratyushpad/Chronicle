@@ -7,7 +7,7 @@ from app.db import get_session
 from app.models import Application, ApplicationEvent, AppStatus, Company, Job, User
 from app.routers.users import get_current_user
 from app.schemas import SavedJobOut
-from app.job_items import job_list_item
+from app.job_items import LIST_LOAD, job_list_item
 
 # "Saved" is the entry stage of the tracker: a bookmark is an Application with
 # status='saved'. These routes are a view over that single store (no separate
@@ -31,6 +31,7 @@ def list_saved(user: User = Depends(get_current_user), session: Session = Depend
         .join(Company, Job.company_id == Company.id)
         .where(Application.user_id == user.id, Application.status == AppStatus.saved)
         .order_by(Application.created_at.desc())
+        .options(LIST_LOAD)
     ).all()
 
     results = []

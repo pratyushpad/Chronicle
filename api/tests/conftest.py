@@ -1,8 +1,11 @@
 import asyncio
 import json
 import os
+import re
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
+from typing import NamedTuple
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -43,6 +46,71 @@ def pg_engine():
     if eng is None:
         pytest.skip("no TEST_DATABASE_URL Postgres reachable")
     return eng
+
+
+class ResultSet(NamedTuple):
+    """What one statement sent back over the wire: its SQL (and bind parameters, so a test
+    can EXPLAIN exactly what ran), the column names of its result, and how many rows it
+    carried."""
+
+    sql: str
+    columns: tuple[str, ...]
+    rows: int
+    params: object = None
+
+
+# The ORM de-duplicates repeated labels in one SELECT (id, id_1, ...); strip that so a
+# column is matched by the name the model gives it.
+_LABEL_SUFFIX = re.compile(r"_\d+$")
+
+
+class SelectLog(list):
+    """The result sets the database returned while a request ran (see record_selects)."""
+
+    def with_column(self, *names: str) -> list[ResultSet]:
+        """The result sets that returned a column called one of `names`."""
+        return [
+            rs for rs in self
+            if any(_LABEL_SUFFIX.sub("", col) in names for col in rs.columns)
+        ]
+
+    def assert_never_returned(self, *names: str) -> None:
+        hits = self.with_column(*names)
+        assert not hits, (
+            f"{', '.join(names)} came back over the wire from:\n"
+            + "\n".join(f"  [{rs.rows} rows] {' '.join(rs.sql.split())[:240]}" for rs in hits)
+        )
+
+
+@pytest.fixture
+def record_selects(pg_engine):
+    """Context manager that records, for every statement that returns rows while it is
+    open, the column names and row count of the result set (cursor.description and
+    cursor.rowcount, via the engine's after_cursor_execute). That is what Neon bills as
+    egress, so a test can assert that one API request never pulls a column or a row
+    volume it does not use.
+
+        with record_selects() as log:
+            client.get("/jobs")
+        log.assert_never_returned("description_text", "embedding")
+    """
+    from sqlalchemy import event
+
+    @contextmanager
+    def _record():
+        log = SelectLog()
+
+        def _after(conn, cursor, statement, parameters, context, executemany):
+            if cursor.description is not None:
+                log.append(ResultSet(statement, tuple(d[0] for d in cursor.description), cursor.rowcount, parameters))
+
+        event.listen(pg_engine, "after_cursor_execute", _after)
+        try:
+            yield log
+        finally:
+            event.remove(pg_engine, "after_cursor_execute", _after)
+
+    return _record
 
 
 @pytest.fixture
