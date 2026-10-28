@@ -88,6 +88,9 @@ class Company(Base):
     industry = Column(String, nullable=True)
     active = Column(Boolean, nullable=False, default=True)
     last_ingested_at = Column(DateTime(timezone=True), nullable=True)
+    # sha256 of the last fully ingested board payload (plus BOARD_HASH_VERSION). An
+    # identical payload on the next run means nothing changed, so the board is skipped.
+    board_hash = Column(String(64), nullable=True)
 
     jobs = relationship("Job", back_populates="company")
 
@@ -154,6 +157,9 @@ class Job(Base):
     first_seen_at = Column(DateTime(timezone=True), nullable=False)
     last_seen_at = Column(DateTime(timezone=True), nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)
+    # When the role was soft-closed; the prune clock. NULL for rows closed before this
+    # column existed (the prune falls back to last_seen_at for those).
+    closed_at = Column(DateTime(timezone=True), nullable=True)
     # Versioned hash of the posting's source content (see dedupe.make_content_hash). Lets
     # incremental ingest re-embed only rows whose content changed; a row carrying an older
     # hash version adopts the new one without re-embedding. NULL on very old rows.

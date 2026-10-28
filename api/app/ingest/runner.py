@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import traceback
 from datetime import datetime, timedelta, timezone
 
@@ -9,7 +10,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.models import ATSSource, Company, IngestRun, Job
-from .adapters.base import BoardTooLarge
+from .adapters.base import BoardDigest, BoardTooLarge, board_digest
 from .adapters.ashby import AshbyAdapter
 from .adapters.greenhouse import GreenhouseAdapter
 from .adapters.lever import LeverAdapter
@@ -51,6 +52,16 @@ _CONCURRENCY = 3
 # adds nothing to search or embedding quality but costs Neon storage on every row.
 _MAX_DESC_CHARS = 20_000
 
+# Salt for the board-level payload hash. Bump it whenever the normalizers, extractors or
+# stored columns change, so every board is reprocessed once after such a deploy instead of
+# being skipped as "unchanged".
+BOARD_HASH_VERSION = "v1"
+
+
+def _force_full() -> bool:
+    """INGEST_FORCE_FULL=1 reprocesses every board even if its payload is unchanged."""
+    return os.environ.get("INGEST_FORCE_FULL", "").lower() in ("1", "true", "yes")
+
 
 def _describe_error(exc: BaseException) -> str:
     """"{type}: {message} @ {file}:{line}" — the crash site, not just the symptom.
@@ -91,7 +102,10 @@ async def _ingest_company(
     deadline: datetime | None = None,
 ) -> dict:
     adapter = _ADAPTERS[company.ats]
-    result = {"company_id": company.id, "jobs_seen": 0, "jobs_new": 0, "error": None, "skipped": False}
+    result = {
+        "company_id": company.id, "jobs_seen": 0, "jobs_new": 0, "error": None,
+        "skipped": False, "unchanged": False,
+    }
 
     async with sem:
         # Runtime-budget checkpoint (C3): once the run is over budget, stop fetching new
@@ -116,6 +130,7 @@ async def _ingest_company(
         # per-job body below contains no awaits — so from the first upsert through the
         # commit this task never yields to the event loop, and no sibling task can be
         # holding uncommitted work when a rollback fires.
+        new_board_hash: str | None = None
         for attempt in range(2):
             try:
                 # Reset before each attempt: a retry after a partial consume must not
@@ -124,7 +139,37 @@ async def _ingest_company(
                 result["jobs_new"] = 0
                 now = datetime.now(tz=timezone.utc)
 
-                async for raw in adapter.fetch(company.slug, client):
+                digest = BoardDigest()
+                token = board_digest.set(digest)
+                try:
+                    stream = adapter.fetch(company.slug, client)
+                    # Pull the first item: iter_board_json finishes the whole download
+                    # before its first yield, so the digest is final by now (and also if
+                    # the board is empty, where the stream just ends).
+                    first = await stream.__anext__()
+                except StopAsyncIteration:
+                    first = None
+                finally:
+                    board_digest.reset(token)
+                new_board_hash = digest.hexdigest(BOARD_HASH_VERSION)
+                if (
+                    new_board_hash is not None
+                    and new_board_hash == getattr(company, "board_hash", None)
+                    and not _force_full()
+                ):
+                    # Same payload as the last full ingest: every job row is already
+                    # current, so skip normalization and the per-job upserts entirely.
+                    await stream.aclose()
+                    result["unchanged"] = True
+                    break
+
+                async def _with_first(first=first, stream=stream):
+                    if first is not None:
+                        yield first
+                        async for item in stream:
+                            yield item
+
+                async for raw in _with_first():
                     posted = parse_posted_at(raw.posted_at)
                     # Staleness is judged on the last-modified time (Greenhouse
                     # updated_at), exactly as before posted_at became first-published —
@@ -225,6 +270,7 @@ async def _ingest_company(
                         set_={
                             "last_seen_at": now,
                             "is_active": True,
+                            "closed_at": None,
                             "title": raw.title,
                             "title_normalized": t_norm,
                             "location_raw": raw.location,
@@ -303,12 +349,16 @@ async def _ingest_company(
         # on every run is what turned one OOM into four consecutive crashed runs.
         # Stays inside the semaphore so the "no await between first upsert and commit"
         # property above is true by construction.
+        # The payload hash is stored only after the whole board went in, so a board that
+        # failed halfway is never skipped next run.
         session.execute(
             update(Company)
             .where(Company.id == company.id)
-            .values(last_ingested_at=datetime.now(tz=timezone.utc))
+            .values(last_ingested_at=datetime.now(tz=timezone.utc), board_hash=new_board_hash)
         )
         session.commit()
+        if result["unchanged"]:
+            return result  # nothing was written for jobs, so there is nothing to embed
 
     # Embed the rows we just inserted (embedding IS NULL). Best-effort:
     # a missing/broken model must never fail an ingest run. The deadline applies
@@ -363,6 +413,7 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
     failures = []
     ok = 0
     skipped = 0
+    unchanged = 0
     ok_ids: list[int] = []
 
     for company, result in zip(companies, results):
@@ -388,7 +439,12 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
             run.companies_failed += 1
         else:
             ok += 1
-            ok_ids.append(company.id)
+            unchanged += 1 if result.get("unchanged") else 0
+            if not result.get("unchanged"):
+                # An unchanged board lists exactly the roles already stored, so none
+                # vanished; it must not enter soft-close (its rows were not touched, so
+                # their last_seen_at is deliberately old).
+                ok_ids.append(company.id)
             jobs_seen += result["jobs_seen"]
             jobs_new += result["jobs_new"]
             # last_ingested_at is stamped per company inside _ingest_company —
@@ -413,7 +469,14 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
                     Job.last_seen_at < run_start,
                     Job.is_active == True,
                 )
-                .values(is_active=False)
+                .values(
+                    is_active=False,
+                    closed_at=run_start,
+                    # A closed role keeps only the row. Its description and vector are
+                    # the bulk of the bytes and nothing reads them once it is closed.
+                    description_text=None,
+                    embedding=None,
+                )
             )
             jobs_closed = closed_result.rowcount
 
@@ -480,7 +543,7 @@ async def run_ingest(session: Session, budget_seconds: int | None = None) -> Ing
             log.exception("embedder release failed (ingest itself succeeded)")
 
     log.info(
-        "Ingest complete: %d/%d companies OK, %d skipped (budget), %d new jobs, %d closed, %d failures",
-        ok, len(companies), skipped, jobs_new, jobs_closed, len(failures),
+        "Ingest complete: %d/%d companies OK (%d unchanged, skipped), %d skipped (budget), %d new jobs, %d closed, %d failures",
+        ok, len(companies), unchanged, skipped, jobs_new, jobs_closed, len(failures),
     )
     return run
