@@ -1,0 +1,29 @@
+name: neon-usage
+
+# Weekly check of Neon's free-tier meters (egress 5 GB, compute 100 CU-hours, storage).
+# Fails, which makes GitHub email the repo owner, when any meter passes 60% of its limit.
+# Needs the NEON_API_KEY repo secret (a Neon personal API key; the script only issues GETs).
+# Without the secret it prints a notice and succeeds, so a fresh fork stays green.
+on:
+  schedule:
+    - cron: "23 15 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  usage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Neon usage
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+        run: |
+          if [ -z "$NEON_API_KEY" ]; then
+            echo "::notice::NEON_API_KEY repo secret is not set; skipping the Neon usage check."
+            exit 0
+          fi
+          python3 tools/neon_usage.py
