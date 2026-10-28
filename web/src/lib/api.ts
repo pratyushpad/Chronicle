@@ -1,5 +1,6 @@
 import type { PayPeriod } from "@/lib/format";
 import type { DescriptionBlock } from "@/lib/description";
+import { ApiUnavailableError } from "@/lib/api-errors";
 import { SERVICE_HEADER, serviceKey } from "@/lib/internal-service";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -209,6 +210,7 @@ async function fetchJSON<T>(
   const { revalidate = 300, retries = 1, timeoutMs = 10000, errMsg, notFoundMsg } = opts;
   const key = await serverKey();
   let lastErr: unknown;
+  let lastStatus = 0;
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -224,15 +226,20 @@ async function fetchJSON<T>(
       // 4xx answers are final (a retry gets the same one); 5xx and network errors retry.
       if (notFoundMsg && res.status === 404) throw new FinalError(notFoundMsg);
       if (res.status < 500) throw new FinalError(`${errMsg} (${res.status})`);
+      lastStatus = res.status;
       lastErr = new Error(`${errMsg} (${res.status})`);
     } catch (e) {
       if (e instanceof FinalError) throw new Error(e.message);
       lastErr = e;
+      lastStatus = 0;
     } finally {
       clearTimeout(timer);
     }
     if (attempt < retries) await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
   }
+  // A final 503 means the database is down or suspended: say so, so the page can show a
+  // calm notice instead of the generic error.
+  if (lastStatus === 503) throw new ApiUnavailableError(`${errMsg} (503)`);
   throw lastErr instanceof Error ? lastErr : new Error(errMsg);
 }
 
