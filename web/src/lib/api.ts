@@ -186,7 +186,7 @@ export interface JobParams {
 class FinalError extends Error {}
 
 /** serviceKey() reads a server-only env var; fetchJSON only runs in server renders. */
-function serverKey(): string | undefined {
+async function serverKey(): Promise<string | undefined> {
   return typeof window === "undefined" ? serviceKey() : undefined;
 }
 
@@ -207,7 +207,7 @@ async function fetchJSON<T>(
   // the API now answers 503 fast when the database is down, so only a cold start is slow.
   // Callers that cannot afford a retry (similar roles, sitemap) pass retries: 0.
   const { revalidate = 300, retries = 1, timeoutMs = 10000, errMsg, notFoundMsg } = opts;
-  const key = serverKey();
+  const key = await serverKey();
   let lastErr: unknown;
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();

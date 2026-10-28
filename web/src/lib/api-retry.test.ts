@@ -68,7 +68,7 @@ describe("server-to-server key", () => {
     expect(init.headers["X-Internal-Service"]).toBe(
       "19e328a26863af84496a1dbadbdb3f28dc475492d1d5def6f4c99d37ed595c87",
     );
-    expect(serviceKey()).toBe(init.headers["X-Internal-Service"]);
+    expect(await serviceKey()).toBe(init.headers["X-Internal-Service"]);
   });
 
   it("is omitted without a secret", async () => {
