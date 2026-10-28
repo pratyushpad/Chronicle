@@ -64,7 +64,8 @@ export interface JobDetail extends JobListItem {
 
 export interface SitemapJobs {
   total: number;
-  items: { id: number; last_seen_at: string }[];
+  /** The sitemap only reads `id`; the API may leave `last_seen_at` out. */
+  items: { id: number; last_seen_at?: string | null }[];
 }
 
 export interface CompanyItem {
@@ -227,17 +228,26 @@ function buildQuery(params: Record<string, unknown>): string {
   return str ? `?${str}` : "";
 }
 
-export async function getJobs(params: JobParams = {}): Promise<JobListResponse> {
+/**
+ * `revalidate` is the cache window in seconds. It is a separate argument, not a JobParams
+ * field, so it never reaches the query string. The feed keeps the 5-minute default; the
+ * job page's "more at company" list passes an hour.
+ */
+export async function getJobs(
+  params: JobParams = {},
+  { revalidate = 300 }: { revalidate?: number } = {},
+): Promise<JobListResponse> {
   return fetchJSON<JobListResponse>(
     `/jobs${buildQuery(params as Record<string, unknown>)}`,
-    { revalidate: 300, errMsg: "Failed to fetch jobs" },
+    { revalidate, errMsg: "Failed to fetch jobs" },
   );
 }
 
 export async function getJob(id: number): Promise<JobDetail> {
   // Extra retry to absorb Render cold-starts / transient 503s under prefetch fan-out.
+  // An hour: a role only changes when the twice-daily ingest runs.
   return fetchJSON<JobDetail>(`/jobs/${id}`, {
-    revalidate: 300,
+    revalidate: 3600,
     retries: 2,
     errMsg: "Job fetch failed",
     notFoundMsg: "Job not found",
@@ -267,7 +277,8 @@ export async function getCompanyVelocity(id: number, weeks = 8): Promise<Company
 }
 
 export async function getMeta(): Promise<Meta> {
-  return fetchJSON<Meta>(`/meta`, { revalidate: 300, errMsg: "Failed to fetch meta" });
+  // Every page's layout calls this. It only changes when the twice-daily ingest runs.
+  return fetchJSON<Meta>(`/meta`, { revalidate: 3600, errMsg: "Failed to fetch meta" });
 }
 
 /**
@@ -290,7 +301,7 @@ export async function getSimilarJobs(id: number, limit = 4): Promise<JobListItem
 
 export async function getSitemapJobs(offset: number, limit: number): Promise<SitemapJobs> {
   return fetchJSON<SitemapJobs>(`/sitemap/jobs?offset=${offset}&limit=${limit}`, {
-    revalidate: 3600,
+    revalidate: 86400, // a day; keep equal to `revalidate` in app/sitemap.ts (the shorter one wins)
     timeoutMs: 30000,
     errMsg: "Failed to fetch sitemap jobs",
   });
@@ -328,5 +339,5 @@ export interface StatusResponse {
 
 /** Ingest health for /status. Absent on APIs before PR 7 (the page says so). */
 export async function getStatus(): Promise<StatusResponse> {
-  return fetchJSON<StatusResponse>(`/status`, { revalidate: 120, errMsg: "Failed to fetch status" });
+  return fetchJSON<StatusResponse>(`/status`, { revalidate: 900, errMsg: "Failed to fetch status" });
 }

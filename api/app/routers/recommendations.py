@@ -20,7 +20,7 @@ from app.db import get_session
 from app.models import Application, Company, Interaction, InteractionEvent, Job, User
 from app.routers.users import get_current_user
 from app.schemas import RecommendedJob
-from app.job_items import job_list_item
+from app.job_items import LIST_LOAD, job_list_item
 
 router = APIRouter(prefix="/users/me/recommendations", tags=["recommendations"])
 
@@ -245,6 +245,7 @@ def _rule_scored(
         .where(Job.is_active == True)
         .order_by(func.least(Job.posted_at, Job.first_seen_at).desc().nullslast())
         .limit(500)
+        .options(LIST_LOAD)  # rule_score and the card read card columns only
     ).all()
 
     scored: list[tuple] = []
@@ -282,6 +283,7 @@ def _two_stage_scored(
         .where(Job.is_active == True, Job.embedding.isnot(None))
         .order_by(distance)
         .limit(CANDIDATE_POOL)
+        .options(LIST_LOAD)  # the vector is only compared in SQL, never read back
     ).all()
 
     candidates: list[tuple] = []

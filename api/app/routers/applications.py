@@ -10,7 +10,7 @@ from app.schemas import (
     ApplicationCreateIn, ApplicationOut, ApplicationUpdateIn,
     FunnelStats, JobListItem,
 )
-from app.job_items import job_list_item
+from app.job_items import LIST_LOAD, job_list_item
 
 router = APIRouter(prefix="/users/me/applications", tags=["applications"])
 
@@ -59,6 +59,7 @@ def list_applications(user: User = Depends(get_current_user), session: Session =
         .join(Company, Job.company_id == Company.id)
         .where(Application.user_id == user.id)
         .order_by(Application.updated_at.desc())
+        .options(LIST_LOAD)
     ).all()
 
     # Eager-load events for each application
@@ -193,6 +194,7 @@ def _get_app_with_job(app: Application, session: Session) -> ApplicationOut:
         .join(Job, Application.job_id == Job.id)
         .join(Company, Job.company_id == Company.id)
         .where(Application.id == app.id)
+        .options(LIST_LOAD)
     ).first()
     events = session.execute(
         select(ApplicationEvent).where(ApplicationEvent.application_id == app.id).order_by(ApplicationEvent.at)

@@ -1,6 +1,8 @@
 """One place that turns a Job row into the list-card shape every surface returns
 (feed, For You, saved, tracker) — so a new card field can't reach one surface and not
 the others."""
+from sqlalchemy.orm import load_only
+
 from app.models import Job
 from app.schemas import JobListItem
 from app.util import root_domain
@@ -8,6 +10,22 @@ from app.util import root_domain
 ELIGIBILITY_FIELDS = (
     "term_season", "term_year", "degree_levels", "grad_year_min", "grad_year_max",
     "us_citizen_required", "us_person_required", "clearance_required", "workplace_type", "country",
+)
+
+# Loader option for every query that ends in job_list_item(): the columns it reads, plus
+# dedup_key, which the feed's sibling-location lookup and the cross-post collapses read
+# from the same rows. Nothing else is fetched. description_text (avg 6.4 KB) and embedding
+# (avg 4.7 KB as text) were most of every card's bytes, and Neon bills them as egress.
+# raiseload: a column missing here fails loudly instead of becoming one query per row, so
+# a field added to job_list_item() must be added here too.
+LIST_LOAD = load_only(
+    Job.id, Job.company_id, Job.title, Job.location_normalized, Job.remote, Job.department,
+    Job.employment_type, Job.experience_level, Job.tech_tags, Job.sponsorship_flag,
+    Job.salary_min, Job.salary_max, Job.pay_min, Job.pay_max, Job.pay_currency, Job.pay_period,
+    Job.pay_source, *(getattr(Job, f) for f in ELIGIBILITY_FIELDS),
+    Job.posted_at, Job.first_seen_at, Job.last_seen_at, Job.is_active, Job.apply_url,
+    Job.dedup_key,
+    raiseload=True,
 )
 
 

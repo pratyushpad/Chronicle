@@ -42,7 +42,7 @@ const THEME_SCRIPT = `(function(){var d=document.documentElement;d.classList.add
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // Live company total for the nav badge — cached via getMeta's ISR (revalidate 300).
+  // Live company total for the nav badge — cached via getMeta's ISR (revalidate 3600).
   // Tolerate the API being down so the layout never fails to render.
   const meta = await getMeta().catch(() => null);
 
