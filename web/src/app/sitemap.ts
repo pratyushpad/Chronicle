@@ -6,7 +6,7 @@ import { SITE_URL } from "@/lib/site";
 // crawlers walking ~36k job pages exhausted the hosting plan's CPU in Oct 2026, so job
 // pages are disallowed in robots.ts and JOB_CHUNKS is 0. Raise it again only with
 // edge-cached job pages and a usage alert in place.
-export const JOB_CHUNK_SIZE = 20_000;
+export const JOB_CHUNK_SIZE = 2_000; // the API caps /sitemap/jobs at 2,000 ids per call
 export const JOB_CHUNKS = 0;
 export const revalidate = 86400; // a day; getSitemapJobs uses the same window
 

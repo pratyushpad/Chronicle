@@ -43,7 +43,7 @@ const CASES: Array<[name: string, call: () => Promise<unknown>, path: string, re
   ["getMeta", () => getMeta(), "/meta", HOUR],
   ["getSimilarJobs", () => getSimilarJobs(42, 4), "/jobs/42/similar?limit=4", HOUR],
   ["getStatus", () => getStatus(), "/status", 900],
-  ["getSitemapJobs", () => getSitemapJobs(0, 20_000), "/sitemap/jobs?offset=0&limit=20000", DAY],
+  ["getSitemapJobs", () => getSitemapJobs(0, 2_000), "/sitemap/jobs?offset=0&limit=2000", DAY],
   ["getJobs (the feed's default)", () => getJobs({ q: "rust" }), "/jobs?q=rust", 300],
 ];
 

@@ -1,13 +1,15 @@
 import logging
+import time
 from datetime import date, datetime, timedelta, timezone
 from math import ceil
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import and_, any_, func, literal, or_, select, text, true
 from sqlalchemy.orm import Session, aliased, load_only
 
 from app.db import get_session
+from app.ratelimit import search_limiter
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
 from app.ingest.alerts import email_configured
 from app.industries import canonical_industry, fold_counts, raw_labels
@@ -36,6 +38,16 @@ from app.schemas import (
 _SENIOR_REGEX = r"\m(senior|sr|staff|principal|lead|distinguished|architect)\M"
 
 router = APIRouter()
+
+# Public, unauthenticated input bounds. Every free-text filter feeds an ILIKE, a full-text
+# query or the embedder, so an unbounded value is a CPU and Neon-compute amplifier (a 10 KB
+# q measured 1.2 to 1.4 s of API CPU and seconds of Postgres time). NUL is rejected because
+# psycopg2 refuses it in string literals (it used to surface as a 500).
+_MAX_TEXT = 200
+_NO_NUL = r"^[^\x00]*$"
+# Deep offsets are never useful to a person (100 pages x 20 rows is far past any feed use)
+# and grow linearly in cost with the table.
+_MAX_PAGE = 500
 
 logger = logging.getLogger(__name__)
 
@@ -95,17 +107,17 @@ def _last_run_start(session: Session) -> datetime | None:
 
 @router.get("/jobs", response_model=JobListResponse)
 def list_jobs(
-    q: Optional[str] = Query(None),
+    q: Optional[str] = Query(None, max_length=_MAX_TEXT, pattern=_NO_NUL),
     mode: str = Query("keyword", pattern="^(keyword|semantic|hybrid)$"),
-    company: Optional[str] = Query(None),
+    company: Optional[str] = Query(None, max_length=_MAX_TEXT, pattern=_NO_NUL),
     company_id: Optional[int] = Query(None),
-    department: Optional[str] = Query(None),
-    location: Optional[str] = Query(None),
+    department: Optional[str] = Query(None, max_length=_MAX_TEXT, pattern=_NO_NUL),
+    location: Optional[str] = Query(None, max_length=_MAX_TEXT, pattern=_NO_NUL),
     remote: Optional[bool] = Query(None),
-    employment_type: Optional[str] = Query(None),
-    experience_level: Optional[str] = Query(None),
-    level: Optional[str] = Query(None),
-    industry: Optional[str] = Query(None),
+    employment_type: Optional[str] = Query(None, max_length=_MAX_TEXT, pattern=_NO_NUL),
+    experience_level: Optional[str] = Query(None, max_length=_MAX_TEXT, pattern=_NO_NUL),
+    level: Optional[str] = Query(None, max_length=_MAX_TEXT, pattern=_NO_NUL),
+    industry: Optional[str] = Query(None, max_length=_MAX_TEXT, pattern=_NO_NUL),
     posted_after: Optional[date] = Query(None),
     since_last_run: bool = Query(False),
     # Student filters (PR 4). "hide_*" drop roles whose posting STATES the requirement;
@@ -119,11 +131,14 @@ def list_jobs(
     country: Optional[str] = Query(None, pattern="^[A-Za-z]{2}$"),
     # newest (alias posted_at, the default) | relevance (default when q is set) | pay |
     # first_seen. Anything unrecognized keeps the old behaviour (first_seen).
-    sort: Optional[str] = Query(None),
-    page: int = Query(1, ge=1),
+    sort: Optional[str] = Query(None, max_length=20),
+    page: int = Query(1, ge=1, le=_MAX_PAGE),
     page_size: int = Query(20, ge=1, le=100),
+    request: Request = None,
     session: Session = Depends(_db),
 ):
+    if q and mode in ("semantic", "hybrid"):
+        search_limiter.check(request, "search")
     last_start = _last_run_start(session)
     sort_key = (sort or ("relevance" if q else "newest")).lower()
     if sort_key in ("newest", "posted_at", "relevance"):
@@ -577,10 +592,31 @@ def similar_jobs(
 # most recent posting, which can change), so search engines see a steady URL set.
 @router.get("/sitemap/jobs", response_model=SitemapJobsResponse)
 def sitemap_jobs(
-    offset: int = Query(0, ge=0),
-    limit: int = Query(10_000, ge=1, le=20_000),
+    response: Response,
+    offset: int = Query(0, ge=0, le=200_000),
+    limit: int = Query(2_000, ge=1, le=2_000),
     session: Session = Depends(_db),
 ):
+    # Public and unused by the site since job URLs left the sitemap (web JOB_CHUNKS=0), so it
+    # is capped at 2,000 ids per call (was 20,000: 312 KB of Neon egress per call) and cached
+    # in-process for a day, keyed by (offset, limit).
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    key = (offset, limit)
+    hit = _SITEMAP_CACHE.get(key)
+    if hit is not None and (time.monotonic() - hit[0]) < _SITEMAP_TTL_SECONDS:
+        return hit[1]
+    result = _sitemap_jobs(session, offset, limit)
+    if len(_SITEMAP_CACHE) >= 64:
+        _SITEMAP_CACHE.clear()
+    _SITEMAP_CACHE[key] = (time.monotonic(), result)
+    return result
+
+
+_SITEMAP_CACHE: dict[tuple[int, int], tuple[float, SitemapJobsResponse]] = {}
+_SITEMAP_TTL_SECONDS = 86400
+
+
+def _sitemap_jobs(session: Session, offset: int, limit: int) -> SitemapJobsResponse:
     # Ids only: the sitemap emits no lastmod (last_seen_at moves on every ingest), so the
     # per-role timestamp it used to fetch was ~1 MB of unused egress per regeneration.
     firsts = (
@@ -601,9 +637,29 @@ def sitemap_jobs(
 
 @router.get("/companies", response_model=list[CompanyItem])
 def list_companies(
-    industry: Optional[str] = Query(None),
+    response: Response,
+    industry: Optional[str] = Query(None, max_length=_MAX_TEXT, pattern=_NO_NUL),
     session: Session = Depends(_db),
 ):
+    # Same pattern as /meta: the list only changes after an ingest run, and each uncached call
+    # moved about 71 KB out of Neon. Cached in-process for an hour per industry filter.
+    response.headers["Cache-Control"] = "public, max-age=300"
+    key = (industry or "").strip().lower()
+    hit = _COMPANIES_CACHE.get(key)
+    if hit is not None and (time.monotonic() - hit[0]) < _COMPANIES_TTL_SECONDS:
+        return hit[1]
+    result = _list_companies(session, industry)
+    if len(_COMPANIES_CACHE) >= 64:
+        _COMPANIES_CACHE.clear()
+    _COMPANIES_CACHE[key] = (time.monotonic(), result)
+    return result
+
+
+_COMPANIES_CACHE: dict[str, tuple[float, list[CompanyItem]]] = {}
+_COMPANIES_TTL_SECONDS = 3600
+
+
+def _list_companies(session: Session, industry: Optional[str]) -> list[CompanyItem]:
     stmt = (
         select(Company, func.count(func.distinct(Job.dedup_key)).label("active_job_count"))
         .outerjoin(Job, (Job.company_id == Company.id) & (Job.is_active == True))
@@ -744,6 +800,8 @@ def invalidate_meta_cache() -> None:
     label and "NEW SINCE LAST RUN" counts reflect the new run immediately instead of
     waiting out the TTL."""
     _STATUS_CACHE.clear()  # a finished run changes /status too
+    _COMPANIES_CACHE.clear()  # job counts per company change too
+    _SITEMAP_CACHE.clear()
     _META_CACHE.pop("meta", None)
 
 
