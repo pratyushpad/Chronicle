@@ -156,7 +156,7 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 | Database | PostgreSQL + pgvector (HNSW) + SQLAlchemy 2.0 + Alembic |
 | Auth (web→API) | HMAC-signed short-lived internal tokens (`api/app/internal_auth.py`) |
 | Scheduler | GitHub Actions `ingest-actions` twice a day: `python -m app.ingest.schedule --once --budget 4200` (a full refresh, then embeddings); fallback until its secret exists: `ingest.yml` → secured `POST /admin/ingest` on Render |
-| Frontend | Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui; Playfair Display, Inter, Source Serif |
+| Frontend | Next.js 15 (App Router), React 19 + TypeScript + Tailwind + shadcn/ui; Playfair Display, Inter, Source Serif |
 | CI | pytest (with a pgvector service), tsc, ESLint, Vitest, build, Playwright + axe, Lighthouse budget |
 | Auth | NextAuth v5 (Google OAuth) |
 | Infra | Deployed on Vercel (web) + Render (api) + Neon (Postgres); a Docker Compose file exists but is out of date (see Running locally) |

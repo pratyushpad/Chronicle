@@ -1,6 +1,6 @@
 # Chronicle — web
 
-Next.js 14 (App Router) frontend for [Chronicle](../README.md): the job feed,
+Next.js 15 (App Router) frontend for [Chronicle](../README.md): the job feed,
 hybrid search UI, company registry, For-You recommendations, saved jobs, and the
 application tracker. Deployed on Vercel at
 [chronicles-weld.vercel.app](https://chronicles-weld.vercel.app); talks to the
