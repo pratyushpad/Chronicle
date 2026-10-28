@@ -2,13 +2,12 @@ import type { MetadataRoute } from "next";
 import { getCompanies, getSitemapJobs } from "@/lib/api";
 import { SITE_URL } from "@/lib/site";
 
-// Sitemap 0 holds the static pages and companies; 1..JOB_CHUNKS hold one URL per distinct
-// active role (the API's /sitemap/jobs, paged by id). A fixed chunk count keeps the
-// sitemap ids and robots.txt identical at build and at request time; 3 × 20,000 covers
-// the corpus with room to spare (about 45k rows, fewer distinct roles), and an empty
-// chunk is a valid, empty sitemap.
+// Sitemap 0 holds the static pages and companies. Per-role job URLs are no longer listed:
+// crawlers walking ~36k job pages exhausted the hosting plan's CPU in Oct 2026, so job
+// pages are disallowed in robots.ts and JOB_CHUNKS is 0. Raise it again only with
+// edge-cached job pages and a usage alert in place.
 export const JOB_CHUNK_SIZE = 20_000;
-export const JOB_CHUNKS = 3;
+export const JOB_CHUNKS = 0;
 export const revalidate = 86400; // a day; getSitemapJobs uses the same window
 
 export async function generateSitemaps() {

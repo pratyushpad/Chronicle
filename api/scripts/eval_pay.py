@@ -22,7 +22,7 @@ import json
 import re
 from pathlib import Path
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 from app.ingest.adapters.ashby import AshbyAdapter
 from app.ingest.adapters.greenhouse import GreenhouseAdapter

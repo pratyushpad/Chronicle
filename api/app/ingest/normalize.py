@@ -2,7 +2,7 @@ import re
 from collections.abc import Iterable
 from datetime import datetime, timezone
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 from .adapters.base import RawJob
 

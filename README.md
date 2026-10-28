@@ -2,6 +2,10 @@
 
 [![ci](https://github.com/pratyushpad/Chronicle/actions/workflows/ci.yml/badge.svg)](https://github.com/pratyushpad/Chronicle/actions/workflows/ci.yml)
 
+**In one line:** a job search site that reads open roles straight from nearly 600 tech
+companies' own hiring boards and ranks them with keyword plus semantic search, built for
+students looking for internships.
+
 Chronicle is a job aggregator that pulls every open role directly from tech companies'
 own applicant-tracking systems (Greenhouse, Lever, Ashby) into one searchable, filterable
 feed, built first for students looking for internships and early-career roles. It reads
@@ -11,15 +15,31 @@ alerts on top. Every number below links to how it was measured: [docs/metrics.md
 
 **Live app:** [chronicles-weld.vercel.app](https://chronicles-weld.vercel.app)
 
+> **Status (late October 2026):** the live demo is paused. The free hosting tiers hit their
+> usage limits in October: the Neon database's monthly transfer cap resets on Nov 1, and the
+> Vercel free plan pauses the site until mid November. The scheduled data refresh resumes
+> after Nov 1. The code, tests and measurements below are current.
+
 | | |
 |:---:|:---:|
-| ![Homepage](docs/screenshots/upgrade/pr3/after-home-1440.jpg) | ![Internship feed](docs/screenshots/upgrade/pr4/after-jobs-1440.jpg) |
-| *Homepage: search and live numbers first* | *Internship feed: one search, four filters, sort* |
-| ![Job detail](docs/screenshots/upgrade/pr4/after-job-1440.jpg) | ![Companies](docs/screenshots/upgrade/pr3/after-companies-1440.jpg) |
-| *Job detail: pay as posted, term, degrees, sticky Apply* | *Companies: search, 21 industries* |
+| ![Job detail](docs/screenshots/upgrade/pr4/after-job-1440.jpg) | ![Internship feed](docs/screenshots/upgrade/pr4/after-jobs-1440.jpg) |
+| *Job detail: pay as posted, term, degrees, sticky Apply* | *Internship feed: one search, four filters, sort* |
+| ![Job detail, dark theme](docs/screenshots/upgrade/pr3/after-dark-job-1440.jpg) | ![Companies](docs/screenshots/upgrade/pr3/after-companies-1440.jpg) |
+| *Dark theme (follows the system, with a toggle)* | *Companies: search, 21 industries* |
 
 Screenshots are from a local build against a fixture replica of 119 real postings, so the
-counts in them are small; the live site shows the full registry.
+counts in them are small; the live site reads the full registry.
+
+## Results
+
+Each number links to the file that produced it; [docs/metrics.md](docs/metrics.md) lists them all.
+
+| What | Result | How it was measured |
+|---|---|---|
+| "For You" ranking quality, hybrid vs the rule baseline | NDCG@10 0.58 to 0.81, recall@50 0.71 to 0.96, MRR 0.80 to 0.98 | Offline harness `api/scripts/eval_matching.py` on 24 synthetic personas, held-out engagements, bootstrap 95% CIs ([eval_results.md](docs/eval_results.md)) |
+| Correct pay shown on intern postings that state pay | 3.8% to 96.2% (3/80 to 77/80) | 120 labeled real postings from a Sept 2026 recording, scored by `scripts/eval_pay.py`; a development set, not a blind one ([pay_eval.md](docs/pay_eval.md)) |
+| Search latency, local | p95 19 ms on 20,499 real jobs | `api/scripts/bench_search.py`, n=50, local hardware; it times the query embedding plus a pgvector cosine top-200 and a title-match query, not the full API handler ([bench_results.md](docs/bench_results.md)) |
+| Company registry | nearly 600 boards (605 in the seed, 596 active) | `api/companies.seed.json` |
 
 ## How it works
 
@@ -54,7 +74,7 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 
 ## Features
 
-- **Live registry** of 600+ verified company boards (`api/companies.seed.json`; live counts
+- **Live registry** of nearly 600 verified company boards (`api/companies.seed.json`; live counts
   of open roles and re-checked boards are on the site and at `/status`), refreshed twice a
   day on GitHub Actions (see Refresh & operations), stalest boards first, with per-company
   fault isolation (one broken board never blocks the run). The
@@ -98,7 +118,7 @@ departments. Filtering happens at read time in the API/UI, so the company regist
   **functional GIN index**, ranked by `ts_rank_cd(websearch_to_tsquery(...))`. That's
   lexical relevance, not substring matching. (A functional index rather than a stored
   `tsvector` column: a stored column of the description body would bloat storage and its
-  `ADD` rewrites the table past Neon's 512 MB free tier. The body is left to semantic
+  `ADD` rewrites the table past Neon's free-tier storage cap. The body is left to semantic
   search instead.) Every job is also embedded (all-MiniLM-L6-v2, int8 ONNX, no torch,
   free-tier friendly) into pgvector. Search offers keyword (FTS), pure semantic, and a
   hybrid mode that fuses the **full-text** and vector rankings with Reciprocal Rank
@@ -136,10 +156,10 @@ departments. Filtering happens at read time in the API/UI, so the company regist
 | Database | PostgreSQL + pgvector (HNSW) + SQLAlchemy 2.0 + Alembic |
 | Auth (web→API) | HMAC-signed short-lived internal tokens (`api/app/internal_auth.py`) |
 | Scheduler | GitHub Actions `ingest-actions` twice a day: `python -m app.ingest.schedule --once --budget 4200` (a full refresh, then embeddings); fallback until its secret exists: `ingest.yml` → secured `POST /admin/ingest` on Render |
-| Frontend | Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui; Playfair Display, Inter, Source Serif |
+| Frontend | Next.js 15 (App Router), React 19 + TypeScript + Tailwind + shadcn/ui; Playfair Display, Inter, Source Serif |
 | CI | pytest (with a pgvector service), tsc, ESLint, Vitest, build, Playwright + axe, Lighthouse budget |
 | Auth | NextAuth v5 (Google OAuth) |
-| Infra | Docker Compose (api / worker / db / web); deployed on Vercel (web) + Render (api) + Neon (Postgres) |
+| Infra | Deployed on Vercel (web) + Render (api) + Neon (Postgres); a Docker Compose file exists but is out of date (see Running locally) |
 
 ## Project structure
 
@@ -149,50 +169,66 @@ web/          Next.js frontend (Playwright smoke tests in web/e2e)
 tools/        Verification harness: board recording/replay, replica metrics, screenshots,
               overflow audit, Lighthouse (dev-only; never points at production)
 docs/         Measurements (metrics.md links them all), eval results, upgrade plan
-docker-compose.yml
+docker-compose.yml   (out of date, see Running locally)
 ```
 
 ## Running locally
 
-Requires Python 3.12+, Node 18+, and PostgreSQL 16 (or use Docker Compose for all of it).
+Requires Python 3.12+, Node 18+, and PostgreSQL 16 with the pgvector extension.
 
-### Option A: Docker Compose
-
-```bash
-docker compose up --build
-```
-
-Brings up Postgres, the API (`:8000`), the ingest worker, and the web app (`:3000`).
-
-### Option B: run each piece directly
+### Run each piece directly
 
 ```bash
-# 1. Postgres
-brew services start postgresql@16   # or your platform's equivalent
+# 1. Postgres with pgvector, plus the role and databases the .env.example expects
+brew install postgresql@16 pgvector      # or your platform's equivalent
+brew services start postgresql@16
+createuser chronicle --pwprompt          # password: chronicle (matches api/.env.example)
+createdb -O chronicle chronicle
+createdb -O chronicle chronicle_test     # only needed for the database-backed tests
+psql -d chronicle -c "CREATE EXTENSION IF NOT EXISTS vector"
+psql -d chronicle_test -c "CREATE EXTENSION IF NOT EXISTS vector"
 
-# 2. API
+# 2. API (from the repo root). Use a virtualenv: Homebrew and system Pythons refuse a
+#    global pip install (PEP 668, "externally-managed-environment").
 cd api
+python3 -m venv .venv && source .venv/bin/activate
 cp .env.example .env                # set DATABASE_URL + INTERNAL_API_SECRET
-pip install -e ".[dev]"
+pip install --require-hashes -r requirements-dev.lock && pip install --no-deps -e .
 python -m app.ml.download           # fetch the ONNX embedding model (~23 MB, one-time)
-python -m alembic upgrade head      # includes CREATE EXTENSION vector (needs pgvector)
-uvicorn app.main:app --reload --port 8000
+python -m alembic upgrade head
+uvicorn app.main:app --reload --port 8000   # stays in the foreground
 
-# 3. Ingest (populates the registry with real job data, embeds new jobs)
+# 3. Ingest, in a second terminal (populates the registry with real job data)
+cd api && source .venv/bin/activate
 python -m app.ingest.schedule --once
 python -m scripts.backfill_embeddings   # embed any pre-existing corpus
 
-# 4. Web
+# 4. Web, in a third terminal (from the repo root)
 cd web
+cp .env.example .env.local          # set AUTH_SECRET; INTERNAL_API_SECRET must match api/.env
 npm install
 npm run dev
 ```
 
+`api/requirements.lock` and `api/requirements-dev.lock` pin every Python dependency with
+hashes; CI and the scheduled ingest install from them. After changing `api/pyproject.toml`,
+regenerate both with the `uv pip compile` command at the top of each file.
+
+### Docker Compose (not working right now)
+
+`docker-compose.yml` (Postgres, API, ingest worker, web) is out of date and does not come up
+cleanly on a fresh checkout: the web image copies a `public/` folder that does not exist,
+nothing runs the Alembic migrations before the API starts, the web container points its
+server-side API calls at `localhost` instead of the `api` service, and it sets no
+`AUTH_SECRET`. Use the steps above until it is fixed.
+
 ### Tests
 
 ```bash
-# API (database-backed tests run when TEST_DATABASE_URL points at a local, migrated Postgres)
-cd api && TEST_DATABASE_URL=postgresql+psycopg2://chronicle:chronicle@localhost:5432/chronicle_test pytest
+# API (database-backed tests run when TEST_DATABASE_URL points at a local, migrated Postgres;
+# without it they are skipped). Migrate the test database once:
+cd api && DATABASE_URL=postgresql+psycopg2://chronicle:chronicle@localhost:5432/chronicle_test python -m alembic upgrade head
+TEST_DATABASE_URL=postgresql+psycopg2://chronicle:chronicle@localhost:5432/chronicle_test pytest
 # Web
 cd web && npx tsc --noEmit && npm run lint && npm test && npm run build
 # End to end, against a running `next start` + API (CI seeds it from committed fixtures)
@@ -255,6 +291,10 @@ too small for a full pass: `.github/workflows/ingest.yml` asks the Render API fo
 slice, which reaches only a few dozen boards, so on its own a full pass takes about two weeks.
 The site shows how recently boards were checked (`/meta` → `freshness`).
 
+**Keepalive.** GitHub turns off scheduled workflows in a public repo after 60 days without
+activity. `.github/workflows/keepalive.yml` runs weekly and re-enables every scheduled
+workflow that is active (which resets the timer), but never one that was turned off by hand.
+
 **Render trigger.** `POST /admin/ingest` triggers an incremental, idempotent refresh on
 Render in the background (returns `202` immediately). It is guarded by a dedicated
 `INGEST_SECRET` (header `X-Ingest-Secret`; 401 without it), which `ingest.yml` sends from the
@@ -263,7 +303,8 @@ bounds wall-clock time. Both paths refuse to start while a run younger than two 
 open, and the upsert is idempotent, so a double-fire is harmless.
 
 
-**Storage caveat.** Neon's free tier has a hard 512 MB project-size limit. Three policies
+**Storage caveat.** Neon's free tier has a hard project storage cap (1 GB on the current
+free plan; the policies were sized for the earlier 512 MB cap). Three policies
 keep the live corpus (hundreds of boards, tens of thousands of roles + 384-dim embeddings)
 under it: ingest stores a **sanitized HTML subset of each description, capped at 20,000
 characters, never the raw ATS HTML** (the raw HTML was ~126 MB that no endpoint served;

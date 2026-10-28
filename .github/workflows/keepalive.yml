@@ -1,0 +1,39 @@
+name: keepalive
+
+# GitHub disables scheduled workflows in a public repo after 60 days without repository
+# activity. This weekly job calls the "enable workflow" API for every scheduled workflow
+# that is active or was disabled for inactivity, which resets that 60-day timer (and
+# includes this workflow itself, so it keeps itself alive too).
+# A workflow someone disabled by hand (state "disabled_manually") is never touched: it
+# stays off until a person turns it back on.
+on:
+  schedule:
+    - cron: "41 7 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-enable scheduled workflows (skips manually disabled ones)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for wf in keepalive.yml keep-warm.yml ingest.yml ingest-actions.yml; do
+            state=$(gh api "repos/$REPO/actions/workflows/$wf" --jq .state 2>/dev/null || echo missing)
+            case "$state" in
+              active|disabled_inactivity)
+                gh api -X PUT "repos/$REPO/actions/workflows/$wf/enable"
+                echo "$wf: was $state, enabled (60-day timer reset)"
+                ;;
+              *)
+                echo "$wf: $state, left as is"
+                ;;
+            esac
+          done

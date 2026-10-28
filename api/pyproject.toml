@@ -15,18 +15,16 @@ dependencies = [
     "psycopg2-binary>=2.9",
     "rapidfuzz>=3.9",
     "apscheduler>=3.10",
-    # Capped below 1.0, which removed the Modest backend (`selectolax.parser`) that the
-    # ingest parses descriptions with. Lift it only together with a move to
-    # `selectolax.lexbor`, after a replay shows content hashes and stored descriptions
-    # are unchanged.
-    "selectolax>=0.3,<1",
+    # The ingest parses with the Lexbor backend (`selectolax.lexbor`); 1.0 removed the old
+    # Modest backend. Lexbor output matched Modest on 600 fixture inputs (0.4.13 and 1.0.2).
+    "selectolax>=0.4,<2",
     "python-dotenv>=1.0",
     "pydantic>=2.7",
     "pgvector>=0.2.5",
     "onnxruntime>=1.17",
     "tokenizers>=0.19",
     "huggingface-hub>=0.23",
-    "pypdf>=4.0",
+    "pypdf>=6.21.2",
     "python-multipart>=0.0.9",
     "ijson>=3.2",
 ]

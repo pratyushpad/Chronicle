@@ -14,6 +14,13 @@ import { jobPostingJsonLd, serializeJsonLd } from "@/lib/jobPosting";
 import { SITE_URL } from "@/lib/site";
 import { eligibilityFacts } from "@/lib/eligibility";
 
+// ISR: render each job on first request, then serve it from the CDN for an hour.
+export const revalidate = 3600;
+export const dynamicParams = true;
+export async function generateStaticParams() {
+  return [];
+}
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
