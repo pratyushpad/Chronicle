@@ -24,7 +24,7 @@ import html
 import re
 from typing import Any
 
-from selectolax.parser import HTMLParser, Node
+from selectolax.lexbor import LexborHTMLParser as HTMLParser, LexborNode as Node
 
 from .normalize import plain_text
 

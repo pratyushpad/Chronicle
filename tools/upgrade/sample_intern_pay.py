@@ -13,7 +13,7 @@ import re
 import sys
 from pathlib import Path
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 INTERN = re.compile(r"\bintern(ship)?s?\b|\bco-?op\b", re.I)
 MONEY = re.compile(r"[$£€]\s?\d|\b\d[\d,.]*\s?(?:USD|CAD|GBP|EUR)\b")
