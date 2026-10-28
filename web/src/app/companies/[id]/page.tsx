@@ -6,6 +6,7 @@ import { SectionLabel } from "@/components/SectionLabel";
 import { HiringVelocity } from "@/components/HiringVelocity";
 import { Pagination } from "@/components/Pagination";
 import { formatNumber, formatDate } from "@/lib/utils";
+import { clampPage } from "@/lib/params";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -15,7 +16,7 @@ interface Props {
 export default async function CompanyPage({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = await searchParams;
-  const page = parseInt(sp.page ?? "1", 10);
+  const page = clampPage(sp.page);
 
   let company, jobs;
   try {

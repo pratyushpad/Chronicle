@@ -39,7 +39,7 @@ function sent(): { url: string; revalidate: number | undefined } {
 }
 
 const CASES: Array<[name: string, call: () => Promise<unknown>, path: string, revalidate: number]> = [
-  ["getJob", () => getJob(42), "/jobs/42", HOUR],
+  ["getJob", () => getJob(42), "/jobs/42", 604800],
   ["getMeta", () => getMeta(), "/meta", HOUR],
   ["getSimilarJobs", () => getSimilarJobs(42, 4), "/jobs/42/similar?limit=4", HOUR],
   ["getStatus", () => getStatus(), "/status", 900],

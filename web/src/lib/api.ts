@@ -192,7 +192,11 @@ async function fetchJSON<T>(
     notFoundMsg?: string;
   },
 ): Promise<T> {
-  const { revalidate = 300, retries = 1, timeoutMs = 20000, errMsg, notFoundMsg } = opts;
+  // 8 s and no retry by default (was 20 s with 1 to 2 retries). These run inside server
+  // renders, where every second spent waiting is billed as provisioned function memory: during
+  // the Oct 2026 database outage the long waits took one day from 9 to 67 GB-h. The API now
+  // answers 503 fast when the database is down, so a long wait only buys a slower error.
+  const { revalidate = 300, retries = 0, timeoutMs = 8000, errMsg, notFoundMsg } = opts;
   let lastErr: unknown;
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
@@ -243,12 +247,17 @@ export async function getJobs(
   );
 }
 
+// A week. Job pages are long-tail: with ~36K roles a crawler revisits each one about every
+// 29 hours, so an hour-long window made 97% of hits a fresh render (2 API calls, 20 ms CPU).
+// A role's text rarely changes after posting; closing it is the main change, and a closed
+// role showing as open for a few days is an acceptable trade for the hosting quota.
+export const JOB_PAGE_REVALIDATE = 604800;
+
 export async function getJob(id: number): Promise<JobDetail> {
-  // Extra retry to absorb Render cold-starts / transient 503s under prefetch fan-out.
-  // An hour: a role only changes when the twice-daily ingest runs.
+  // One retry to absorb a Render cold start or a transient 503 under prefetch fan-out.
   return fetchJSON<JobDetail>(`/jobs/${id}`, {
-    revalidate: 3600,
-    retries: 2,
+    revalidate: JOB_PAGE_REVALIDATE,
+    retries: 1,
     errMsg: "Job fetch failed",
     notFoundMsg: "Job not found",
   });
