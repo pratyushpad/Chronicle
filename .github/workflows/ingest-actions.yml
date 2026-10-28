@@ -42,10 +42,12 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: api/pyproject.toml
-      - name: Install
+          cache-dependency-path: api/requirements.lock
+      - name: Install (hash-locked)
         if: steps.secret.outputs.present == 'true'
-        run: pip install -e .
+        run: |
+          pip install --require-hashes -r requirements.lock
+          pip install --no-deps -e .
       - name: Cache the embedding model
         if: steps.secret.outputs.present == 'true'
         uses: actions/cache@v4

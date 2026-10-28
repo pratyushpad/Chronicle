@@ -193,7 +193,7 @@ psql -d chronicle_test -c "CREATE EXTENSION IF NOT EXISTS vector"
 cd api
 python3 -m venv .venv && source .venv/bin/activate
 cp .env.example .env                # set DATABASE_URL + INTERNAL_API_SECRET
-pip install -e ".[dev]"
+pip install --require-hashes -r requirements-dev.lock && pip install --no-deps -e .
 python -m app.ml.download           # fetch the ONNX embedding model (~23 MB, one-time)
 python -m alembic upgrade head
 uvicorn app.main:app --reload --port 8000   # stays in the foreground
@@ -209,6 +209,10 @@ cp .env.example .env.local          # set AUTH_SECRET; INTERNAL_API_SECRET must 
 npm install
 npm run dev
 ```
+
+`api/requirements.lock` and `api/requirements-dev.lock` pin every Python dependency with
+hashes; CI and the scheduled ingest install from them. After changing `api/pyproject.toml`,
+regenerate both with the `uv pip compile` command at the top of each file.
 
 ### Docker Compose (not working right now)
 
