@@ -58,6 +58,30 @@ def test_semantic_search_rate_limited_before_db(client, monkeypatch):
     assert int(r.headers["Retry-After"]) >= 1
 
 
+def test_trusted_server_exempt_from_search_limit(client, monkeypatch):
+    from app.ratelimit import SERVICE_HEADER, service_key
+
+    monkeypatch.setenv("INTERNAL_API_SECRET", "s3cret")
+    monkeypatch.setattr(jobs.search_limiter, "limit", 0)
+    monkeypatch.setattr(jobs, "_last_run_start", MagicMock(side_effect=RuntimeError("past limiter")))
+    url = "/jobs?q=engineer&mode=hybrid"
+    # Right key: gets past the limiter (then fails on the fake session).
+    assert client.get(url, headers={SERVICE_HEADER: service_key("s3cret")}).status_code == 500
+    # Wrong key, no key: still limited.
+    assert client.get(url, headers={SERVICE_HEADER: service_key("other")}).status_code == 429
+    assert client.get(url, headers={SERVICE_HEADER: "x"}).status_code == 429
+    assert client.get(url).status_code == 429
+
+
+def test_no_secret_configured_exempts_nobody(client, monkeypatch):
+    from app.ratelimit import SERVICE_HEADER, service_key
+
+    monkeypatch.delenv("INTERNAL_API_SECRET", raising=False)
+    monkeypatch.setattr(jobs.search_limiter, "limit", 0)
+    r = client.get("/jobs?q=engineer&mode=hybrid", headers={SERVICE_HEADER: service_key("")})
+    assert r.status_code == 429
+
+
 def test_keyword_search_not_rate_limited(client, monkeypatch):
     monkeypatch.setattr(jobs.search_limiter, "limit", 0)
     monkeypatch.setattr(jobs, "_last_run_start", MagicMock(side_effect=RuntimeError("past limiter")))

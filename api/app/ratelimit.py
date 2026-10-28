@@ -8,16 +8,44 @@ used to saturate the instance at about 5.8 req/s.
 Client identity: Render's proxy appends the connecting address to X-Forwarded-For, so the
 RIGHTMOST entry is the one a caller cannot forge. Without the header (local runs, tests)
 the socket peer is used. Server-side renders on Vercel arrive from Vercel's egress IPs and
-share those buckets, which is acceptable: it caps total SSR search load as well.
+would share those buckets and turn a per-client limit into a site-wide one, so requests
+that prove they come from our own web server are exempt (see is_trusted_server). Browsers and
+other direct callers stay limited.
 """
 from __future__ import annotations
 
+import hmac
+import hashlib
 import os
 import threading
 import time
 from collections import deque
 
 from fastapi import HTTPException, Request
+
+
+SERVICE_HEADER = "x-internal-service"
+_SERVICE_LABEL = b"chronicle-ratelimit-exempt-v1"
+
+
+def service_key(secret: str) -> str:
+    """Static value the web sends in X-Internal-Service. Derived from INTERNAL_API_SECRET
+    (so the secret itself never travels on public fetches) and constant, so it does not
+    change the Next.js fetch cache key the way a per-request timestamped token would.
+    Mirror of web/src/lib/internal-service.ts."""
+    return hmac.new(secret.encode("utf-8"), _SERVICE_LABEL, hashlib.sha256).hexdigest()
+
+
+def is_trusted_server(request: Request | None) -> bool:
+    """True when the request carries the server-to-server key. Fails closed: with no
+    INTERNAL_API_SECRET configured nobody is exempt."""
+    if request is None:
+        return False
+    secret = os.environ.get("INTERNAL_API_SECRET")
+    got = request.headers.get(SERVICE_HEADER)
+    if not secret or not got:
+        return False
+    return hmac.compare_digest(service_key(secret), got)
 
 
 def client_id(request: Request | None) -> str:
@@ -57,6 +85,8 @@ class SlidingWindowLimiter:
             return True, 0
 
     def check(self, request: Request | None, scope: str) -> None:
+        if is_trusted_server(request):
+            return
         ok, retry = self.allow(f"{scope}:{client_id(request)}")
         if not ok:
             raise HTTPException(
