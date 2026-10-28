@@ -291,6 +291,10 @@ too small for a full pass: `.github/workflows/ingest.yml` asks the Render API fo
 slice, which reaches only a few dozen boards, so on its own a full pass takes about two weeks.
 The site shows how recently boards were checked (`/meta` → `freshness`).
 
+**Keepalive.** GitHub turns off scheduled workflows in a public repo after 60 days without
+activity. `.github/workflows/keepalive.yml` runs weekly and re-enables every scheduled
+workflow that is active (which resets the timer), but never one that was turned off by hand.
+
 **Render trigger.** `POST /admin/ingest` triggers an incremental, idempotent refresh on
 Render in the background (returns `202` immediately). It is guarded by a dedicated
 `INGEST_SECRET` (header `X-Ingest-Secret`; 401 without it), which `ingest.yml` sends from the
