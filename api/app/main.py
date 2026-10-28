@@ -1,3 +1,4 @@
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -22,9 +23,14 @@ from app.routers.admin import router as admin_router  # noqa: E402
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Seeding is a convenience for empty databases. If the database is unreachable at boot
+    # (for example a suspended free-tier compute), start anyway so /health passes and the
+    # deploy goes live; data routes recover on their own once the database is back.
     session = get_session()
     try:
         seed_companies_if_empty(session)
+    except Exception as exc:  # noqa: BLE001 - never block startup on the seed step
+        logging.getLogger(__name__).warning("startup seed skipped: %s", type(exc).__name__)
     finally:
         session.close()
     yield
