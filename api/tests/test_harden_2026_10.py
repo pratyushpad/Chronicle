@@ -58,19 +58,26 @@ def test_semantic_search_rate_limited_before_db(client, monkeypatch):
     assert int(r.headers["Retry-After"]) >= 1
 
 
-def test_trusted_server_exempt_from_search_limit(client, monkeypatch):
+def test_trusted_server_uses_its_own_higher_bucket(client, monkeypatch):
     from app.ratelimit import SERVICE_HEADER, service_key
 
     monkeypatch.setenv("INTERNAL_API_SECRET", "s3cret")
+    jobs.search_limiter.reset()
     monkeypatch.setattr(jobs.search_limiter, "limit", 0)
+    monkeypatch.setattr(jobs.search_limiter, "server_limit", 2)
     monkeypatch.setattr(jobs, "_last_run_start", MagicMock(side_effect=RuntimeError("past limiter")))
     url = "/jobs?q=engineer&mode=hybrid"
-    # Right key: gets past the limiter (then fails on the fake session).
-    assert client.get(url, headers={SERVICE_HEADER: service_key("s3cret")}).status_code == 500
-    # Wrong key, no key: still limited.
+    good = {SERVICE_HEADER: service_key("s3cret")}
+    # Right key: gets past the limiter (then fails on the fake session) up to server_limit.
+    assert client.get(url, headers=good).status_code == 500
+    assert client.get(url, headers=good).status_code == 500
+    # Not exempt: the shared web-server bucket is capped too.
+    assert client.get(url, headers=good).status_code == 429
+    # Wrong key, no key: per-client limit.
     assert client.get(url, headers={SERVICE_HEADER: service_key("other")}).status_code == 429
     assert client.get(url, headers={SERVICE_HEADER: "x"}).status_code == 429
     assert client.get(url).status_code == 429
+    jobs.search_limiter.reset()
 
 
 def test_no_secret_configured_exempts_nobody(client, monkeypatch):
