@@ -7,11 +7,19 @@ name: ingest-actions
 # and the Render-triggered `ingest` workflow's schedule stands down once the secret exists,
 # so exactly one scheduled path is active. Both refuse to start while another run is in
 # flight (an open run younger than two hours). GitHub may start scheduled runs hours late.
+#
+# One run a day (Neon free-tier budget: 100 CU-hours and 5 GB egress a month; every run wakes
+# the database for its whole length). A board whose payload is unchanged since the last run
+# is skipped without touching its job rows, and closed roles are pruned at the end of the run.
 on:
   schedule:
-    - cron: "17 4 * * *"
-    - cron: "17 16 * * *"
-  workflow_dispatch: {}
+    - cron: "7 10 * * *"
+  workflow_dispatch:
+    inputs:
+      force_full:
+        description: "Reprocess every board even if its payload is unchanged"
+        type: boolean
+        default: false
 
 concurrency:
   group: ingest
@@ -65,5 +73,6 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM: ${{ secrets.RESEND_FROM }}
           APP_URL: ${{ vars.APP_URL || 'https://chronicles-weld.vercel.app' }}
+          INGEST_FORCE_FULL: ${{ inputs.force_full && '1' || '' }}
         # A 70-minute budget ends the run cleanly inside the 90-minute job timeout.
         run: python -m app.ingest.schedule --once --budget 4200
