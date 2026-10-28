@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import and_, any_, func, literal, or_, select, text, true
 from sqlalchemy.orm import Session, aliased, load_only
 
-from app.db import get_session
+from app.db import get_request_session
 from app.ratelimit import search_limiter
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
 from app.ingest.alerts import email_configured
@@ -69,7 +69,7 @@ def _fts_rank_desc(q: str):
 
 
 def _db():
-    s = get_session()
+    s = get_request_session()
     try:
         yield s
     finally:

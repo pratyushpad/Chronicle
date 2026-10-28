@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.db import get_session
+from app.db import get_request_session
 from app.models import Interaction, InteractionEvent, InteractionSurface, User
 from app.routers.users import get_current_user
 from app.schemas import InteractionBatchIn
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/interactions", tags=["interactions"])
 
 
 def _db():
-    s = get_session()
+    s = get_request_session()
     try:
         yield s
     finally:

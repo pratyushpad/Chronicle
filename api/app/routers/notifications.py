@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db import get_session
+from app.db import get_request_session
 from app.models import Notification, SavedSearch, User
 from app.routers.users import get_current_user
 from app.schemas import NotificationOut, SavedSearchIn, SavedSearchOut
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/users/me", tags=["notifications"])
 
 
 def _db():
-    s = get_session()
+    s = get_request_session()
     try:
         yield s
     finally:

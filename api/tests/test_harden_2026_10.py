@@ -134,12 +134,53 @@ def test_cors_preflight_cached_for_a_day(client):
     assert r.headers.get("access-control-max-age") == "86400"
 
 
-def test_db_connect_args_bound_waits(monkeypatch):
+def test_db_connect_args_only_bound_connect(monkeypatch):
+    """No global statement_timeout: ingest, admin and backfill jobs must not get one."""
     from app import db
 
-    monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@ep-x.us-east-1.aws.neon.tech/db")
-    args = db._connect_args()
-    assert args["connect_timeout"] == 5
-    assert "statement_timeout=15000" in args["options"]
-    monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@ep-x-pooler.us-east-1.aws.neon.tech/db")
-    assert "options" not in db._connect_args()
+    for url in (
+        "postgresql://u:p@ep-x.us-east-1.aws.neon.tech/db",
+        "postgresql://u:p@ep-x-pooler.us-east-1.aws.neon.tech/db",
+    ):
+        monkeypatch.setenv("DATABASE_URL", url)
+        assert db._connect_args() == {"connect_timeout": 5}
+
+
+
+
+def test_request_session_sets_local_timeout_every_transaction(monkeypatch):
+    from unittest.mock import MagicMock
+
+    from app import db
+
+    sess = db.get_request_session()
+    conn = MagicMock()
+    # Fire the after_begin hook the way the Session does at the start of each transaction.
+    sess.dispatch.after_begin(sess, MagicMock(), conn)
+    sess.dispatch.after_begin(sess, MagicMock(), conn)  # e.g. a second one after a commit
+    sqls = [str(c.args[0]) for c in conn.execute.call_args_list]
+    assert sqls == ["SET LOCAL statement_timeout = '15000ms'"] * 2
+    sess.close()
+
+
+def test_plain_session_has_no_timeout_hook():
+    """get_session() (ingest, admin, backfill, scripts) must stay unbounded."""
+    from unittest.mock import MagicMock
+
+    from app import db
+
+    sess = db.get_session()
+    conn = MagicMock()
+    sess.dispatch.after_begin(sess, MagicMock(), conn)
+    conn.execute.assert_not_called()
+    sess.close()
+
+
+def test_public_routers_use_request_session_and_jobs_do_not():
+    import inspect
+
+    from app.routers import admin, jobs, users
+
+    assert "get_request_session()" in inspect.getsource(jobs._db)
+    assert "get_request_session()" in inspect.getsource(users.get_current_user.__globals__["_db"])
+    assert "get_request_session" not in inspect.getsource(admin)

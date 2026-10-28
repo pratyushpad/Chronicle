@@ -1,26 +1,25 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker, Session
 
-from app.dbguard import db_host, sqlalchemy_url
+from app.dbguard import sqlalchemy_url
 
 
 def _connect_args() -> dict:
-    """Bound how long a request can wait on Postgres.
+    """Bound how long a request can wait to CONNECT to Postgres.
 
-    Without these, a frozen or slow database hung every request for as long as it was down,
+    Without this, a frozen or slow database hung every request for as long as it was down,
     and once the threadpool filled even /health stopped answering (local drill, Oct 2026).
-    connect_timeout is plain libpq and works everywhere. statement_timeout is sent as a
-    startup option, which Neon's PgBouncer pooler ("-pooler" hosts) rejects, so it is only
-    added on direct connections; set it on the role in Neon for pooled URLs
-    (ALTER ROLE ... SET statement_timeout).
+    connect_timeout is plain libpq and works everywhere, including Neon's "-pooler" hosts.
+
+    There is deliberately no global statement_timeout: ingest, admin and backfill jobs run
+    long statements on purpose. The per-request cap is applied by get_request_session().
     """
-    args: dict = {"connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT_S", "5"))}
-    stmt_ms = int(os.getenv("DB_STATEMENT_TIMEOUT_MS", "15000"))
-    host = db_host(os.environ.get("DATABASE_URL")) or ""
-    if stmt_ms > 0 and "-pooler" not in host:
-        args["options"] = f"-c statement_timeout={stmt_ms}"
-    return args
+    return {"connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT_S", "5"))}
+
+
+def _statement_timeout_ms() -> int:
+    return int(os.getenv("DB_STATEMENT_TIMEOUT_MS", "15000"))
 
 engine = create_engine(
     sqlalchemy_url(os.environ["DATABASE_URL"]),
@@ -36,3 +35,21 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 def get_session() -> Session:
     return SessionLocal()
+
+
+def get_request_session() -> Session:
+    """Session for public request handlers: every transaction starts with
+    SET LOCAL statement_timeout, so a runaway query is cut off at 15 s.
+
+    SET LOCAL is a plain statement, so it works through Neon's PgBouncer pooler (a startup
+    option would not), and it is scoped to the transaction, so the pooled connection goes
+    back to the pool clean. The hook re-applies it after a commit starts a new transaction.
+    Jobs and scripts keep using get_session(), which has no statement timeout.
+    """
+    session = SessionLocal()
+    ms = _statement_timeout_ms()
+    if ms > 0:
+        @event.listens_for(session, "after_begin")
+        def _set_timeout(_session, _transaction, connection):
+            connection.execute(text(f"SET LOCAL statement_timeout = '{ms}ms'"))
+    return session
