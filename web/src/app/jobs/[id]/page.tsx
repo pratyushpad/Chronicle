@@ -266,7 +266,7 @@ async function SimilarRoles({ jobId, now }: { jobId: number; now: number }) {
 async function MoreAtCompany({ job, now }: { job: JobDetail; now: number }) {
   let related: Awaited<ReturnType<typeof getJobs>> | null = null;
   try {
-    related = await getJobs({ company_id: job.company_id, page_size: 5 });
+    related = await getJobs({ company_id: job.company_id, page_size: 5 }, { revalidate: 3600 });
   } catch {
     return null; // non-critical
   }

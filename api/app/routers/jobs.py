@@ -5,14 +5,14 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, any_, func, literal, or_, select, text, true
-from sqlalchemy.orm import Session, defer
+from sqlalchemy.orm import Session, aliased, load_only
 
 from app.db import get_session
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
 from app.ingest.alerts import email_configured
 from app.industries import canonical_industry, fold_counts, raw_labels
 from app.ingest.description import description_blocks, description_plain, description_summary
-from app.job_items import ELIGIBILITY_FIELDS, job_list_item
+from app.job_items import ELIGIBILITY_FIELDS, LIST_LOAD, job_list_item
 from app.schemas import (
     CompanyDetail,
     CompanyItem,
@@ -283,6 +283,7 @@ def _keyword_search(
         .order_by(order_col.desc().nullslast(), JOB_AGE.desc().nullslast(), Job.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
+        .options(LIST_LOAD)
     )
     rows = session.execute(page_stmt).all()
     return _build_response(session, rows, last_start, total, page, page_size)
@@ -322,6 +323,7 @@ def _fts_keyword_search(
         .order_by(_fts_rank_desc(q), Job.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
+        .options(LIST_LOAD)
     )
     rows = session.execute(page_stmt).all()
     return _build_response(session, rows, last_start, total, page, page_size)
@@ -436,11 +438,28 @@ def _fused_search(
             select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
             .join(Company)
             .where(Job.id.in_(page_ids))
+            .options(LIST_LOAD)
         ).all()
         by_id = {row.Job.id: row for row in fetched}
         rows = [by_id[i] for i in page_ids if i in by_id]
 
     return _build_response(session, rows, last_start, total, page, page_size, search_mode=mode)
+
+
+# The Job columns get_job() builds a JobDetail from. Not source, source_job_id,
+# title_normalized, department_raw, dedup_key or content_hash (bookkeeping), and not the
+# 4.7 KB embedding: crawlers render this page all day and Neon bills every byte it reads.
+# raiseload: a field added to the response but not listed here fails loudly instead of
+# costing a second query.
+_DETAIL_LOAD = load_only(
+    Job.id, Job.company_id, Job.title, Job.location_raw, Job.location_normalized, Job.remote,
+    Job.department, Job.employment_type, Job.experience_level, Job.tech_tags, Job.sponsorship_flag,
+    Job.salary_min, Job.salary_max, Job.pay_min, Job.pay_max, Job.pay_currency, Job.pay_period,
+    Job.pay_source, *(getattr(Job, f) for f in ELIGIBILITY_FIELDS),
+    Job.description_text, Job.apply_url, Job.posted_at, Job.first_seen_at, Job.last_seen_at,
+    Job.is_active,
+    raiseload=True,
+)
 
 
 @router.get("/jobs/{job_id}", response_model=JobDetail)
@@ -449,6 +468,7 @@ def get_job(job_id: int, session: Session = Depends(_db)):
         select(Job, Company.name.label("company_name"), Company.industry.label("company_industry"))
         .join(Company)
         .where(Job.id == job_id)
+        .options(_DETAIL_LOAD)
     ).first()
     if not row:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -510,14 +530,23 @@ def similar_jobs(
     limit: int = Query(4, ge=1, le=12),
     session: Session = Depends(_db),
 ):
+    # Whether the role exists and has a vector, and its dedup_key: never the vector itself.
+    # It is 4.7 KB as text, and fetching it just to send it straight back as a bind
+    # parameter was billed twice a described page render. The ORDER BY reads it in place.
     source = session.execute(
-        select(Job.embedding, Job.dedup_key).where(Job.id == job_id)
+        select(Job.dedup_key, Job.embedding.is_(None).label("unembedded")).where(Job.id == job_id)
     ).first()
     if source is None:
         raise HTTPException(status_code=404, detail="Job not found")
-    if source.embedding is None:
+    if source.unembedded:
         return []  # not embedded yet: no honest notion of "similar"
-    distance = Job.embedding.cosine_distance(source.embedding)
+    # Aliased: the subquery must not correlate to the jobs row being ordered. As an
+    # uncorrelated InitPlan it is a constant to the planner, so the HNSW index still serves
+    # the ORDER BY.
+    this = aliased(Job)
+    distance = Job.embedding.cosine_distance(
+        select(this.embedding).where(this.id == job_id).scalar_subquery()
+    )
     rows = session.execute(
         select(Job, Company.name.label("company_name"), Company.careers_url.label("company_careers_url"))
         .join(Company)
@@ -529,8 +558,7 @@ def similar_jobs(
         )
         .order_by(distance)
         .limit(limit * _SIMILAR_OVERFETCH)
-        # List cards never read these; skip loading 20 KB descriptions and vectors.
-        .options(defer(Job.description_text), defer(Job.embedding))
+        .options(LIST_LOAD)
     ).all()
     seen: set[str] = set()
     items = []
@@ -553,19 +581,21 @@ def sitemap_jobs(
     limit: int = Query(10_000, ge=1, le=20_000),
     session: Session = Depends(_db),
 ):
+    # Ids only: the sitemap emits no lastmod (last_seen_at moves on every ingest), so the
+    # per-role timestamp it used to fetch was ~1 MB of unused egress per regeneration.
     firsts = (
-        select(func.min(Job.id).label("id"), func.max(Job.last_seen_at).label("last_seen_at"))
+        select(func.min(Job.id).label("id"))
         .where(Job.is_active == True)  # noqa: E712
         .group_by(Job.dedup_key)
         .subquery()
     )
     total = session.execute(select(func.count()).select_from(firsts)).scalar_one()
     rows = session.execute(
-        select(firsts.c.id, firsts.c.last_seen_at).order_by(firsts.c.id).offset(offset).limit(limit)
+        select(firsts.c.id).order_by(firsts.c.id).offset(offset).limit(limit)
     ).all()
     return SitemapJobsResponse(
         total=total,
-        items=[SitemapJob(id=r.id, last_seen_at=r.last_seen_at) for r in rows],
+        items=[SitemapJob(id=r.id) for r in rows],
     )
 
 
@@ -702,10 +732,11 @@ def company_velocity(company_id: int, weeks: int = 8, session: Session = Depends
 
 
 # /meta is ~15 aggregate queries (full-table DISTINCTs + regex COUNTs) whose inputs only
-# change after an ingest run, so it's cached in-process with a short TTL. This keeps it off
-# the critical path of every page load (it gates the jobs feed's server-side Promise.all).
+# change after an ingest run (twice a day), so it's cached in-process for an hour. This
+# keeps it off the critical path of every page load (it gates the jobs feed's server-side
+# Promise.all) and keeps crawler traffic from recomputing it every few minutes.
 _META_CACHE: dict[str, tuple[float, MetaResponse]] = {}
-_META_TTL_SECONDS = 300
+_META_TTL_SECONDS = 3600
 
 
 def invalidate_meta_cache() -> None:
@@ -757,16 +788,21 @@ def _canonical_locations(session: Session) -> list[str]:
     """Location filter list: Remote (pinned first) + the curated major metros that actually
     have roles in the corpus, sorted alphabetically. The main places users search for,
     without the thousands of raw ATS variants."""
-    rows = session.execute(
-        select(Job.location_normalized, func.count())
+    # One row of counts, computed in the database: streaming every distinct location (4,914
+    # rows, ~239 KB) to Python to add them up was billed as Neon egress on each recompute.
+    # strpos() > 0 is the same case-sensitive substring test as Python's `token in loc`.
+    def has(token: str):
+        return func.count().filter(func.strpos(Job.location_normalized, token) > 0)
+
+    counts = session.execute(
+        select(has("remote"), *(has(token) for _, token in _MAJOR_METROS))
         .where(Job.is_active == True, Job.location_normalized != None)  # noqa: E712
-        .group_by(Job.location_normalized)
-    ).all()
-    remote = sum(cnt for loc, cnt in rows if "remote" in loc)
+    ).one()
+    remote = counts[0]
     present = [
         display
-        for display, token in _MAJOR_METROS
-        if sum(cnt for loc, cnt in rows if token in loc) >= _LOCATION_MIN_COUNT
+        for (display, _), cnt in zip(_MAJOR_METROS, counts[1:])
+        if cnt >= _LOCATION_MIN_COUNT
     ]
     present.sort()  # alphabetical
     return (["remote"] + present) if remote else present
@@ -775,22 +811,26 @@ def _canonical_locations(session: Session) -> list[str]:
 def _freshness(session: Session) -> Freshness:
     """How recently active boards were re-checked. `last_ingested_at` is stamped only
     after a board's jobs are committed, so a failing board keeps its last good time."""
+    # Aggregated in the database (one row) rather than pulling every board's timestamp.
     now = datetime.now(timezone.utc)
-    stamps = session.execute(
-        select(Company.last_ingested_at).where(Company.active == True)  # noqa: E712
-    ).scalars().all()
-    checked = [t for t in stamps if t is not None]
-    ages = sorted((now - t).total_seconds() / 3600 for t in checked)
-    median = None
-    if ages:
-        mid = len(ages) // 2
-        median = ages[mid] if len(ages) % 2 else (ages[mid - 1] + ages[mid]) / 2
+    stamp = Company.last_ingested_at
+    age_hours = func.extract("epoch", literal(now) - stamp) / 3600
+    row = session.execute(
+        select(
+            func.count(),
+            func.count().filter(stamp >= now - timedelta(hours=24)),
+            func.count().filter(stamp >= now - timedelta(days=7)),
+            func.percentile_cont(0.5).within_group(age_hours),
+            func.min(stamp),
+        ).where(Company.active == True)  # noqa: E712
+    ).one()
+    boards, in_24h, in_7d, median, oldest = row
     return Freshness(
-        boards_active=len(stamps),
-        boards_checked_24h=sum(1 for a in ages if a <= 24),
-        boards_checked_7d=sum(1 for a in ages if a <= 24 * 7),
-        median_check_age_hours=round(median, 1) if median is not None else None,
-        oldest_check_at=min(checked) if checked else None,
+        boards_active=boards,
+        boards_checked_24h=in_24h,
+        boards_checked_7d=in_7d,
+        median_check_age_hours=round(float(median), 1) if median is not None else None,
+        oldest_check_at=oldest,
     )
 
 
@@ -818,9 +858,12 @@ def _compute_meta(session: Session) -> MetaResponse:
         select(func.count()).select_from(Company).where(Company.active == True)
     ).scalar_one()
 
+    # Just the five fields the summary shows, not the run's failure list (kilobytes of JSON).
     last_run_row = session.execute(
-        select(IngestRun).order_by(IngestRun.started_at.desc()).limit(1)
-    ).scalar_one_or_none()
+        select(IngestRun.started_at, IngestRun.jobs_seen, IngestRun.jobs_new,
+               IngestRun.companies_ok, IngestRun.companies_failed)
+        .order_by(IngestRun.started_at.desc()).limit(1)
+    ).first()
 
     last_run = None
     if last_run_row:
@@ -918,7 +961,7 @@ _STATUS_RUNS = 20
 # Public and unauthenticated: cached in-process so crawlers or a refresh loop can't keep
 # Neon awake (every uncached call reads 20 runs' failure lists and scans companies).
 _STATUS_CACHE: dict[str, tuple[float, StatusResponse]] = {}
-_STATUS_TTL_SECONDS = 120
+_STATUS_TTL_SECONDS = 900
 # Error classes whose message is safe to publish (HTTP/network failures name the board's
 # public URL). Anything else, e.g. a database error that names the host and the SQL,
 # is published as its class name only.
