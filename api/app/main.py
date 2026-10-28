@@ -7,7 +7,9 @@ load_dotenv()
 
 from contextlib import asynccontextmanager  # noqa: E402
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import FastAPI, Request  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
+from sqlalchemy.exc import InterfaceError, OperationalError, TimeoutError as PoolTimeoutError  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
 from app.db import get_session  # noqa: E402
@@ -52,7 +54,25 @@ app.add_middleware(
     allow_origins=_cors_origins,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
+    max_age=86400,  # browsers cache the preflight for a day instead of re-asking per request
 )
+
+
+async def _db_unavailable(request: Request, exc: Exception) -> JSONResponse:
+    """Database down, suspended (Neon free quota) or timing out: answer 503 with Retry-After
+    instead of a raw 500 and a traceback, so clients and the web app's fetch retry logic treat
+    it as temporary and crawlers do not treat pages as broken."""
+    logging.getLogger(__name__).warning("database unavailable: %s", type(exc).__name__)
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database temporarily unavailable"},
+        headers={"Retry-After": "60"},
+    )
+
+
+app.add_exception_handler(OperationalError, _db_unavailable)
+app.add_exception_handler(InterfaceError, _db_unavailable)
+app.add_exception_handler(PoolTimeoutError, _db_unavailable)
 
 
 @app.middleware("http")
@@ -68,10 +88,11 @@ async def security_headers(request, call_next):
     return response
 
 @app.get("/health")
-def health() -> dict:
+async def health() -> dict:
     """Cheap, DB-free liveness probe for the external keep-warm pinger (cron-job.org).
     Deliberately touches nothing so hitting it every ~5 min wakes the Render instance
-    without any query load."""
+    without any query load. async so it runs on the event loop and still answers when every
+    threadpool worker is stuck waiting on a slow database."""
     return {"status": "ok"}
 
 

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db import get_session
+from app.db import get_request_session
 from app.internal_auth import verify_internal_token
 from app.models import Profile, User
 from app.schemas import ProfileIn, ProfileOut, UserOut, UserSyncIn
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 def _db():
-    s = get_session()
+    s = get_request_session()
     try:
         yield s
     finally:

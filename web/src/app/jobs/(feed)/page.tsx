@@ -7,6 +7,7 @@ import { Pagination } from "@/components/Pagination";
 import { JobListSkeleton } from "@/components/JobCardSkeleton";
 import { formatNumber } from "@/lib/utils";
 import { boardsRechecked, relativeAge } from "@/lib/format";
+import { clampPage, clampText } from "@/lib/params";
 import { RELEASED, effectiveHides, validCountry, validTerm } from "@/lib/eligibility";
 
 interface PageProps {
@@ -15,22 +16,22 @@ interface PageProps {
 
 async function JobFeed({ searchParams }: { searchParams: Record<string, string> }) {
   const compact = searchParams.density === "compact";
-  const parsedPage = parseInt(searchParams.page ?? "1", 10);
-  const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
+  const page = clampPage(searchParams.page);
+  const q = clampText(searchParams.q);
   const params = {
-    q: searchParams.q,
+    q,
     mode:
-      searchParams.q && ["semantic", "hybrid"].includes(searchParams.mode)
+      q && ["semantic", "hybrid"].includes(searchParams.mode)
         ? (searchParams.mode as "semantic" | "hybrid")
         : undefined,
-    company: searchParams.company,
+    company: clampText(searchParams.company),
     company_id: searchParams.company_id ? parseInt(searchParams.company_id, 10) : undefined,
-    department: searchParams.department,
-    location: searchParams.location,
-    employment_type: searchParams.employment_type,
-    experience_level: searchParams.experience_level,
-    level: searchParams.level,
-    industry: searchParams.industry,
+    department: clampText(searchParams.department),
+    location: clampText(searchParams.location),
+    employment_type: clampText(searchParams.employment_type),
+    experience_level: clampText(searchParams.experience_level),
+    level: clampText(searchParams.level),
+    industry: clampText(searchParams.industry),
     remote: searchParams.remote === "true" ? true : undefined,
     since_last_run: searchParams.since_last_run === "true" ? true : undefined,
     sort: ["newest", "relevance", "pay"].includes(searchParams.sort) ? searchParams.sort : undefined,

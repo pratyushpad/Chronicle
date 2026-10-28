@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,9 +13,13 @@ import { descriptionBlocks, summarize } from "@/lib/description";
 import { jobPostingJsonLd, serializeJsonLd } from "@/lib/jobPosting";
 import { SITE_URL } from "@/lib/site";
 import { eligibilityFacts } from "@/lib/eligibility";
+import { parseJobId } from "@/lib/params";
 
-// ISR: render each job on first request, then serve it from the CDN for an hour.
-export const revalidate = 3600;
+const OG_IMAGE = { url: "/opengraph-image", width: 1200, height: 630, alt: "Chronicle" };
+
+// ISR: render each job on first request, then serve it from the CDN for a week (a literal,
+// because Next reads segment config statically; keep equal to JOB_PAGE_REVALIDATE in lib/api).
+export const revalidate = 604800;
 export const dynamicParams = true;
 export async function generateStaticParams() {
   return [];
@@ -25,12 +29,16 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+// cache(): generateMetadata and the page both need the job. Without it a render made two API
+// calls whenever the fetch was not data-cached (every unknown id, since 404s are not cached).
+const fetchJobOnce = cache((jobId: number) => getJob(jobId));
+
 async function loadJob(params: PageProps["params"]): Promise<JobDetail> {
   const { id } = await params;
-  const jobId = Number(id);
-  if (!Number.isInteger(jobId) || jobId <= 0) notFound();
+  const jobId = parseJobId(id);
+  if (jobId === null) notFound();
   try {
-    return await getJob(jobId);
+    return await fetchJobOnce(jobId);
   } catch (e) {
     // Only a real 404 is "not found". A cold start, timeout or 5xx must surface as an
     // error (a 5xx), never as a not-found page that tells crawlers to drop a live role.
@@ -58,8 +66,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: { canonical: url },
     // A closed role stays reachable for people who saved it, but isn't offered to search.
     robots: job.is_active === false ? { index: false, follow: true } : undefined,
-    openGraph: { title, description, url, type: "website", siteName: "Chronicle" },
-    twitter: { card: "summary_large_image", title, description },
+    // One shared, build-time social card (app/opengraph-image.tsx) instead of a per-job image
+    // rendered on demand: that route cost 25 to 34 ms of CPU per id, for any id.
+    openGraph: { title, description, url, type: "website", siteName: "Chronicle", images: [OG_IMAGE] },
+    twitter: { card: "summary_large_image", title, description, images: [OG_IMAGE.url] },
   };
 }
 

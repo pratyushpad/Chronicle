@@ -1,5 +1,6 @@
 import type { PayPeriod } from "@/lib/format";
 import type { DescriptionBlock } from "@/lib/description";
+import { SERVICE_HEADER, serviceKey } from "@/lib/internal-service";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -182,6 +183,13 @@ export interface JobParams {
  * 5xx without letting a slow wake-up hang the request forever. 4xx (except an optional
  * notFound) fail fast — they won't get better on retry.
  */
+class FinalError extends Error {}
+
+/** serviceKey() reads a server-only env var; fetchJSON only runs in server renders. */
+async function serverKey(): Promise<string | undefined> {
+  return typeof window === "undefined" ? serviceKey() : undefined;
+}
+
 async function fetchJSON<T>(
   path: string,
   opts: {
@@ -192,7 +200,14 @@ async function fetchJSON<T>(
     notFoundMsg?: string;
   },
 ): Promise<T> {
-  const { revalidate = 300, retries = 1, timeoutMs = 20000, errMsg, notFoundMsg } = opts;
+  // One retry for these idempotent GETs, 10 s per attempt, 500 ms backoff: worst case is
+  // about 20.5 s, under the ~25 s a server render can afford. The retry is what absorbs a
+  // Render cold start (the first attempt wakes the API, the second lands on it). Long waits
+  // were what cost GB-hours during the Oct 2026 database outage (9 to 67 GB-h in a day);
+  // the API now answers 503 fast when the database is down, so only a cold start is slow.
+  // Callers that cannot afford a retry (similar roles, sitemap) pass retries: 0.
+  const { revalidate = 300, retries = 1, timeoutMs = 10000, errMsg, notFoundMsg } = opts;
+  const key = await serverKey();
   let lastErr: unknown;
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
@@ -201,13 +216,17 @@ async function fetchJSON<T>(
       const res = await fetch(`${API}${path}`, {
         next: { revalidate },
         signal: controller.signal,
+        // Lets the API skip the per-IP search limit for server renders (Vercel's few egress
+        // IPs would otherwise share one bucket). Absent in browsers and local dev.
+        ...(key ? { headers: { [SERVICE_HEADER]: key } } : {}),
       });
       if (res.ok) return (await res.json()) as T;
-      if (notFoundMsg && res.status === 404) throw new Error(notFoundMsg);
-      if (res.status < 500) throw new Error(`${errMsg} (${res.status})`);
+      // 4xx answers are final (a retry gets the same one); 5xx and network errors retry.
+      if (notFoundMsg && res.status === 404) throw new FinalError(notFoundMsg);
+      if (res.status < 500) throw new FinalError(`${errMsg} (${res.status})`);
       lastErr = new Error(`${errMsg} (${res.status})`);
     } catch (e) {
-      if (e instanceof Error && notFoundMsg && e.message === notFoundMsg) throw e;
+      if (e instanceof FinalError) throw new Error(e.message);
       lastErr = e;
     } finally {
       clearTimeout(timer);
@@ -243,12 +262,17 @@ export async function getJobs(
   );
 }
 
+// A week. Job pages are long-tail: with ~36K roles a crawler revisits each one about every
+// 29 hours, so an hour-long window made 97% of hits a fresh render (2 API calls, 20 ms CPU).
+// A role's text rarely changes after posting; closing it is the main change, and a closed
+// role showing as open for a few days is an acceptable trade for the hosting quota.
+export const JOB_PAGE_REVALIDATE = 604800;
+
 export async function getJob(id: number): Promise<JobDetail> {
-  // Extra retry to absorb Render cold-starts / transient 503s under prefetch fan-out.
-  // An hour: a role only changes when the twice-daily ingest runs.
+  // One retry to absorb a Render cold start or a transient 503 under prefetch fan-out.
   return fetchJSON<JobDetail>(`/jobs/${id}`, {
-    revalidate: 3600,
-    retries: 2,
+    revalidate: JOB_PAGE_REVALIDATE,
+    retries: 1,
     errMsg: "Job fetch failed",
     notFoundMsg: "Job not found",
   });
@@ -303,6 +327,7 @@ export async function getSitemapJobs(offset: number, limit: number): Promise<Sit
   return fetchJSON<SitemapJobs>(`/sitemap/jobs?offset=${offset}&limit=${limit}`, {
     revalidate: 86400, // a day; keep equal to `revalidate` in app/sitemap.ts (the shorter one wins)
     timeoutMs: 30000,
+    retries: 0,
     errMsg: "Failed to fetch sitemap jobs",
   });
 }

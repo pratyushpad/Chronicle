@@ -39,11 +39,11 @@ function sent(): { url: string; revalidate: number | undefined } {
 }
 
 const CASES: Array<[name: string, call: () => Promise<unknown>, path: string, revalidate: number]> = [
-  ["getJob", () => getJob(42), "/jobs/42", HOUR],
+  ["getJob", () => getJob(42), "/jobs/42", 604800],
   ["getMeta", () => getMeta(), "/meta", HOUR],
   ["getSimilarJobs", () => getSimilarJobs(42, 4), "/jobs/42/similar?limit=4", HOUR],
   ["getStatus", () => getStatus(), "/status", 900],
-  ["getSitemapJobs", () => getSitemapJobs(0, 20_000), "/sitemap/jobs?offset=0&limit=20000", DAY],
+  ["getSitemapJobs", () => getSitemapJobs(0, 2_000), "/sitemap/jobs?offset=0&limit=2000", DAY],
   ["getJobs (the feed's default)", () => getJobs({ q: "rust" }), "/jobs?q=rust", 300],
 ];
 

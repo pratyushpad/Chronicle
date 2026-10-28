@@ -13,7 +13,7 @@ from app.ingest.adapters.base import RawJob
 from app.ingest.dedupe import make_content_hash
 from app.ingest.normalize import plain_text
 from app.models import ATSSource, Company, Job
-from app.routers.jobs import get_job, similar_jobs, sitemap_jobs
+from app.routers.jobs import get_job, similar_jobs, _sitemap_jobs
 from tests.conftest import FIXTURES
 
 
@@ -74,7 +74,7 @@ def test_sitemap_lists_one_stable_url_per_active_role(pg_engine):
         outer = conn.begin()
         try:
             s = _session(conn)
-            before = sitemap_jobs(offset=0, limit=20_000, session=s).total
+            before = _sitemap_jobs(s, 0, 2_000).total
             co = Company(name="MapCo", ats=ATSSource.greenhouse, slug="map-co-test", active=True)
             s.add(co)
             s.flush()
@@ -83,7 +83,7 @@ def test_sitemap_lists_one_stable_url_per_active_role(pg_engine):
             gone = _job(co, "m4", "dk-m-c", active=False)
             s.add_all([a1, a2, b, gone])
             s.flush()
-            res = sitemap_jobs(offset=0, limit=20_000, session=s)
+            res = _sitemap_jobs(s, 0, 2_000)
             assert res.total == before + 2
             ids = {i.id for i in res.items}
             assert min(a1.id, a2.id) in ids and max(a1.id, a2.id) not in ids

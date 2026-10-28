@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.db import get_session
+from app.db import get_request_session
 from app.models import Application, Company, Interaction, InteractionEvent, Job, User
 from app.routers.users import get_current_user
 from app.schemas import RecommendedJob
@@ -310,7 +310,7 @@ def _two_stage_scored(
 
 
 def _db():
-    s = get_session()
+    s = get_request_session()
     try:
         yield s
     finally:
