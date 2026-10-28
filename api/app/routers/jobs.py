@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import and_, any_, func, literal, or_, select, text, true
 from sqlalchemy.orm import Session, aliased, load_only
 
-from app.cache import TTLCache, configured_ttl, is_anonymous, normalized_key
+from app.cache import TTLCache, bound_key, configured_ttl, is_anonymous, raw_query_is_plain
 from app.db import get_request_session
 from app.ratelimit import search_limiter
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
@@ -120,7 +120,11 @@ def _cached_anonymous(fn):
         ttl = configured_ttl()
         if request is None or ttl == 0 or not is_anonymous(request.headers):
             return fn(*args, **kwargs)
-        key = normalized_key(request.url.path, request.query_params.multi_items())
+        # Key = the validated arguments FastAPI bound, not the raw query string; a request
+        # with unknown or repeated parameters is not cached at all.
+        if not raw_query_is_plain(request.query_params.multi_items(), kwargs.keys()):
+            return fn(*args, **kwargs)
+        key = bound_key(request.url.path, kwargs)
         hit = _JOBS_CACHE.get(key, ttl)
         if hit is not None:
             return hit

@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import pytest
 from sqlalchemy import event
 
-from app.cache import TTLCache, configured_ttl, is_anonymous, normalized_key
+from app.cache import TTLCache, bound_key, configured_ttl, is_anonymous, raw_query_is_plain
 from app.routers import jobs as jobs_router
 from tests.test_design_api_db import _company, _job, api  # noqa: F401  (fixture)
 
@@ -49,12 +49,20 @@ def test_ttl_is_clamped_to_60_300_and_zero_disables(monkeypatch):
     assert configured_ttl() == 120
 
 
-def test_key_ignores_order_case_of_names_blanks_and_defaults():
-    a = normalized_key("/jobs", [("q", "intern"), ("Remote", "true")])
-    b = normalized_key("/jobs", [("remote", "true"), ("q", " intern "), ("page", "1"),
-                                 ("page_size", "20"), ("mode", "keyword"), ("company", "")])
-    assert a == b
-    assert a != normalized_key("/jobs", [("q", "intern"), ("remote", "true"), ("page", "2")])
+def test_bound_key_is_case_and_whitespace_sensitive_and_skips_request_objects():
+    base = {"q": "x", "page": 1, "request": object(), "session": object()}
+    assert bound_key("/jobs", base) == bound_key("/jobs", {**base, "request": object()})
+    assert bound_key("/jobs", base) != bound_key("/jobs", {**base, "q": "X"})
+    assert bound_key("/jobs", base) != bound_key("/jobs", {**base, "q": " x"})
+    assert bound_key("/jobs", base) != bound_key("/jobs", {**base, "page": 2})
+
+
+def test_plain_query_check():
+    names = {"q", "page", "request"}
+    assert raw_query_is_plain([("q", "x"), ("page", "2")], names)
+    assert not raw_query_is_plain([("Q", "x")], names)                 # unknown spelling
+    assert not raw_query_is_plain([("q", "a"), ("q", "b")], names)     # repeated
+    assert not raw_query_is_plain([("zzz", "1")], names)               # unknown
 
 
 def test_credentials_make_a_request_non_anonymous():
@@ -103,12 +111,45 @@ def test_jobs_list_repeat_makes_zero_queries(seeded):
     assert again["queries"] == 0
 
 
-def test_equivalent_spellings_share_one_cache_entry(seeded):
+def test_default_valued_spellings_share_one_entry(seeded):
     client, eng = seeded
-    client.get("/jobs?page_size=2&remote=false")
+    client.get("/jobs?page_size=2")
     with count_queries(eng) as n:
-        client.get("/jobs?remote=false&page=1&page_size=2&q=")
+        client.get("/jobs?page_size=2&page=1&mode=keyword")  # bound args identical
     assert n["queries"] == 0
+
+
+def _titles(r):
+    return [i["title"] for i in r.json()["items"]]
+
+
+def test_case_variant_name_cannot_read_or_poison_another_entry(seeded):
+    client, eng = seeded
+    a = client.get("/jobs?q=Intern%201&page_size=5")          # filtered to one role
+    plain = client.get("/jobs?page_size=5")                    # all three roles
+    wrong = client.get("/jobs?Q=Intern%201&page_size=5")       # unknown name: q is ignored
+    assert len(_titles(a)) == 1 and len(_titles(plain)) == 3
+    assert _titles(wrong) == _titles(plain)                    # not the ?q= body
+    assert _titles(client.get("/jobs?q=Intern%201&page_size=5")) == _titles(a)
+    assert _titles(client.get("/jobs?page_size=5")) == _titles(plain)
+
+
+def test_repeated_params_are_not_cached(seeded):
+    client, eng = seeded
+    r1 = client.get("/jobs?q=Intern%201&q=Intern%202&page_size=5")
+    with count_queries(eng) as n:
+        r2 = client.get("/jobs?q=Intern%201&q=Intern%202&page_size=5")
+    assert n["queries"] > 0 and r1.json() == r2.json()
+    assert len(_titles(client.get("/jobs?q=Intern%201&page_size=5"))) == 1  # not poisoned
+
+
+def test_whitespace_padded_value_is_its_own_entry(seeded):
+    client, eng = seeded
+    padded = client.get("/jobs?company=%20CacheCo&page_size=5")   # ILIKE '% CacheCo%': no match
+    exact = client.get("/jobs?company=CacheCo&page_size=5")
+    assert _titles(padded) == [] and len(_titles(exact)) == 3
+    assert _titles(client.get("/jobs?company=%20CacheCo&page_size=5")) == []
+    assert len(_titles(client.get("/jobs?company=CacheCo&page_size=5"))) == 3
 
 
 def test_different_params_miss_and_credentialed_requests_bypass(seeded):

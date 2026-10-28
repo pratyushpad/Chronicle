@@ -60,22 +60,24 @@ class TTLCache:
         return len(self._data)
 
 
-# Parameters whose default value means "not set": dropped from the key so /jobs and
-# /jobs?page=1&page_size=20&mode=keyword share one entry.
-_DEFAULTS = {"page": "1", "page_size": "20", "mode": "keyword", "since_last_run": "false"}
+_NOT_PART_OF_KEY = frozenset({"request", "session", "response", "user", "current_user"})
 
 
-def normalized_key(path: str, query_items: list[tuple[str, str]]) -> tuple:
-    """Order-, case- and default-insensitive key for a GET: names lowercased, values
-    stripped, empty values and default values dropped, then sorted. Values keep their case
-    (a search for "ML" is not "ml" to the matcher's caller, and the cost of a miss is one query)."""
-    items = []
-    for name, value in query_items:
-        name, value = name.strip().lower(), value.strip()
-        if not value or _DEFAULTS.get(name) == value.lower():
-            continue
-        items.append((name, value))
-    return (path, tuple(sorted(items)))
+def bound_key(path: str, bound: dict) -> tuple:
+    """Key from the validated arguments FastAPI bound to the handler (types coerced, defaults
+    filled in), never from the raw query string, so two requests share an entry only when the
+    handler would compute the same answer for them. Case- and whitespace-sensitive on
+    purpose; request/session/user objects are left out."""
+    items = tuple(sorted((k, v) for k, v in bound.items() if k not in _NOT_PART_OF_KEY))
+    return (path, items)
+
+
+def raw_query_is_plain(query_items: list[tuple[str, str]], bound_names) -> bool:
+    """True only when every query name is a bound parameter spelled exactly as declared and
+    appears once. Unknown names (?Q=x), repeated names, or anything else FastAPI may have
+    ignored or collapsed bypasses the cache, so the raw request and the key cannot disagree."""
+    names = [n for n, _ in query_items]
+    return len(names) == len(set(names)) and all(n in bound_names for n in names)
 
 
 def is_anonymous(headers) -> bool:
