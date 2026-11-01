@@ -1,4 +1,6 @@
+import hashlib
 import tempfile
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, AsyncIterator, Protocol
 
@@ -12,6 +14,35 @@ if TYPE_CHECKING:
 MAX_BOARD_BYTES = 64 * 1024 * 1024
 # Response bodies spool to RAM up to this, then overflow to disk.
 _SPOOL_MAX_BYTES = 4 * 1024 * 1024
+
+
+# When set (the runner sets it per board), iter_board_json feeds the raw response bytes
+# into it, so the runner can tell an unchanged board from a changed one without parsing a
+# single job. A ContextVar keeps every adapter's fetch(slug, client) signature as it was.
+class BoardDigest:
+    """Running sha256 of one board's response body. `fed` is False until a real download
+    went through it, so an adapter that never feeds it (a test stub) is never mistaken for
+    an unchanged board."""
+
+    def __init__(self) -> None:
+        self._h = hashlib.sha256()
+        self.fed = False
+
+    def update(self, chunk: bytes) -> None:
+        self._h.update(chunk)
+        self.fed = True
+
+    def hexdigest(self, version: str) -> str | None:
+        """Digest salted with `version` (bump it whenever normalization changes, so an
+        unchanged payload is still reprocessed once). None if nothing was downloaded."""
+        if not self.fed:
+            return None
+        h = self._h.copy()
+        h.update(version.encode())
+        return h.hexdigest()
+
+
+board_digest: ContextVar["BoardDigest | None"] = ContextVar("board_digest", default=None)
 
 
 class BoardTooLarge(Exception):
@@ -39,6 +70,7 @@ async def iter_board_json(
 
     if max_bytes is None:
         max_bytes = MAX_BOARD_BYTES
+    digest = board_digest.get()
     with tempfile.SpooledTemporaryFile(max_size=_SPOOL_MAX_BYTES) as spool:
         async with client.stream("GET", url, timeout=30) as resp:
             resp.raise_for_status()
@@ -48,6 +80,8 @@ async def iter_board_json(
                 if received > max_bytes:
                     raise BoardTooLarge(slug, max_bytes)
                 spool.write(chunk)
+                if digest is not None:
+                    digest.update(chunk)
         spool.seek(0)
         for item in ijson.items(spool, prefix):
             yield item

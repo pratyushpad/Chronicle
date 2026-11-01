@@ -8,7 +8,10 @@ name: keep-warm
 # Override the target with the API_URL repo variable.
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    # Daytime only (about 7 AM to 11 PM Pacific). Render's free plan has 750 instance
+    # hours a month shared by every service; keeping the API awake 24/7 alone uses
+    # about 744, so nights are left to spin down. A night visitor gets a cold start.
+    - cron: "*/10 14-23,0-6 * * *"
   workflow_dispatch: {}
 
 jobs:

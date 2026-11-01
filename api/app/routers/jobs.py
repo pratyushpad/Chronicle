@@ -1,3 +1,4 @@
+import functools
 import logging
 import time
 from datetime import date, datetime, timedelta, timezone
@@ -8,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import and_, any_, func, literal, or_, select, text, true
 from sqlalchemy.orm import Session, aliased, load_only
 
+from app.cache import TTLCache, bound_key, configured_ttl, is_anonymous, raw_query_is_plain
 from app.db import get_request_session
 from app.ratelimit import search_limiter
 from app.models import Company, IngestRun, Job, JOB_SEARCH_FTS_EXPR
@@ -105,7 +107,36 @@ def _last_run_start(session: Session) -> datetime | None:
     ).scalar_one_or_none()
 
 
+# Anonymous /jobs lists are identical for everyone, so an identical request inside the TTL
+# (60-300 s, JOBS_CACHE_TTL_S) is answered from memory with no database query. The cache
+# sits below the router decorator so FastAPI still sees list_jobs' own signature.
+_JOBS_CACHE = TTLCache(max_entries=256)
+
+
+def _cached_anonymous(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        request = kwargs.get("request")
+        ttl = configured_ttl()
+        if request is None or ttl == 0 or not is_anonymous(request.headers):
+            return fn(*args, **kwargs)
+        # Key = the validated arguments FastAPI bound, not the raw query string; a request
+        # with unknown or repeated parameters is not cached at all.
+        if not raw_query_is_plain(request.query_params.multi_items(), kwargs.keys()):
+            return fn(*args, **kwargs)
+        key = bound_key(request.url.path, kwargs)
+        hit = _JOBS_CACHE.get(key, ttl)
+        if hit is not None:
+            return hit
+        result = fn(*args, **kwargs)
+        _JOBS_CACHE.set(key, result)
+        return result
+
+    return wrapper
+
+
 @router.get("/jobs", response_model=JobListResponse)
+@_cached_anonymous
 def list_jobs(
     q: Optional[str] = Query(None, max_length=_MAX_TEXT, pattern=_NO_NUL),
     mode: str = Query("keyword", pattern="^(keyword|semantic|hybrid)$"),
@@ -802,6 +833,7 @@ def invalidate_meta_cache() -> None:
     _STATUS_CACHE.clear()  # a finished run changes /status too
     _COMPANIES_CACHE.clear()  # job counts per company change too
     _SITEMAP_CACHE.clear()
+    _JOBS_CACHE.clear()
     _META_CACHE.pop("meta", None)
 
 

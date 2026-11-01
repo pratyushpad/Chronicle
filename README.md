@@ -274,7 +274,7 @@ its board removed can [open an issue](https://github.com/pratyushpad/Chronicle/i
 
 ## Refresh & operations
 
-**Keep-warm.** Render's free tier spins the API down after ~15 min idle. The primary
+**Keep-warm.** Render's free tier spins the API down after ~15 min idle, and all free services share 750 instance hours a month, so keep-warm runs only from about 7 AM to 11 PM Pacific (24/7 would use about 744 hours on its own). If you add an external pinger, give it the same daytime window. The primary
 keep-warm is an external **cron-job.org** monitor hitting `GET /health` every 5 min (free,
 fires reliably); the `.github/workflows/keep-warm.yml` GitHub Action is a backup, since
 GitHub scheduled crons drop fires on low-activity repos. To set it up: create a cron-job.org
